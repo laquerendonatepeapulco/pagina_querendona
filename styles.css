@@ -3311,12 +3311,12 @@ iframe {
 }
 
 .about-experience-section {
-    display: flex;
-    justify-content: flex-end;
+    display: block;
 }
 
 .about-experience-section .experience-card {
-    width: min(900px, 100%);
+    width: 100%;
+    max-width: none;
 }
 
 .menu-image-card img,
