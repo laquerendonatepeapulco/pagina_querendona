@@ -492,11 +492,24 @@ const track = document.getElementById('carouselTrack');
 
 if(track){
     let position = 0;
+    const isTouchCarousel = () =>
+        window.matchMedia('(max-width: 768px), (hover: none) and (pointer: coarse)').matches;
+
+    const resetCarouselPosition = () => {
+        position = 0;
+        track.style.transform = '';
+    };
 
     setInterval(()=>{
+        if(isTouchCarousel()){
+            resetCarouselPosition();
+            return;
+        }
 
         const firstSlide = track.querySelector('.carousel-slide');
-        const slideWidth = firstSlide ? firstSlide.getBoundingClientRect().width + 25 : 345;
+        const trackStyles = window.getComputedStyle(track);
+        const slideGap = parseFloat(trackStyles.columnGap || trackStyles.gap) || 25;
+        const slideWidth = firstSlide ? firstSlide.getBoundingClientRect().width + slideGap : 345;
 
         position -= slideWidth;
 
@@ -508,6 +521,12 @@ if(track){
         track.style.transform = `translateX(${position}px)`;
 
     }, 2500);
+
+    window.addEventListener('resize', () => {
+        if(isTouchCarousel()){
+            resetCarouselPosition();
+        }
+    });
 }
 
 /* ========================= */

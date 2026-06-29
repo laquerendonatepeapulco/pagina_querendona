@@ -3550,11 +3550,32 @@ iframe {
 
     .carousel-track {
         gap: 16px;
+        width: max-content;
+        animation: none !important;
+        transform: none !important;
+        transition: none;
+        touch-action: pan-x;
+    }
+
+    .carousel-container {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+    }
+
+    .carousel-container::-webkit-scrollbar {
+        display: none;
     }
 
     .carousel-slide {
+        flex: 0 0 min(78vw, 300px);
         min-width: min(78vw, 300px);
         height: 200px;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
     }
 
     .menu-image-card {
