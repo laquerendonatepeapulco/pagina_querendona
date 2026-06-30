@@ -4197,6 +4197,13 @@ nav a::after {
         0 0 24px rgba(0, 183, 255, 0.18);
 }
 
+.btn-primary:disabled {
+    cursor: wait;
+    opacity: .68;
+    transform: none;
+    filter: none;
+}
+
 .secondary-btn,
 .about-btn {
     border: 2px solid var(--accent2);

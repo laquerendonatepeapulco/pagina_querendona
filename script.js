@@ -180,97 +180,165 @@ if(reservationForm){
         if(dateField){
             dateField.addEventListener('click', () => openReservationDatePicker(reservationDate));
         }
+
+        reservationDate.addEventListener('change', () => {
+            if(customerNumberInput){
+                setReservationCustomerNumber(customerNumberInput, reservationDate.value);
+            }
+        });
     }
 
     if(customerNumberInput){
-        setReservationCustomerNumber(customerNumberInput);
+        setReservationCustomerNumber(customerNumberInput, reservationDate ? reservationDate.value : undefined);
     }
 
-    reservationForm.addEventListener('submit', (e) => {
+    reservationForm.addEventListener('submit', async (e) => {
 
         e.preventDefault();
 
+        const submitButton = reservationForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton ? submitButton.textContent.trim() : '';
         const formData = new FormData(reservationForm);
-        const customerNumber = String(formData.get('customerNumber') || '').trim();
-        const name = String(formData.get('name') || '').trim();
-        const email = String(formData.get('email') || '').trim();
-        const phone = String(formData.get('phone') || '').trim();
-        const date = String(formData.get('date') || '');
-        const time = String(formData.get('time') || '');
-        const celebrationType = String(formData.get('celebrationType') || '').trim();
-        const message = String(formData.get('message') || '').trim();
-        const formattedDate = formatReservationDate(date);
-        const formattedTime = formatReservationTime(time);
-        const whatsappNumber = '527713420990';
-        const reservationMessage = [
-            translateSiteText('Hola, quiero hacer una reservación en La Querendona.'),
-            '',
-            `${translateSiteText('No. de cliente')}: ${customerNumber}`,
-            `${translateSiteText('Nombre')}: ${name}`,
-            `${translateSiteText('Correo')}: ${email}`,
-            `${translateSiteText('Teléfono')}: ${phone}`,
-            `${translateSiteText('Fecha')}: ${formattedDate}`,
-            `${translateSiteText('Hora')}: ${formattedTime}`,
-            `${translateSiteText('Tipo de celebración')}: ${translateSiteText(celebrationType)}`,
-            `${translateSiteText('Detalles')}: ${message || translateSiteText('Sin detalles adicionales')}`,
-            '',
-            translateSiteText('¿Me pueden confirmar disponibilidad?')
-        ].join('\n');
-        const whatsappUrl =
-            `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(reservationMessage)}`;
-        const whatsappWindow = window.open(whatsappUrl, '_blank', 'noopener');
 
-        if(!whatsappWindow){
-            window.location.href = whatsappUrl;
+        const reservationPayload = {
+            name: String(formData.get('name') || '').trim(),
+            email: String(formData.get('email') || '').trim(),
+            phone: String(formData.get('phone') || '').trim(),
+            date: String(formData.get('date') || ''),
+            time: String(formData.get('time') || ''),
+            celebrationType: String(formData.get('celebrationType') || '').trim(),
+            message: String(formData.get('message') || '').trim()
+        };
+
+        if(submitButton){
+            submitButton.disabled = true;
+            submitButton.textContent = translateSiteText('Guardando reservación...');
         }
 
-        showToast(translateSiteText('Te llevamos a WhatsApp para confirmar tu reservación.'));
+        try {
+            const response = await fetch('/api/reservations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(reservationPayload)
+            });
+            const payload = await readJsonResponse(response);
 
-        confirmReservationCustomerNumber(customerNumber);
-        reservationForm.reset();
+            if(!response.ok){
+                throw new Error(payload.error || translateSiteText('No pudimos registrar tu reservación. Inténtalo de nuevo o contáctanos por WhatsApp.'));
+            }
 
-        if(reservationDate){
-            setDefaultReservationDate(reservationDate);
-        }
+            const savedReservation = payload.reservation || {};
+            const customerNumber = savedReservation.customerNumber || String(formData.get('customerNumber') || '').trim();
+            const reservationForWhatsApp = {
+                ...reservationPayload,
+                customerNumber,
+                date: savedReservation.date || reservationPayload.date,
+                time: savedReservation.time || reservationPayload.time
+            };
 
-        if(customerNumberInput){
-            setReservationCustomerNumber(customerNumberInput);
+            openReservationWhatsApp(reservationForWhatsApp);
+            showToast(translateSiteText('Reservación registrada. Te llevamos a WhatsApp para confirmar.'));
+
+            confirmReservationCustomerNumber(customerNumber);
+            reservationForm.reset();
+
+            if(reservationDate){
+                setDefaultReservationDate(reservationDate);
+            }
+
+            if(customerNumberInput){
+                setReservationCustomerNumber(customerNumberInput, reservationDate ? reservationDate.value : undefined);
+            }
+        } catch (error) {
+            showToast(error.message || translateSiteText('No pudimos registrar tu reservación. Inténtalo de nuevo o contáctanos por WhatsApp.'));
+        } finally {
+            if(submitButton){
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText || translateSiteText('Reservar ahora');
+            }
         }
 
     });
 
 }
 
-function setReservationCustomerNumber(input){
+async function readJsonResponse(response){
 
-    input.value = getNextReservationCustomerNumber();
+    try {
+        return await response.json();
+    } catch (error) {
+        return {};
+    }
 
 }
 
-function getNextReservationCustomerNumber(){
+function openReservationWhatsApp(reservation){
 
-    const today = getTodayInputDate();
-    const counter = getReservationCounter(today);
+    const whatsappNumber = '527713420990';
+    const whatsappUrl =
+        `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(buildReservationMessage(reservation))}`;
+    const whatsappWindow = window.open(whatsappUrl, '_blank', 'noopener');
+
+    if(!whatsappWindow){
+        window.location.href = whatsappUrl;
+    }
+
+}
+
+function buildReservationMessage(reservation){
+
+    const formattedDate = formatReservationDate(reservation.date);
+    const formattedTime = formatReservationTime(reservation.time);
+
+    return [
+        translateSiteText('Hola, quiero hacer una reservación en La Querendona.'),
+        '',
+        `${translateSiteText('No. de cliente')}: ${reservation.customerNumber}`,
+        `${translateSiteText('Nombre')}: ${reservation.name}`,
+        `${translateSiteText('Correo')}: ${reservation.email}`,
+        `${translateSiteText('Teléfono')}: ${reservation.phone}`,
+        `${translateSiteText('Fecha')}: ${formattedDate}`,
+        `${translateSiteText('Hora')}: ${formattedTime}`,
+        `${translateSiteText('Tipo de celebración')}: ${translateSiteText(reservation.celebrationType)}`,
+        `${translateSiteText('Detalles')}: ${reservation.message || translateSiteText('Sin detalles adicionales')}`,
+        '',
+        translateSiteText('¿Me pueden confirmar disponibilidad?')
+    ].join('\n');
+
+}
+
+function setReservationCustomerNumber(input, dateValue){
+
+    input.value = getNextReservationCustomerNumber(dateValue);
+
+}
+
+function getNextReservationCustomerNumber(dateValue){
+
+    const reservationDate = isInputDate(dateValue) ? dateValue : getTodayInputDate();
+    const counter = getReservationCounter(reservationDate);
     const nextNumber = counter.count + 1;
 
-    return formatReservationCustomerNumber(today, nextNumber);
+    return formatReservationCustomerNumber(reservationDate, nextNumber);
 
 }
 
 function confirmReservationCustomerNumber(customerNumber){
 
-    const today = getTodayInputDate();
-    const sequence = getReservationSequence(customerNumber, today);
+    const reservationDate = getReservationDateFromCustomerNumber(customerNumber);
+    const sequence = getReservationSequence(customerNumber, reservationDate);
 
-    if(!sequence){
+    if(!reservationDate || !sequence){
         return;
     }
 
-    const counter = getReservationCounter(today);
+    const counter = getReservationCounter(reservationDate);
     const nextCount = Math.max(counter.count, sequence);
 
     localStorage.setItem(RESERVATION_COUNTER_KEY, JSON.stringify({
-        date: today,
+        date: reservationDate,
         count: nextCount
     }));
 
@@ -289,6 +357,20 @@ function getReservationCounter(today){
     }
 
     return { date: today, count: 0 };
+
+}
+
+function isInputDate(value){
+
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
+
+}
+
+function getReservationDateFromCustomerNumber(customerNumber){
+
+    const match = String(customerNumber || '').match(/^CL-(\d{4})(\d{2})(\d{2})-\d+$/);
+
+    return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
 
 }
 

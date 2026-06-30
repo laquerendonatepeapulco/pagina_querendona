@@ -52,6 +52,23 @@ CREATE TABLE IF NOT EXISTS stock_alerts (
   resolved_at TIMESTAMPTZ
 );
 
+CREATE TABLE IF NOT EXISTS reservations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_number TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  reservation_date DATE NOT NULL,
+  reservation_time TIME NOT NULL,
+  celebration_type TEXT NOT NULL,
+  message TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_movements_created_at ON movements(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_stock_alerts_status ON stock_alerts(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reservations_date_time ON reservations(reservation_date, reservation_time);
+CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status, created_at DESC);

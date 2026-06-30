@@ -127,6 +127,35 @@ function stockAlertDto(row) {
   };
 }
 
+function formatDateOnly(value) {
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  return String(value || "").slice(0, 10);
+}
+
+function formatTimeOnly(value) {
+  return String(value || "").slice(0, 5);
+}
+
+function reservationDto(row) {
+  return {
+    id: row.id,
+    customerNumber: row.customer_number,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    date: formatDateOnly(row.reservation_date),
+    time: formatTimeOnly(row.reservation_time),
+    celebrationType: row.celebration_type,
+    message: row.message,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
 async function query(text, params = []) {
   return pool.query(text, params);
 }
@@ -191,9 +220,27 @@ async function ensureSchema() {
       resolved_at TIMESTAMPTZ
     )
   `);
+  await query(`
+    CREATE TABLE IF NOT EXISTS reservations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      customer_number TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      reservation_date DATE NOT NULL,
+      reservation_time TIME NOT NULL,
+      celebration_type TEXT NOT NULL,
+      message TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
   await query(`CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)`);
   await query(`CREATE INDEX IF NOT EXISTS idx_movements_created_at ON movements(created_at DESC)`);
   await query(`CREATE INDEX IF NOT EXISTS idx_stock_alerts_status ON stock_alerts(status, created_at DESC)`);
+  await query(`CREATE INDEX IF NOT EXISTS idx_reservations_date_time ON reservations(reservation_date, reservation_time)`);
+  await query(`CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status, created_at DESC)`);
 }
 
 async function seedUsers() {
@@ -284,6 +331,152 @@ function adminRequired(req, res, next) {
   }
   next();
 }
+
+function sanitizeReservation(input = {}) {
+  const reservation = {
+    name: String(input.name || "").trim(),
+    email: String(input.email || "").trim().toLowerCase(),
+    phone: String(input.phone || "").trim(),
+    date: String(input.date || "").trim(),
+    time: String(input.time || "").trim(),
+    celebrationType: String(input.celebrationType || "").trim(),
+    message: String(input.message || "").trim().slice(0, 1000)
+  };
+
+  if (!reservation.name || !reservation.email || !reservation.phone || !reservation.date || !reservation.time || !reservation.celebrationType) {
+    const error = new Error("Completa nombre, correo, telefono, fecha, hora y tipo de celebracion");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reservation.email)) {
+    const error = new Error("Correo electronico invalido");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(reservation.date)) {
+    const error = new Error("Fecha invalida");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!/^\d{2}:\d{2}$/.test(reservation.time)) {
+    const error = new Error("Hora invalida");
+    error.status = 400;
+    throw error;
+  }
+
+  const [hours, minutes] = reservation.time.split(":").map(Number);
+  const selectedDate = new Date(`${reservation.date}T00:00:00`);
+
+  if (Number.isNaN(selectedDate.getTime()) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    const error = new Error("Fecha u hora invalida");
+    error.status = 400;
+    throw error;
+  }
+
+  return reservation;
+}
+
+async function getNextReservationCustomerNumber(client, date) {
+  const compactDate = date.replace(/-/g, "");
+
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`reservations:${date}`]);
+
+  const result = await client.query(
+    `SELECT customer_number
+     FROM reservations
+     WHERE customer_number LIKE $1
+     ORDER BY customer_number DESC
+     LIMIT 1`,
+    [`CL-${compactDate}-%`]
+  );
+  const lastNumber = result.rows[0]?.customer_number || "";
+  const match = lastNumber.match(/-(\d+)$/);
+  const nextSequence = match ? Number(match[1]) + 1 : 1;
+
+  return `CL-${compactDate}-${String(nextSequence).padStart(3, "0")}`;
+}
+
+app.post("/api/reservations", async (req, res, next) => {
+  const client = await pool.connect();
+
+  try {
+    const reservation = sanitizeReservation(req.body);
+
+    await client.query("BEGIN");
+
+    const customerNumber = await getNextReservationCustomerNumber(client, reservation.date);
+    const result = await client.query(
+      `INSERT INTO reservations (customer_number, name, email, phone, reservation_date, reservation_time, celebration_type, message)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        customerNumber,
+        reservation.name,
+        reservation.email,
+        reservation.phone,
+        reservation.date,
+        reservation.time,
+        reservation.celebrationType,
+        reservation.message
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    res.status(201).json({ reservation: reservationDto(result.rows[0]) });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    next(error);
+  } finally {
+    client.release();
+  }
+});
+
+app.get("/api/reservations", authRequired, async (req, res, next) => {
+  try {
+    const result = await query(
+      `SELECT *
+       FROM reservations
+       ORDER BY reservation_date DESC, reservation_time DESC, created_at DESC
+       LIMIT 120`
+    );
+
+    res.json({ reservations: result.rows.map(reservationDto) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/api/reservations/:id/status", authRequired, adminRequired, async (req, res, next) => {
+  try {
+    const status = String(req.body.status || "").trim();
+
+    if (!["pending", "confirmed", "cancelled"].includes(status)) {
+      res.status(400).json({ error: "Estado de reservacion invalido" });
+      return;
+    }
+
+    const result = await query(
+      `UPDATE reservations
+       SET status = $1, updated_at = now()
+       WHERE id = $2
+       RETURNING *`,
+      [status, req.params.id]
+    );
+
+    if (!result.rows[0]) {
+      res.status(404).json({ error: "Reservacion no encontrada" });
+      return;
+    }
+
+    res.json({ reservation: reservationDto(result.rows[0]) });
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.post("/api/auth/login", async (req, res, next) => {
   try {
