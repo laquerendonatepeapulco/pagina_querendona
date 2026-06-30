@@ -13,6 +13,26 @@ function getSiteLocale(){
     }[language] || 'es-MX';
 }
 
+function markCurrentNavigation(){
+    const currentPage =
+        window.location.pathname.split('/').pop() || 'index.html';
+
+    document.querySelectorAll('.navbar nav a[href]').forEach((link) => {
+        const linkPage = link.getAttribute('href')?.split('/').pop();
+        const isCurrent = linkPage === currentPage;
+
+        link.classList.toggle('active-nav', isCurrent);
+
+        if(isCurrent){
+            link.setAttribute('aria-current', 'page');
+        }else{
+            link.removeAttribute('aria-current');
+        }
+    });
+}
+
+markCurrentNavigation();
+
 document.addEventListener('laquerendona:languagechange', () => {
     document.querySelectorAll('.sound-btn').forEach((button) => {
         const container = button.closest(
