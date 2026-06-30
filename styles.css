@@ -4771,3 +4771,63 @@ nav a:hover {
         bottom: 8px;
     }
 }
+
+/* ========================= */
+/* MOBILE NAVBAR LAYOUT */
+/* ========================= */
+
+@media(max-width:768px){
+    .navbar {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 14px !important;
+        min-height: 82px;
+        padding: 14px 18px !important;
+    }
+
+    .navbar .brand {
+        flex: 0 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        min-width: 0;
+    }
+
+    .navbar .brand a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .navbar .brand img {
+        height: clamp(46px, 13vw, 58px) !important;
+        max-width: min(56vw, 210px) !important;
+        object-fit: contain;
+    }
+
+    .navbar .menu-toggle {
+        flex: 0 0 50px;
+        width: 50px !important;
+        height: 50px !important;
+        margin-left: auto;
+    }
+}
+
+@media(max-width:480px){
+    .navbar {
+        min-height: 76px;
+        padding: 12px 14px !important;
+    }
+
+    .navbar .brand img {
+        max-width: min(52vw, 180px) !important;
+    }
+
+    .navbar .menu-toggle {
+        flex-basis: 46px;
+        width: 46px !important;
+        height: 46px !important;
+    }
+}
