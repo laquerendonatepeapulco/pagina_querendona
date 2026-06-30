@@ -294,7 +294,16 @@ function getInitPromise() {
   return initPromise;
 }
 
+function isReservationCreateRequest(req) {
+  return req.method === "POST" && req.originalUrl.split("?")[0] === "/api/reservations";
+}
+
 app.use("/api", async (req, res, next) => {
+  if (!process.env.DATABASE_URL && isReservationCreateRequest(req)) {
+    next();
+    return;
+  }
+
   try {
     await getInitPromise();
     next();
@@ -399,12 +408,48 @@ async function getNextReservationCustomerNumber(client, date) {
   return `CL-${compactDate}-${String(nextSequence).padStart(3, "0")}`;
 }
 
+function createWhatsAppReservation(reservation) {
+  const now = new Date();
+  const compactDate = reservation.date.replace(/-/g, "");
+  const timePart = [
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0"),
+    String(now.getSeconds()).padStart(2, "0")
+  ].join("");
+  const randomPart = String(crypto.randomInt(100, 1000));
+
+  return {
+    id: null,
+    customerNumber: `CL-${compactDate}-${timePart}${randomPart}`,
+    name: reservation.name,
+    email: reservation.email,
+    phone: reservation.phone,
+    date: reservation.date,
+    time: reservation.time,
+    celebrationType: reservation.celebrationType,
+    message: reservation.message,
+    status: "pending",
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+    stored: false
+  };
+}
+
 app.post("/api/reservations", async (req, res, next) => {
-  const client = await pool.connect();
+  let client;
 
   try {
     const reservation = sanitizeReservation(req.body);
 
+    if (!process.env.DATABASE_URL) {
+      res.status(202).json({
+        mode: "whatsapp-only",
+        reservation: createWhatsAppReservation(reservation)
+      });
+      return;
+    }
+
+    client = await pool.connect();
     await client.query("BEGIN");
 
     const customerNumber = await getNextReservationCustomerNumber(client, reservation.date);
@@ -428,10 +473,14 @@ app.post("/api/reservations", async (req, res, next) => {
 
     res.status(201).json({ reservation: reservationDto(result.rows[0]) });
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (client) {
+      await client.query("ROLLBACK").catch(() => {});
+    }
     next(error);
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 });
 

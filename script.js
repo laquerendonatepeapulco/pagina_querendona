@@ -239,9 +239,13 @@ if(reservationForm){
             };
 
             openReservationWhatsApp(reservationForWhatsApp);
-            showToast(translateSiteText('Reservación registrada. Te llevamos a WhatsApp para confirmar.'));
+            showToast(translateSiteText(payload.mode === 'whatsapp-only'
+                ? 'Te llevamos a WhatsApp para confirmar tu reservación.'
+                : 'Reservación registrada. Te llevamos a WhatsApp para confirmar.'));
 
-            confirmReservationCustomerNumber(customerNumber);
+            if(payload.mode !== 'whatsapp-only'){
+                confirmReservationCustomerNumber(customerNumber);
+            }
             reservationForm.reset();
 
             if(reservationDate){
