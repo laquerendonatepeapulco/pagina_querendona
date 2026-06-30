@@ -4831,3 +4831,50 @@ nav a:hover {
         height: 46px !important;
     }
 }
+
+/* ========================= */
+/* MOBILE ABOUT VIDEO */
+/* ========================= */
+
+@media(max-width:768px){
+    .about-hero .about-hero-image {
+        width: 100% !important;
+        max-width: 100%;
+        min-width: 0;
+        justify-self: stretch;
+    }
+
+    .about-hero .hero-video-container {
+        width: 100% !important;
+        max-width: 100%;
+        height: clamp(200px, 56vw, 280px) !important;
+        aspect-ratio: 16 / 9;
+        border-radius: 22px !important;
+        margin-top: 4px;
+    }
+
+    .about-hero .hero-video {
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .about-hero .sound-btn {
+        width: 48px;
+        height: 48px;
+        right: 14px;
+        bottom: 14px;
+    }
+}
+
+@media(max-width:480px){
+    .about-hero .hero-video-container {
+        height: clamp(190px, 54vw, 240px) !important;
+    }
+
+    .about-hero .sound-btn {
+        width: 44px;
+        height: 44px;
+        right: 12px;
+        bottom: 12px;
+    }
+}
