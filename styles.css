@@ -4837,6 +4837,11 @@ nav a:hover {
 /* ========================= */
 
 @media(max-width:768px){
+    .about-hero {
+        padding-bottom: 8px !important;
+        gap: 22px !important;
+    }
+
     .about-hero .about-hero-image {
         width: 100% !important;
         max-width: 100%;
@@ -4847,8 +4852,8 @@ nav a:hover {
     .about-hero .hero-video-container {
         width: 100% !important;
         max-width: 100%;
-        height: clamp(200px, 56vw, 280px) !important;
-        aspect-ratio: 16 / 9;
+        height: clamp(360px, 105vw, 500px) !important;
+        aspect-ratio: auto;
         border-radius: 22px !important;
         margin-top: 4px;
     }
@@ -4864,11 +4869,16 @@ nav a:hover {
         right: 14px;
         bottom: 14px;
     }
+
+    .history-section {
+        margin-top: 12px !important;
+        padding-top: 18px !important;
+    }
 }
 
 @media(max-width:480px){
     .about-hero .hero-video-container {
-        height: clamp(190px, 54vw, 240px) !important;
+        height: clamp(360px, 108vw, 440px) !important;
     }
 
     .about-hero .sound-btn {
@@ -4876,5 +4886,10 @@ nav a:hover {
         height: 44px;
         right: 12px;
         bottom: 12px;
+    }
+
+    .history-section {
+        margin-top: 8px !important;
+        padding-top: 14px !important;
     }
 }
