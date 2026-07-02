@@ -4900,3 +4900,47 @@ nav a:hover {
         padding-top: 14px !important;
     }
 }
+
+/* ========================= */
+/* CHEF PHOTO SIZE */
+/* ========================= */
+
+.chefs-grid .chef-card {
+    grid-template-columns: minmax(460px, 500px) 1fr;
+    gap: 64px;
+    padding: 48px;
+}
+
+.chefs-grid .chef-card .chef-image {
+    min-height: 500px;
+}
+
+@media(max-width:992px){
+    .chefs-grid .chef-card {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding: 32px;
+    }
+
+    .chefs-grid .chef-card .chef-image {
+        min-height: 430px;
+    }
+}
+
+@media(max-width:768px){
+    .chefs-grid .chef-card {
+        padding: 22px;
+    }
+
+    .chefs-grid .chef-card .chef-image {
+        height: 380px;
+        min-height: 380px;
+    }
+}
+
+@media(max-width:480px){
+    .chefs-grid .chef-card .chef-image {
+        height: 340px;
+        min-height: 340px;
+    }
+}
