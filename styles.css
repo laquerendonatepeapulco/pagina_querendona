@@ -4918,6 +4918,14 @@ nav a:hover {
     padding: 48px;
 }
 
+.team-section-header {
+    margin-top: 10px;
+}
+
+.waiters-grid {
+    margin-bottom: 120px;
+}
+
 .chefs-grid .chef-card .chef-image {
     width: min(430px, 100%);
     height: 500px;
