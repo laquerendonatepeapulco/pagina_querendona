@@ -2700,6 +2700,13 @@ body{
     line-height:1.8;
 }
 
+.section-header p {
+    color: rgba(255, 248, 236, 0.82);
+    font-size: 1.18rem;
+    font-weight: 500;
+    max-width: 780px;
+}
+
 /* ========================= */
 /* CHEFS GRID */
 /* ========================= */
