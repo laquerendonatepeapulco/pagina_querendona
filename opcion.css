@@ -32,14 +32,14 @@
     display: block;
     background: var(--card);
     border-radius: 20px;
-    padding: 40px;
+    padding: 30px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     text-align: center;
     cursor: pointer;
     color: inherit;
     text-decoration: none;
     transition: all 0.3s ease;
-    max-width: 300px;
+    max-width: 350px;
 }
 
 .restaurant-option:hover {
@@ -49,7 +49,7 @@
 
 .restaurant-option img {
     width: 100%;
-    height: 250px;
+    height: 300px;
     object-fit: cover;
     border-radius: 15px;
     margin-bottom: 25px;
@@ -112,7 +112,7 @@
     }
 
     .restaurant-option img {
-        height: clamp(190px, 58vw, 260px);
+        height: clamp(230px, 64vw, 320px);
     }
 
     .btn-select {
