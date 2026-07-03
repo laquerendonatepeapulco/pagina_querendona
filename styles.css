@@ -4628,10 +4628,6 @@ nav a:hover {
 
 .site-footer {
     margin-top: clamp(64px, 8vw, 110px);
-    width: fit-content;
-    max-width: 100%;
-    margin-left: auto;
-    margin-right: auto;
     padding: 30px;
     text-align: left;
     color: var(--muted-text);
@@ -4646,13 +4642,22 @@ nav a:hover {
 .selector-footer {
     margin-top: 28px;
     margin-bottom: 20px;
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .footer-main {
     display: grid;
+    grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(150px, 1fr));
+    gap: 28px;
+    align-items: start;
+}
+
+.selector-footer .footer-main {
     grid-template-columns: minmax(260px, 300px) minmax(190px, 220px) max-content;
     gap: clamp(28px, 4vw, 52px);
-    align-items: start;
     justify-content: start;
 }
 
@@ -4693,7 +4698,7 @@ nav a:hover {
     gap: 10px;
 }
 
-.footer-column:last-child {
+.selector-footer .footer-column:last-child {
     width: max-content;
     max-width: 100%;
 }
@@ -4734,7 +4739,7 @@ nav a:hover {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .footer-column:last-child {
+    .selector-footer .footer-column:last-child {
         width: auto;
     }
 }
