@@ -130,12 +130,18 @@
 }
 
 .selector-social-section .social-icon-instagram {
-    background:
-        radial-gradient(circle at 30% 105%, #fdf497 0 22%, #fdf497 0 24%, #fd5949 45%, #d6249f 68%, #285AEB 100%);
+    background: transparent;
+    border-radius: 12px;
 }
 
 .selector-social-section .social-icon-whatsapp {
     background: #25d366;
+}
+
+.selector-social-section .social-icon-instagram svg {
+    width: 34px;
+    height: 34px;
+    fill: none;
 }
 
 @media (max-width: 768px) {

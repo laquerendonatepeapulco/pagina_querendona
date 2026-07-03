@@ -1404,12 +1404,18 @@ width: 100%;
 }
 
 .social-card .social-icon-instagram {
-    background:
-        radial-gradient(circle at 30% 105%, #fdf497 0 22%, #fdf497 0 24%, #fd5949 45%, #d6249f 68%, #285AEB 100%);
+    background: transparent;
+    border-radius: 12px;
 }
 
 .social-card .social-icon-whatsapp {
     background: #25d366;
+}
+
+.social-card .social-icon-instagram svg {
+    width: 36px;
+    height: 36px;
+    fill: none;
 }
 
 .social-card:hover {
