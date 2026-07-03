@@ -106,6 +106,38 @@
     border-radius: 20px;
 }
 
+.selector-social-section .social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+.selector-social-section .social-icon svg {
+    display: block;
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
+}
+
+.selector-social-section .social-icon-facebook {
+    background: #1877f2;
+}
+
+.selector-social-section .social-icon-instagram {
+    background:
+        radial-gradient(circle at 30% 105%, #fdf497 0 22%, #fdf497 0 24%, #fd5949 45%, #d6249f 68%, #285AEB 100%);
+}
+
+.selector-social-section .social-icon-whatsapp {
+    background: #25d366;
+}
+
 @media (max-width: 768px) {
     .selector-logo-header {
         padding: 16px 0 0;
@@ -157,5 +189,10 @@
     .selector-social-section .social-card {
         min-height: 58px;
         padding: 16px 18px;
+    }
+
+    .selector-social-section .social-icon {
+        width: 32px;
+        height: 32px;
     }
 }
