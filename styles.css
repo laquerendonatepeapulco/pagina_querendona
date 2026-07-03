@@ -4628,6 +4628,10 @@ nav a:hover {
 
 .site-footer {
     margin-top: clamp(64px, 8vw, 110px);
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
     padding: 30px;
     text-align: left;
     color: var(--muted-text);
@@ -4646,9 +4650,10 @@ nav a:hover {
 
 .footer-main {
     display: grid;
-    grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(150px, 1fr));
-    gap: 28px;
+    grid-template-columns: minmax(260px, 300px) minmax(190px, 220px) max-content;
+    gap: clamp(28px, 4vw, 52px);
     align-items: start;
+    justify-content: start;
 }
 
 .footer-brand {
@@ -4688,6 +4693,11 @@ nav a:hover {
     gap: 10px;
 }
 
+.footer-column:last-child {
+    width: max-content;
+    max-width: 100%;
+}
+
 .footer-column h4 {
     margin: 0 0 4px;
     color: #fff7ea;
@@ -4723,11 +4733,16 @@ nav a:hover {
     .footer-main {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .footer-column:last-child {
+        width: auto;
+    }
 }
 
 @media(max-width:620px){
     .site-footer {
         margin-top: 46px;
+        width: 100%;
         padding: 22px;
         border-radius: 22px;
     }
