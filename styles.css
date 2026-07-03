@@ -4742,7 +4742,7 @@ nav a:hover {
 }
 
 .selector-footer .footer-main {
-    grid-template-columns: minmax(260px, 300px) minmax(190px, 220px) max-content;
+    grid-template-columns: minmax(260px, 300px) minmax(280px, 360px) max-content;
     gap: clamp(28px, 4vw, 52px);
     justify-content: start;
 }
@@ -4810,6 +4810,39 @@ nav a:hover {
     transform: translateX(3px);
 }
 
+.footer-branch-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footer-column .footer-branch-button {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 12px;
+    color: #fff7ea;
+    background: rgba(242, 232, 212, 0.08);
+    border: 1px solid rgba(255, 210, 63, 0.18);
+    border-radius: 14px;
+}
+
+.footer-column .footer-branch-button:hover {
+    color: #fff7ea;
+    background: rgba(255, 210, 63, 0.12);
+}
+
+.footer-branch-button strong {
+    font-size: 0.92rem;
+    color: var(--accent2);
+}
+
+.footer-branch-button span {
+    color: var(--muted-text);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
 .footer-bottom {
     display: flex;
     justify-content: space-between;
@@ -4822,6 +4855,10 @@ nav a:hover {
 
 @media(max-width:900px){
     .footer-main {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .selector-footer .footer-main {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -4841,6 +4878,10 @@ nav a:hover {
     .footer-main {
         grid-template-columns: 1fr;
         gap: 24px;
+    }
+
+    .selector-footer .footer-main {
+        grid-template-columns: 1fr;
     }
 
     .footer-bottom {
