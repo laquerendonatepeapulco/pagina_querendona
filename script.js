@@ -18,7 +18,7 @@ function markCurrentNavigation(){
         window.location.pathname.split('/').pop() || 'index.html';
 
     document.querySelectorAll('.navbar nav a[href]').forEach((link) => {
-        const linkPage = link.getAttribute('href')?.split('/').pop();
+        const linkPage = link.getAttribute('href')?.split('/').pop()?.split('?')[0];
         const isCurrent = linkPage === currentPage;
 
         link.classList.toggle('active-nav', isCurrent);
@@ -32,6 +32,32 @@ function markCurrentNavigation(){
 }
 
 markCurrentNavigation();
+
+function configureBranchLocation(){
+    const branch = new URLSearchParams(window.location.search).get('sucursal');
+
+    if(branch !== 'sahagun'){
+        return;
+    }
+
+    const sahagunMap =
+        'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15017.433823969914!2d-98.56828754751837!3d19.782393549327466!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1b7fd291b7705%3A0xddb28d00b120566e!2sLa%20Querendona!5e0!3m2!1ses-419!2smx!4v1783104398718!5m2!1ses-419!2smx';
+    const locationMap = document.getElementById('locationMap');
+    const locationLink = document.getElementById('locationLink');
+
+    if(locationMap){
+        locationMap.src = sahagunMap;
+        locationMap.referrerPolicy = 'strict-origin-when-cross-origin';
+    }
+
+    if(locationLink){
+        locationLink.href = 'https://www.google.com/maps/search/?api=1&query=La%20Querendona%20Ciudad%20Sahag%C3%BAn%20Hidalgo';
+        locationLink.textContent = ` ${translateSiteText('La Querendona, Ciudad Sahagún, Hidalgo.')}`;
+    }
+}
+
+configureBranchLocation();
+document.addEventListener('laquerendona:languagechange', configureBranchLocation);
 
 document.addEventListener('laquerendona:languagechange', () => {
     document.querySelectorAll('.sound-btn').forEach((button) => {
