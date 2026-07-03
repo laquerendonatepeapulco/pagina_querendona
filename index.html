@@ -18,19 +18,19 @@
     </div>
 
     <div class="selector-container">
-        <div class="restaurant-option" onclick="irA('tepeapulco.html')">
+        <a class="restaurant-option" href="tepeapulco.html">
             <img src="img/comida/eleccion.jpg" alt="La Querendona Tepeapulco" >
             <h3>La Querendona Tepeapulco</h3>
             <p>Ubicación: Tepeapulco</p>
-            <button class="btn-select">Seleccionar</button>
-        </div>
+            <span class="btn-select">Seleccionar</span>
+        </a>
 
-        <div class="restaurant-option" onclick="irA('sahagun.html')">
+        <a class="restaurant-option" href="sahagun.html">
             <img src="img/logo2.png" alt="La Querendona Sahagún">
             <h3>La Querendona Sahagún</h3>
             <p>Ubicación: Sahagún</p>
-            <button class="btn-select">Seleccionar</button>
-        </div>
+            <span class="btn-select">Seleccionar</span>
+        </a>
     </div>
 
     <div class="page">
@@ -73,10 +73,5 @@
     </div>
 
     <script src="translations.js"></script>
-    <script>
-        function irA(url) {
-            window.location.href = url;
-        }
-    </script>
 </body>
 </html>

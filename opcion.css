@@ -29,12 +29,15 @@
 }
 
 .restaurant-option {
+    display: block;
     background: var(--card);
     border-radius: 20px;
     padding: 40px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     text-align: center;
     cursor: pointer;
+    color: inherit;
+    text-decoration: none;
     transition: all 0.3s ease;
     max-width: 300px;
 }
