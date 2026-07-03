@@ -83,6 +83,29 @@
     background: #a15a43;
 }
 
+.selector-social-section {
+    width: min(820px, calc(100% - 48px));
+    margin: 28px auto 0;
+    text-align: center;
+}
+
+.selector-social-section h2 {
+    margin: 0 0 18px;
+    color: var(--bone, #f3ead8);
+    font-size: clamp(1.35rem, 2.4vw, 2rem);
+    font-weight: 700;
+}
+
+.selector-social-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.selector-social-section .social-card {
+    min-height: 74px;
+    padding: 20px 24px;
+    border-radius: 20px;
+}
+
 @media (max-width: 768px) {
     .selector-logo-header {
         padding: 16px 0 0;
@@ -118,5 +141,21 @@
     .btn-select {
         width: 100%;
         min-height: 46px;
+    }
+
+    .selector-social-section {
+        width: 100%;
+        margin-top: 10px;
+        padding: 0 16px 8px;
+    }
+
+    .selector-social-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .selector-social-section .social-card {
+        min-height: 58px;
+        padding: 16px 18px;
     }
 }
