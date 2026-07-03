@@ -5048,9 +5048,16 @@ nav a:hover {
     padding: 28px 0 108px;
 }
 
+.sahagun-intro .mini-tag {
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 18px;
+}
+
 .sahagun-intro-text h2,
 .sahagun-gallery .section-header h2,
 .sahagun-cta h2 {
+    margin-top: 0;
     color: #fff8ec;
     font-size: clamp(2.35rem, 4vw, 4.6rem);
     line-height: 1.06;
@@ -5066,9 +5073,9 @@ nav a:hover {
 
 .sahagun-intro-grid {
     display: grid;
-    grid-template-columns: .78fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
-    min-height: 420px;
+    align-items: stretch;
 }
 
 .sahagun-intro-grid img,
@@ -5079,8 +5086,13 @@ nav a:hover {
 }
 
 .sahagun-intro-grid img:first-child {
-    align-self: end;
-    height: 78%;
+    align-self: stretch;
+}
+
+.sahagun-intro-grid img {
+    aspect-ratio: 1 / 1.08;
+    height: auto;
+    object-position: center;
 }
 
 .sahagun-highlights {
@@ -5241,6 +5253,7 @@ nav a:hover {
     .sahagun-intro-grid img,
     .sahagun-intro-grid img:first-child {
         height: 310px;
+        aspect-ratio: auto;
     }
 
     .sahagun-feature-card {
