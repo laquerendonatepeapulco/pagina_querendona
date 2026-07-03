@@ -33,10 +33,18 @@ function markCurrentNavigation(){
 
 markCurrentNavigation();
 
-function configureBranchLocation(){
+function getCurrentPageName(){
+    return window.location.pathname.split('/').pop() || 'index.html';
+}
+
+function isSahagunContext(){
     const branch = new URLSearchParams(window.location.search).get('sucursal');
 
-    if(branch !== 'sahagun'){
+    return branch === 'sahagun' || getCurrentPageName() === 'sahagun.html';
+}
+
+function configureBranchLocation(){
+    if(!isSahagunContext()){
         return;
     }
 
@@ -46,6 +54,21 @@ function configureBranchLocation(){
     const locationMap = document.getElementById('locationMap');
     const locationLink = document.getElementById('locationLink');
     const footerLocationText = document.getElementById('footerLocationText');
+    const footerBrandText = document.querySelector('.footer-brand p');
+    const footerOfficialText = document.querySelector('.footer-bottom p:last-child');
+    const sahagunLinks = {
+        'tepeapulco.html': 'sahagun.html',
+        'menu.html': 'menu.html?sucursal=sahagun',
+        'nosotros.html': 'nosotros.html?sucursal=sahagun',
+        'chefs.html': 'chefs.html?sucursal=sahagun',
+        'contacto.html': 'contacto.html?sucursal=sahagun'
+    };
+
+    Object.entries(sahagunLinks).forEach(([originalHref, sahagunHref]) => {
+        document.querySelectorAll(`a[href="${originalHref}"]`).forEach((link) => {
+            link.setAttribute('href', sahagunHref);
+        });
+    });
 
     if(locationMap){
         locationMap.src = sahagunMap;
@@ -60,6 +83,16 @@ function configureBranchLocation(){
     if(footerLocationText){
         footerLocationText.textContent = translateSiteText(sahagunAddress);
     }
+
+    if(footerBrandText){
+        footerBrandText.textContent = translateSiteText('Sabor, tradición y familia en Sahagún.');
+    }
+
+    if(footerOfficialText){
+        footerOfficialText.textContent = translateSiteText('Sitio oficial de La Querendona Sahagún.');
+    }
+
+    markCurrentNavigation();
 }
 
 configureBranchLocation();
