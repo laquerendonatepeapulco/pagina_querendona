@@ -40,10 +40,12 @@ function configureBranchLocation(){
         return;
     }
 
+    const sahagunAddress = 'Carr. Pachuca - Cd. Sahagún Manzana #1-Lote 10, Vicente Guerrero, 43998 Cd Sahagún, Hgo.';
     const sahagunMap =
         'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15017.433823969914!2d-98.56828754751837!3d19.782393549327466!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1b7fd291b7705%3A0xddb28d00b120566e!2sLa%20Querendona!5e0!3m2!1ses-419!2smx!4v1783104398718!5m2!1ses-419!2smx';
     const locationMap = document.getElementById('locationMap');
     const locationLink = document.getElementById('locationLink');
+    const footerLocationText = document.getElementById('footerLocationText');
 
     if(locationMap){
         locationMap.src = sahagunMap;
@@ -51,8 +53,12 @@ function configureBranchLocation(){
     }
 
     if(locationLink){
-        locationLink.href = 'https://www.google.com/maps/search/?api=1&query=La%20Querendona%20Ciudad%20Sahag%C3%BAn%20Hidalgo';
-        locationLink.textContent = ` ${translateSiteText('La Querendona, Ciudad Sahagún, Hidalgo.')}`;
+        locationLink.href = 'https://www.google.com/maps/search/?api=1&query=Carr.%20Pachuca%20-%20Cd.%20Sahag%C3%BAn%20Manzana%20%231-Lote%2010%2C%20Vicente%20Guerrero%2C%2043998%20Cd%20Sahag%C3%BAn%2C%20Hgo.';
+        locationLink.textContent = ` ${translateSiteText(sahagunAddress)}`;
+    }
+
+    if(footerLocationText){
+        footerLocationText.textContent = translateSiteText(sahagunAddress);
     }
 }
 
