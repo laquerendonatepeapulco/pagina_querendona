@@ -1380,6 +1380,38 @@ width: 100%;
     font-size: 1.5rem;
 }
 
+.social-card .social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+.social-card .social-icon svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.social-card .social-icon-facebook {
+    background: #1877f2;
+}
+
+.social-card .social-icon-instagram {
+    background:
+        radial-gradient(circle at 30% 105%, #fdf497 0 22%, #fdf497 0 24%, #fd5949 45%, #d6249f 68%, #285AEB 100%);
+}
+
+.social-card .social-icon-whatsapp {
+    background: #25d366;
+}
+
 .social-card:hover {
     transform: translateY(-8px);
 }
