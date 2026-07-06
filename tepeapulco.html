@@ -3,15 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Querendona | Men&uacute; Tepeapulco</title>
-    <meta http-equiv="refresh" content="0; url=menu.html">
-    <link rel="canonical" href="menu.html">
-    <script>
-        window.location.replace('menu.html');
-    </script>
+    <title>La Querendona | Inicio Tepeapulco</title>
+    <link rel="icon" href="img/logo_pestaña.png" type="image/jpeg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <p>Redirigiendo al men&uacute; de La Querendona Tepeapulco...</p>
-    <p><a href="menu.html">Abrir men&uacute;</a></p>
+    <div class="bg-decoration"></div>
+
+    <div class="page">
+        <header class="navbar">
+            <div class="brand">
+                <a href="index.html">
+                    <img src="img/logo1.png" alt="Logo de La Querendona">
+                </a>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle"> ☰ </button>
+
+            <nav id="mobileMenu">
+                <a href="tepeapulco.html">Inicio</a>
+                <a href="menu.html">Menú</a>
+                <a href="chefs.html">Nuestro Equipo</a>
+                <a href="contacto.html">Contacto/Reserva</a>
+
+                <select id="lang-select">
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                </select>
+            </nav>
+        </header>
+
+        <section class="experience-section home-experience-section tepeapulco-home-experience reveal">
+            <div class="hero-video-container">
+                <video
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    class="hero-video">
+                    <source src="img/videos/presentacion.mp4" type="video/mp4">
+                </video>
+
+                <div class="hero-video-overlay"></div>
+
+                <button class="sound-btn" aria-label="Activar sonido">
+                    🔇
+                </button>
+            </div>
+
+            <div class="experience-cards">
+                <div class="experience-card">
+                    <h3>Una experiencia única</h3>
+                    <p>
+                        En La Querendona buscamos ofrecer una experiencia cálida y auténtica,
+                        mezclando tradición mexicana con un ambiente moderno y acogedor.
+                    </p>
+                </div>
+
+                <div class="experience-card">
+                    <h3>Comida con tradición</h3>
+                    <p>
+                        Cada platillo está preparado con dedicación y sabores tradicionales
+                        para compartir momentos especiales con familia y amigos.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="site-footer">
+            <div class="footer-main">
+                <div class="footer-brand">
+                    <a href="tepeapulco.html" class="footer-logo">
+                        <img src="img/logo1.png" alt="La Querendona">
+                    </a>
+                    <p>Sabor, tradici&oacute;n y familia en Tepeapulco.</p>
+                </div>
+
+                <div class="footer-column">
+                    <h4>Enlaces r&aacute;pidos</h4>
+                    <a href="tepeapulco.html">Inicio</a>
+                    <a href="menu.html">Men&uacute;</a>
+                    <a href="chefs.html">Nuestro Equipo</a>
+                    <a href="contacto.html">Contacto/Reserva</a>
+                </div>
+
+                <div class="footer-column">
+                    <h4>Vis&iacute;tanos</h4>
+                    <p id="footerLocationText">Av. Ju&aacute;rez, Centro, Tepeapulco, Hgo.</p>
+                    <p>Lunes a Domingo &middot; 9:00 AM - 9:00 PM</p>
+                </div>
+
+                <div class="footer-column">
+                    <h4>Reservaciones</h4>
+                    <a href="https://wa.me/527713420990" target="_blank" rel="noopener">WhatsApp +52 771 342 0990</a>
+                    <a href="contacto.html">Contacto/Reserva</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 La Querendona. Todos los derechos reservados.</p>
+                <p>Sitio oficial de La Querendona Tepeapulco.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="translations.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
