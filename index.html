@@ -15,15 +15,34 @@
     <div class="bg-decoration"></div>
 
     <div class="page">
-        <header class="selector-logo-header">
-            <div class="selector-logo-card">
-                <img src="img/logo1.png" alt="Logo de La Querendona">
+        <header class="navbar selector-navbar">
+            <button class="menu-toggle selector-menu-toggle" id="menuToggle" aria-label="Abrir menú">☰</button>
+
+            <div class="brand selector-brand">
+                <a href="#inicio-index">
+                    <img src="img/logo1.png" alt="Logo de La Querendona">
+                </a>
             </div>
+
+            <nav id="mobileMenu">
+                <a href="#inicio-index">Inicio</a>
+                <a href="#sobre-nosotros-index">Historia</a>
+                <a href="#seleccionar-restaurante">Sucursales</a>
+                <a href="#seleccionar-restaurante" class="selector-contact-nav">Contacto/Reserva</a>
+
+                <select id="lang-select">
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                </select>
+            </nav>
+
+            <a class="selector-reserve-mobile" href="#seleccionar-restaurante">RESERVAR</a>
         </header>
     </div>
 
     <main class="page selector-story-page">
-        <section class="hero selector-intro-hero reveal">
+        <section class="hero selector-intro-hero reveal" id="inicio-index">
             <div class="hero-text">
                 <span class="tag">Restaurante tradicional en Hidalgo</span>
                 <p class="subtitle">BIENVENIDO A</p>
