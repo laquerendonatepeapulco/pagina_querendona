@@ -7,8 +7,13 @@
     <link rel="icon" href="img/logo_pestaña.png" type="image/png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="opcion.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="bg-decoration"></div>
+
     <div class="page">
         <header class="selector-logo-header">
             <div class="selector-logo-card">
@@ -17,21 +22,164 @@
         </header>
     </div>
 
-    <div class="selector-container">
-        <a class="restaurant-option" href="tepeapulco.html">
-            <img src="img/comida/eleccion.jpg" alt="La Querendona Tepeapulco" >
-            <h3>La Querendona Tepeapulco</h3>
-            <p>Ubicación: Tepeapulco</p>
-            <span class="btn-select">Seleccionar</span>
-        </a>
+    <main class="page selector-story-page">
+        <section class="hero selector-intro-hero reveal">
+            <div class="hero-text">
+                <span class="tag">Restaurante tradicional en Hidalgo</span>
+                <p class="subtitle">BIENVENIDO A</p>
+                <h1>La Querendona</h1>
+                <p class="description">
+                    Sabor, tradición y un ambiente familiar para disfrutar comida mexicana
+                    auténtica, hecha con cariño y servida como en casa.
+                </p>
 
-        <a class="restaurant-option" href="sahagun.html">
-            <img src="img/sahagun/interior.jpg" alt="Interior de La Querendona Sahagún">
-            <h3>La Querendona Sahagún</h3>
-            <p>Ubicación: Sahagún</p>
-            <span class="btn-select">Seleccionar</span>
-        </a>
-    </div>
+                <div class="hero-buttons">
+                    <a class="cta" href="#seleccionar-restaurante">Elegir sucursal</a>
+                    <a class="secondary-btn" href="#sobre-nosotros-index">Conocer historia</a>
+                </div>
+            </div>
+
+            <div class="hero-image floating">
+                <div class="hero-image-container">
+                    <img src="img/comida/restaurante.jpg" alt="Ambiente de La Querendona" class="hero-image">
+                    <div class="hero-overlay"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="about-hero selector-about-hero reveal" id="sobre-nosotros-index">
+            <div class="about-hero-text">
+                <span class="tag">Nuestra historia</span>
+
+                <h1>Tradición, sabor y familia</h1>
+
+                <p>
+                    En La Querendona compartimos la riqueza de la cocina tradicional mexicana
+                    con calidad, hospitalidad y sabor casero.
+                </p>
+            </div>
+
+            <div class="about-hero-image floating">
+                <div class="hero-video-container">
+                    <video
+                        autoplay
+                        muted
+                        loop
+                        playsinline
+                        class="hero-video">
+                        <source src="img/videos/presentacion2.mp4" type="video/mp4">
+                    </video>
+
+                    <div class="hero-video-overlay"></div>
+
+                    <button class="sound-btn" aria-label="Activar sonido">
+                        🔇
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="history-section reveal">
+            <div class="history-card">
+                <div class="history-image">
+                    <div class="history-image-container">
+                        <img src="img/comida/cantarito2.jpg" alt="Historia de La Querendona" class="history-img">
+                        <div class="history-overlay"></div>
+                    </div>
+                </div>
+
+                <div class="history-text">
+                    <span class="section-mini-title">NUESTRA ESENCIA</span>
+
+                    <h2>Un restaurante hecho con pasión mexicana</h2>
+
+                    <p>
+                        La Querendona fue fundada en 2021 bajo la inspiración del Sr. Horacio
+                        Molina Silva, con la visión de crear un espacio especializado en comida
+                        típica mexicana.
+                    </p>
+
+                    <p>
+                        Nuestra primera sucursal abrió en Ciudad Sahagún, Hidalgo, y posteriormente
+                        llegó la sucursal de Tepeapulco, conservando el estilo mexicano, el menú,
+                        la coctelería y el sazón casero que nos distingue.
+                    </p>
+
+                    <p>
+                        Hoy seguimos creciendo con el mismo propósito: ofrecer platillos inspirados
+                        en la gastronomía mexicana y una experiencia cálida, familiar y relajada.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="institution-section reveal">
+            <div class="institution-header">
+                <span class="section-mini-title">FILOSOFÍA INSTITUCIONAL</span>
+
+                <h2>Nuestra forma de servir</h2>
+
+                <p>
+                    Trabajamos con identidad, pasión y compromiso para preservar los sabores
+                    tradicionales de México y brindar a cada comensal una experiencia de calidad.
+                </p>
+            </div>
+
+            <div class="institution-grid">
+                <article class="institution-card">
+                    <span>MISIÓN</span>
+                    <h3>Resaltar la cocina tradicional mexicana</h3>
+                    <p>
+                        Somos un restaurante que busca ofrecer una experiencia culinaria que celebre
+                        la riqueza de la cocina tradicional mexicana, cuidando la técnica, el arte en
+                        la preparación y cada detalle del servicio.
+                    </p>
+                </article>
+
+                <article class="institution-card">
+                    <span>VISIÓN</span>
+                    <h3>Ser un referente gastronómico</h3>
+                    <p>
+                        Aspiramos a consolidarnos como un referente de la gastronomía tradicional
+                        mexicana, preservando sus sabores y tradiciones con autenticidad, calidad
+                        y confianza.
+                    </p>
+                </article>
+            </div>
+
+            <div class="institution-objective">
+                <span>OBJETIVO GENERAL</span>
+                <p>
+                    Fortalecer nuestra presencia en la región mediante un crecimiento estratégico,
+                    manteniendo la calidad de nuestros productos, el reconocimiento de marca y una
+                    experiencia que haga sentir a cada cliente cobijado por la esencia de México.
+                </p>
+            </div>
+        </section>
+
+        <section class="selector-restaurant-section reveal" id="seleccionar-restaurante">
+            <div class="selector-section-heading">
+                <span class="section-mini-title">ELIGE TU SUCURSAL</span>
+                <h2>¿Dónde quieres vivir la experiencia?</h2>
+            </div>
+
+            <div class="selector-container">
+                <a class="restaurant-option" href="tepeapulco.html">
+                    <img src="img/comida/eleccion.jpg" alt="La Querendona Tepeapulco" >
+                    <h3>La Querendona Tepeapulco</h3>
+                    <p>Ubicación: Tepeapulco</p>
+                    <span class="btn-select">Seleccionar</span>
+                </a>
+
+                <a class="restaurant-option" href="sahagun.html">
+                    <img src="img/sahagun/interior.jpg" alt="Interior de La Querendona Sahagún">
+                    <h3>La Querendona Sahagún</h3>
+                    <p>Ubicación: Sahagún</p>
+                    <span class="btn-select">Seleccionar</span>
+                </a>
+            </div>
+        </section>
+    </main>
 
     <section class="selector-social-section social-section">
         <h2>Síguenos</h2>
@@ -118,5 +266,6 @@
     </div>
 
     <script src="translations.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
