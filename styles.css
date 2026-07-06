@@ -671,6 +671,7 @@ display: flex;
 flex-direction: column;
 align-items: flex-start;
 max-width: 620px;
+min-width: 0;
 text-align: left;
 }
 .featured-label {
@@ -693,6 +694,7 @@ line-height: 1.16;
 margin: 0 0 16px;
 font-size: clamp(2.45rem, 5vw, 4.9rem);
 line-height: .98;
+overflow-wrap: anywhere;
 }
 .featured-copy p {
 max-width: 590px;
@@ -3386,6 +3388,10 @@ iframe {
     width: auto;
     display: block;
     background: white;
+}
+
+.menu-experience-section {
+    margin-top: 70px;
 }
 
 .about-experience-section {
