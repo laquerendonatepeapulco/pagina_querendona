@@ -17,6 +17,8 @@ const staticEntries = [
   "opcion.css",
   "script.js",
   "translations.js",
+  "robots.txt",
+  "sitemap.xml",
   "img",
   path.join("inventario", "index.html"),
   path.join("inventario", "login.html"),
