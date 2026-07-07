@@ -60,8 +60,7 @@ function configureBranchLocation(){
         'tepeapulco.html': 'sahagun.html',
         'menu.html': 'menu.html?sucursal=sahagun',
         'nosotros.html': 'nosotros.html?sucursal=sahagun',
-        'chefs.html': 'chefs.html?sucursal=sahagun',
-        'contacto.html': 'contacto.html?sucursal=sahagun'
+        'chefs.html': 'chefs.html?sucursal=sahagun'
     };
 
     Object.entries(sahagunLinks).forEach(([originalHref, sahagunHref]) => {
