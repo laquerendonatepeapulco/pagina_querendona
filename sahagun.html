@@ -20,6 +20,7 @@
     <meta name="twitter:image" content="https://www.laquerendonacg.com/img/sahagun/interior.jpg">
     <link rel="icon" href="img/logo_pestaña.png" type="image/jpeg">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="opcion.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -28,21 +29,21 @@
     <div class="bg-decoration"></div>
     <div class="page sahagun-page">
 
-        <header class="navbar">
-            <div class="brand">
+        <header class="navbar selector-navbar">
+            <button class="menu-toggle selector-menu-toggle" id="menuToggle" aria-label="Abrir menú">☰</button>
+
+            <div class="brand selector-brand">
                 <a href="index.html">
-                    <img src="img/logo1.png" alt="Logo de La Querendona">
+                    <img src="img/logo_la_querendona_transparente_contorno_recortado.png" alt="Logo de La Querendona">
                 </a>
             </div>
-
-            <button class="menu-toggle" id="menuToggle">☰</button>
 
             <nav id="mobileMenu">
                 <a href="sahagun.html">Inicio</a>
                 <a href="menu.html?sucursal=sahagun">Men&uacute;</a>
-                <a href="nosotros.html?sucursal=sahagun">Nosotros</a>
                 <a href="chefs.html?sucursal=sahagun">Nuestro Equipo</a>
-                <a href="contacto.html">Contacto/Reserva</a>
+                <a href="index.html#seleccionar-restaurante">Sucursales</a>
+                <a href="contacto.html" class="selector-contact-nav">Contacto/Reserva</a>
 
                 <select id="lang-select">
                     <option value="es">Espa&ntilde;ol</option>
@@ -50,6 +51,8 @@
                     <option value="fr">Fran&ccedil;ais</option>
                 </select>
             </nav>
+
+            <a class="selector-reserve-mobile" href="contacto.html">RESERVAR</a>
         </header>
 
         <section class="sahagun-hero reveal">
