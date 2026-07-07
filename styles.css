@@ -5423,3 +5423,258 @@ nav a:hover {
         border-radius: 24px;
     }
 }
+
+/* ========================= */
+/* TEPEAPULCO PRESENTATION */
+/* ========================= */
+
+.tepeapulco-page .tepe-showcase,
+.tepeapulco-page .tepe-photo-roll,
+.tepeapulco-page .tepe-detail-stack,
+.tepeapulco-page .tepe-reserve-band {
+    width: min(1180px, 100%);
+    margin-inline: auto;
+}
+
+.tepeapulco-page .tepe-showcase,
+.tepeapulco-page .tepe-photo-roll {
+    padding-bottom: clamp(76px, 8vw, 118px);
+}
+
+.tepeapulco-page .tepe-section-heading {
+    max-width: 780px;
+    margin-bottom: 34px;
+}
+
+.tepeapulco-page .tepe-section-heading h2,
+.tepeapulco-page .tepe-detail-copy h2,
+.tepeapulco-page .tepe-reserve-band h2 {
+    margin: 14px 0 16px;
+    color: #fff8ec;
+    font-size: clamp(2.25rem, 4.5vw, 4.4rem);
+    line-height: 1.05;
+}
+
+.tepeapulco-page .tepe-section-heading p,
+.tepeapulco-page .tepe-detail-copy p,
+.tepeapulco-page .tepe-reserve-band p {
+    color: rgba(255, 248, 236, 0.82);
+    font-size: 1.06rem;
+    line-height: 1.85;
+}
+
+.tepeapulco-page .tepe-highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.tepeapulco-page .tepe-highlight-card {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: #000;
+    text-decoration: none;
+    background-color: var(--bone);
+    border: 1px solid rgba(255, 210, 63, 0.42);
+    border-radius: 26px;
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.26);
+    transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+}
+
+.tepeapulco-page .tepe-highlight-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(255, 63, 157, 0.5);
+    box-shadow: 0 28px 58px rgba(0, 0, 0, 0.34);
+}
+
+.tepeapulco-page .tepe-highlight-card img {
+    width: 100%;
+    aspect-ratio: 1 / 0.88;
+    object-fit: cover;
+    display: block;
+}
+
+.tepeapulco-page .tepe-highlight-card div {
+    padding: 20px;
+}
+
+.tepeapulco-page .tepe-highlight-card span {
+    display: inline-flex;
+    margin-bottom: 10px;
+    color: #c62858;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.tepeapulco-page .tepe-highlight-card h3 {
+    margin: 0 0 10px;
+    color: #050505;
+    font-size: 1.08rem;
+    line-height: 1.2;
+}
+
+.tepeapulco-page .tepe-highlight-card p {
+    margin: 0;
+    color: var(--bone-muted);
+    font-size: 0.93rem;
+    line-height: 1.65;
+}
+
+.tepeapulco-page .tepe-roll-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(270px, 360px);
+    gap: 18px;
+    overflow-x: auto;
+    padding: 2px 2px 18px;
+    scroll-snap-type: x mandatory;
+    scrollbar-color: rgba(255, 63, 157, 0.7) rgba(255, 248, 236, 0.12);
+}
+
+.tepeapulco-page .tepe-roll-track figure {
+    margin: 0;
+    scroll-snap-align: start;
+    overflow: hidden;
+    background-color: var(--bone);
+    border: 1px solid rgba(255, 210, 63, 0.35);
+    border-radius: 26px;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.tepeapulco-page .tepe-roll-track img {
+    width: 100%;
+    height: 280px;
+    display: block;
+    object-fit: cover;
+}
+
+.tepeapulco-page .tepe-roll-track figcaption {
+    padding: 14px 18px 18px;
+    color: #050505;
+    font-weight: 700;
+}
+
+.tepeapulco-page .tepe-detail-stack {
+    display: grid;
+    gap: 34px;
+}
+
+.tepeapulco-page .tepe-detail-card {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: clamp(28px, 5vw, 58px);
+    align-items: center;
+    padding: clamp(28px, 5vw, 54px);
+    background-color: var(--bone);
+    border: 1px solid rgba(255, 210, 63, 0.36);
+    border-radius: 34px;
+    box-shadow: 0 26px 62px rgba(0, 0, 0, 0.3);
+    scroll-margin-top: 150px;
+}
+
+.tepeapulco-page .tepe-detail-card-reverse .tepe-detail-image {
+    order: 2;
+}
+
+.tepeapulco-page .tepe-detail-image {
+    overflow: hidden;
+    border-radius: 26px;
+    box-shadow: 0 22px 46px rgba(0, 0, 0, 0.28);
+}
+
+.tepeapulco-page .tepe-detail-image img {
+    width: 100%;
+    height: clamp(340px, 38vw, 500px);
+    display: block;
+    object-fit: cover;
+}
+
+.tepeapulco-page .tepe-detail-copy h2,
+.tepeapulco-page .tepe-reserve-band h2 {
+    color: #050505;
+}
+
+.tepeapulco-page .tepe-detail-copy p,
+.tepeapulco-page .tepe-reserve-band p {
+    color: var(--bone-muted);
+}
+
+.tepeapulco-page .tepe-detail-copy p + p {
+    margin-top: 14px;
+}
+
+.tepeapulco-page .tepe-reserve-band {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    margin-top: 38px;
+    margin-bottom: 24px;
+    padding: clamp(28px, 5vw, 48px);
+    background-color: var(--bone);
+    border: 1px solid rgba(255, 210, 63, 0.42);
+    border-radius: 30px;
+    box-shadow: 0 24px 58px rgba(0, 0, 0, 0.3);
+}
+
+.tepeapulco-page .tepe-reserve-band div {
+    max-width: 780px;
+}
+
+.tepeapulco-page .tepe-reserve-band .cta {
+    flex: 0 0 auto;
+}
+
+@media(max-width:1100px){
+    .tepeapulco-page .tepe-highlight-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media(max-width:820px){
+    .tepeapulco-page .tepe-highlight-grid,
+    .tepeapulco-page .tepe-detail-card {
+        grid-template-columns: 1fr;
+    }
+
+    .tepeapulco-page .tepe-detail-card-reverse .tepe-detail-image {
+        order: 0;
+    }
+
+    .tepeapulco-page .tepe-reserve-band {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media(max-width:620px){
+    .tepeapulco-page .tepe-showcase,
+    .tepeapulco-page .tepe-photo-roll {
+        padding-bottom: 66px;
+    }
+
+    .tepeapulco-page .tepe-highlight-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tepeapulco-page .tepe-highlight-card img {
+        aspect-ratio: 1.35 / 1;
+    }
+
+    .tepeapulco-page .tepe-roll-track {
+        grid-auto-columns: minmax(248px, 82vw);
+    }
+
+    .tepeapulco-page .tepe-roll-track img,
+    .tepeapulco-page .tepe-detail-image img {
+        height: 300px;
+    }
+
+    .tepeapulco-page .tepe-detail-card {
+        border-radius: 26px;
+    }
+}
