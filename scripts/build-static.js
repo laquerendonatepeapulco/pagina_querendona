@@ -17,6 +17,7 @@ const staticEntries = [
   "opcion.css",
   "script.js",
   "translations.js",
+  "googleea7d02d04b945bef.html",
   "robots.txt",
   "sitemap.xml",
   "img",
