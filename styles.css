@@ -3394,6 +3394,14 @@ iframe {
     margin-top: 70px;
 }
 
+.sahagun-home-experience {
+    margin-top: 70px;
+}
+
+.sahagun-home-media img {
+    object-position: center;
+}
+
 .about-experience-section {
     display: block;
 }
