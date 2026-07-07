@@ -23,6 +23,20 @@
     margin-top: 10px;
 }
 
+.index-navbar-shell {
+    position: sticky;
+    top: 0;
+    z-index: 1200;
+    padding-top: 10px;
+    padding-bottom: 0;
+}
+
+.index-navbar-shell .selector-navbar {
+    position: relative;
+    top: auto;
+    margin-top: 0;
+}
+
 .selector-navbar .selector-brand a {
     display: inline-flex;
     align-items: center;
