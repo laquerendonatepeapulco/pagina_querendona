@@ -94,7 +94,48 @@ function configureBranchLocation(){
     markCurrentNavigation();
 }
 
+function configureSahagunMenu(){
+    if(!isSahagunContext()){
+        return;
+    }
+
+    const gallery = document.querySelector('.menu-gallery');
+
+    if(!gallery){
+        return;
+    }
+
+    const menuImages = [
+        'img/menu-sahagun/pagina1.jpg',
+        'img/menu-sahagun/pagina2.jpg',
+        'img/menu-sahagun/pagina3.jpg',
+        'img/menu-sahagun/pagina4.jpg',
+        'img/menu-sahagun/pagina5.jpg',
+        'img/menu-sahagun/pagina6.jpg',
+        'img/menu-sahagun/pagina7.jpg'
+    ];
+
+    const fragment = document.createDocumentFragment();
+
+    menuImages.forEach((src, index) => {
+        const card = document.createElement('div');
+        const image = document.createElement('img');
+
+        card.className = 'menu-image-card';
+        image.src = src;
+        image.alt = `Menú Sahagún ${index + 1}`;
+        image.loading = 'lazy';
+        image.decoding = 'async';
+
+        card.appendChild(image);
+        fragment.appendChild(card);
+    });
+
+    gallery.replaceChildren(fragment);
+}
+
 configureBranchLocation();
+configureSahagunMenu();
 document.addEventListener('laquerendona:languagechange', configureBranchLocation);
 
 document.addEventListener('laquerendona:languagechange', () => {
