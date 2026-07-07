@@ -3394,14 +3394,6 @@ iframe {
     margin-top: 70px;
 }
 
-.sahagun-home-experience {
-    margin-top: 70px;
-}
-
-.sahagun-home-media img {
-    object-position: center;
-}
-
 .about-experience-section {
     display: block;
 }
@@ -5138,6 +5130,7 @@ nav a:hover {
     --sahagun-green: #20c95a;
 }
 
+.branch-hero,
 .sahagun-hero,
 .sahagun-intro,
 .sahagun-highlights,
@@ -5147,6 +5140,7 @@ nav a:hover {
     margin-inline: auto;
 }
 
+.branch-hero,
 .sahagun-hero {
     display: grid;
     grid-template-columns: minmax(0, 1.05fr) minmax(360px, .95fr);
@@ -5155,6 +5149,7 @@ nav a:hover {
     padding: 58px 0 92px;
 }
 
+.branch-hero-media,
 .sahagun-hero-media {
     min-height: 620px;
     border-radius: 34px;
@@ -5162,6 +5157,7 @@ nav a:hover {
     box-shadow: 0 28px 65px rgba(0, 0, 0, .34);
 }
 
+.branch-hero-media img,
 .sahagun-hero-media img,
 .sahagun-intro-grid img,
 .sahagun-feature-card img,
@@ -5172,6 +5168,7 @@ nav a:hover {
     object-fit: cover;
 }
 
+.branch-hero-content h1,
 .sahagun-hero-content h1 {
     margin: 14px 0 20px;
     color: #fff8ec;
@@ -5179,6 +5176,7 @@ nav a:hover {
     line-height: .98;
 }
 
+.branch-hero-content .description,
 .sahagun-hero-content .description {
     max-width: 620px;
     color: rgba(255, 248, 236, .84);
@@ -5344,16 +5342,19 @@ nav a:hover {
 }
 
 @media(max-width:992px){
+    .branch-hero,
     .sahagun-hero,
     .sahagun-intro {
         grid-template-columns: 1fr;
         gap: 34px;
     }
 
+    .branch-hero-content,
     .sahagun-hero-content {
         order: -1;
     }
 
+    .branch-hero-media,
     .sahagun-hero-media {
         min-height: 520px;
     }
@@ -5378,10 +5379,12 @@ nav a:hover {
 }
 
 @media(max-width:768px){
+    .branch-hero,
     .sahagun-hero {
         padding: 32px 0 70px;
     }
 
+    .branch-hero-media,
     .sahagun-hero-media {
         min-height: 420px;
         border-radius: 24px;
