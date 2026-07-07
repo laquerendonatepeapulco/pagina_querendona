@@ -5157,6 +5157,11 @@ nav a:hover {
     box-shadow: 0 28px 65px rgba(0, 0, 0, .34);
 }
 
+.tepeapulco-branch-hero .branch-hero-media {
+    aspect-ratio: 3016 / 2066;
+    min-height: 0;
+}
+
 .branch-hero-media img,
 .sahagun-hero-media img,
 .sahagun-intro-grid img,
