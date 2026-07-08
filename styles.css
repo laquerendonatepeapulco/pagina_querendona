@@ -5465,8 +5465,9 @@ nav a:hover {
 
 .tepeapulco-page .tepe-highlight-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
 }
 
 .tepeapulco-page .tepe-highlight-card {
@@ -5483,6 +5484,15 @@ nav a:hover {
     transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
 }
 
+.tepeapulco-page .tepe-highlight-card:nth-child(1),
+.tepeapulco-page .tepe-highlight-card:nth-child(2) {
+    grid-column: span 3;
+}
+
+.tepeapulco-page .tepe-highlight-card:nth-child(n+3) {
+    grid-column: span 2;
+}
+
 .tepeapulco-page .tepe-highlight-card:hover {
     transform: translateY(-8px);
     border-color: rgba(255, 63, 157, 0.5);
@@ -5491,13 +5501,21 @@ nav a:hover {
 
 .tepeapulco-page .tepe-highlight-card img {
     width: 100%;
-    aspect-ratio: 1 / 0.88;
+    height: 310px;
     object-fit: cover;
     display: block;
 }
 
+.tepeapulco-page .tepe-highlight-card:nth-child(1) img,
+.tepeapulco-page .tepe-highlight-card:nth-child(2) img {
+    height: 390px;
+}
+
 .tepeapulco-page .tepe-highlight-card div {
-    padding: 20px;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 22px;
 }
 
 .tepeapulco-page .tepe-highlight-card span {
@@ -5631,7 +5649,17 @@ nav a:hover {
 
 @media(max-width:1100px){
     .tepeapulco-page .tepe-highlight-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tepeapulco-page .tepe-highlight-card:nth-child(n) {
+        grid-column: auto;
+    }
+
+    .tepeapulco-page .tepe-highlight-card img,
+    .tepeapulco-page .tepe-highlight-card:nth-child(1) img,
+    .tepeapulco-page .tepe-highlight-card:nth-child(2) img {
+        height: 330px;
     }
 }
 
@@ -5661,8 +5689,10 @@ nav a:hover {
         grid-template-columns: 1fr;
     }
 
-    .tepeapulco-page .tepe-highlight-card img {
-        aspect-ratio: 1.35 / 1;
+    .tepeapulco-page .tepe-highlight-card img,
+    .tepeapulco-page .tepe-highlight-card:nth-child(1) img,
+    .tepeapulco-page .tepe-highlight-card:nth-child(2) img {
+        height: 300px;
     }
 
     .tepeapulco-page .tepe-roll-track {
