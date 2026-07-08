@@ -5604,6 +5604,32 @@ nav a:hover {
     margin-bottom: 34px;
 }
 
+.tepeapulco-page .tepe-showcase-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+    gap: clamp(28px, 5vw, 64px);
+    align-items: start;
+    max-width: none;
+    margin-bottom: clamp(30px, 4vw, 46px);
+}
+
+.tepeapulco-page .tepe-showcase-heading h2 {
+    max-width: 760px;
+    font-size: clamp(2.35rem, 3.8vw, 3.85rem);
+}
+
+.tepeapulco-page .tepe-heading-copy {
+    max-width: 520px;
+}
+
+.tepeapulco-page .tepe-heading-copy p {
+    margin: 0;
+}
+
+.tepeapulco-page .tepe-heading-copy p + p {
+    margin-top: 12px;
+}
+
 .tepeapulco-page .tepe-section-heading h2,
 .tepeapulco-page .tepe-detail-copy h2,
 .tepeapulco-page .tepe-reserve-band h2 {
@@ -5893,6 +5919,15 @@ nav a:hover {
 }
 
 @media(max-width:1100px){
+    .tepeapulco-page .tepe-showcase-heading {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .tepeapulco-page .tepe-heading-copy {
+        max-width: 780px;
+    }
+
     .tepeapulco-page .tepe-highlight-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -5937,6 +5972,23 @@ nav a:hover {
     .tepeapulco-page .tepe-showcase,
     .tepeapulco-page .tepe-photo-roll {
         padding-bottom: 66px;
+    }
+
+    .tepeapulco-page .tepe-showcase-heading {
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .tepeapulco-page .tepe-showcase-heading h2 {
+        font-size: clamp(2rem, 10vw, 2.8rem);
+        line-height: 1.08;
+    }
+
+    .tepeapulco-page .tepe-section-heading p,
+    .tepeapulco-page .tepe-detail-copy p,
+    .tepeapulco-page .tepe-reserve-band p {
+        font-size: 0.98rem;
+        line-height: 1.75;
     }
 
     .tepeapulco-page .tepe-highlight-grid {
