@@ -5630,6 +5630,71 @@ nav a:hover {
     margin-top: 12px;
 }
 
+.tepeapulco-page .tepe-services-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: clamp(24px, 4vw, 46px);
+    align-items: start;
+    margin: 0 0 clamp(28px, 4vw, 42px);
+    padding: clamp(24px, 4vw, 38px);
+    background: linear-gradient(135deg, rgba(255, 248, 236, 0.08), rgba(255, 63, 157, 0.055));
+    border: 1px solid rgba(255, 210, 63, 0.28);
+    border-radius: 30px;
+    box-shadow: 0 24px 54px rgba(0, 0, 0, 0.24);
+}
+
+.tepeapulco-page .tepe-services-title h2 {
+    margin: 14px 0 0;
+    color: #fff8ec;
+    font-size: clamp(2.05rem, 3.4vw, 3.45rem);
+    line-height: 1.02;
+}
+
+.tepeapulco-page .tepe-history-card {
+    padding: clamp(20px, 3vw, 28px);
+    background-color: rgba(255, 248, 236, 0.08);
+    border: 1px solid rgba(255, 248, 236, 0.12);
+    border-radius: 24px;
+}
+
+.tepeapulco-page .tepe-history-card h3 {
+    margin: 0 0 18px;
+    color: var(--yellow);
+    font-size: clamp(1.25rem, 2vw, 1.7rem);
+}
+
+.tepeapulco-page .tepe-history-card ol {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tepeapulco-page .tepe-history-card li {
+    position: relative;
+    padding-left: 22px;
+    color: rgba(255, 248, 236, 0.84);
+    font-size: 0.98rem;
+    line-height: 1.7;
+}
+
+.tepeapulco-page .tepe-history-card li::before {
+    content: "";
+    position: absolute;
+    top: 0.72em;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    background: #ff3f9d;
+    border-radius: 999px;
+    box-shadow: 0 0 0 4px rgba(255, 63, 157, 0.12);
+}
+
+.tepeapulco-page .tepe-history-card strong {
+    color: #fff8ec;
+}
+
 .tepeapulco-page .tepe-section-heading h2,
 .tepeapulco-page .tepe-detail-copy h2,
 .tepeapulco-page .tepe-reserve-band h2 {
@@ -5928,6 +5993,10 @@ nav a:hover {
         max-width: 780px;
     }
 
+    .tepeapulco-page .tepe-services-intro {
+        grid-template-columns: 1fr;
+    }
+
     .tepeapulco-page .tepe-highlight-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -5982,6 +6051,21 @@ nav a:hover {
     .tepeapulco-page .tepe-showcase-heading h2 {
         font-size: clamp(2rem, 10vw, 2.8rem);
         line-height: 1.08;
+    }
+
+    .tepeapulco-page .tepe-services-intro {
+        padding: 22px;
+        border-radius: 24px;
+    }
+
+    .tepeapulco-page .tepe-services-title h2 {
+        font-size: clamp(1.9rem, 9vw, 2.55rem);
+        line-height: 1.08;
+    }
+
+    .tepeapulco-page .tepe-history-card {
+        padding: 18px;
+        border-radius: 20px;
     }
 
     .tepeapulco-page .tepe-section-heading p,
