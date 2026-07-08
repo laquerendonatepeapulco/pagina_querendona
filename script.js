@@ -134,8 +134,124 @@ function configureSahagunMenu(){
     gallery.replaceChildren(fragment);
 }
 
+function initSahagunGalleryCarousel(){
+    document.querySelectorAll('[data-gallery-carousel]').forEach((carousel) => {
+        const track = carousel.querySelector('[data-gallery-track]');
+        const slides = track ? Array.from(track.querySelectorAll('.sahagun-gallery-slide')) : [];
+        const previousButton = carousel.querySelector('[data-gallery-prev]');
+        const nextButton = carousel.querySelector('[data-gallery-next]');
+        const dotsContainer = carousel.parentElement?.querySelector('[data-gallery-dots]');
+
+        if(!track || slides.length === 0){
+            return;
+        }
+
+        let activeIndex = 0;
+        let scrollFrame = null;
+
+        const dots = slides.map((slide, index) => {
+            const button = document.createElement('button');
+
+            button.type = 'button';
+            button.className = 'sahagun-gallery-dot';
+            button.setAttribute('aria-label', `Ver foto ${index + 1}`);
+
+            button.addEventListener('click', () => {
+                scrollToSlide(index);
+            });
+
+            return button;
+        });
+
+        if(dotsContainer){
+            dotsContainer.replaceChildren(...dots);
+        }
+
+        const getCenteredSlideIndex = () => {
+            const trackBox = track.getBoundingClientRect();
+            const trackCenter = trackBox.left + trackBox.width / 2;
+
+            return slides.reduce((closestIndex, slide, index) => {
+                const slideBox = slide.getBoundingClientRect();
+                const slideCenter = slideBox.left + slideBox.width / 2;
+                const currentDistance = Math.abs(slideCenter - trackCenter);
+                const closestBox = slides[closestIndex].getBoundingClientRect();
+                const closestCenter = closestBox.left + closestBox.width / 2;
+                const closestDistance = Math.abs(closestCenter - trackCenter);
+
+                return currentDistance < closestDistance ? index : closestIndex;
+            }, 0);
+        };
+
+        const updateCarouselState = () => {
+            activeIndex = getCenteredSlideIndex();
+
+            dots.forEach((dot, index) => {
+                const isActive = index === activeIndex;
+
+                dot.classList.toggle('is-active', isActive);
+                dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+            });
+
+            if(previousButton){
+                previousButton.disabled = activeIndex === 0;
+            }
+
+            if(nextButton){
+                nextButton.disabled = activeIndex === slides.length - 1;
+            }
+        };
+
+        function scrollToSlide(index){
+            const clampedIndex = Math.max(0, Math.min(index, slides.length - 1));
+            const slide = slides[clampedIndex];
+            const targetLeft =
+                slide.offsetLeft -
+                track.offsetLeft -
+                (track.clientWidth - slide.clientWidth) / 2;
+
+            track.scrollTo({
+                left: targetLeft,
+                behavior: 'smooth'
+            });
+        }
+
+        previousButton?.addEventListener('click', () => {
+            scrollToSlide(activeIndex - 1);
+        });
+
+        nextButton?.addEventListener('click', () => {
+            scrollToSlide(activeIndex + 1);
+        });
+
+        track.addEventListener('keydown', (event) => {
+            if(event.key === 'ArrowLeft'){
+                event.preventDefault();
+                scrollToSlide(activeIndex - 1);
+            }
+
+            if(event.key === 'ArrowRight'){
+                event.preventDefault();
+                scrollToSlide(activeIndex + 1);
+            }
+        });
+
+        track.addEventListener('scroll', () => {
+            if(scrollFrame){
+                window.cancelAnimationFrame(scrollFrame);
+            }
+
+            scrollFrame = window.requestAnimationFrame(updateCarouselState);
+        }, { passive: true });
+
+        window.addEventListener('resize', updateCarouselState);
+        updateCarouselState();
+    });
+}
+
 configureBranchLocation();
 configureSahagunMenu();
+initSahagunGalleryCarousel();
 document.addEventListener('laquerendona:languagechange', configureBranchLocation);
 
 document.addEventListener('laquerendona:languagechange', () => {
