@@ -249,9 +249,89 @@ function initSahagunGalleryCarousel(){
     });
 }
 
+function initTepeServiceCarousels(){
+    document.querySelectorAll('[data-service-carousel]').forEach((carousel) => {
+        const track = carousel.querySelector('[data-service-track]');
+        const slides = track ? Array.from(track.querySelectorAll('img')) : [];
+        const previousButton = carousel.querySelector('[data-service-prev]');
+        const nextButton = carousel.querySelector('[data-service-next]');
+
+        if(!track || slides.length === 0){
+            return;
+        }
+
+        let activeIndex = 0;
+        let scrollFrame = null;
+
+        const getActiveIndex = () => {
+            if(track.clientWidth === 0){
+                return 0;
+            }
+
+            return Math.max(0, Math.min(
+                slides.length - 1,
+                Math.round(track.scrollLeft / track.clientWidth)
+            ));
+        };
+
+        const updateState = () => {
+            activeIndex = getActiveIndex();
+
+            if(previousButton){
+                previousButton.disabled = activeIndex === 0;
+            }
+
+            if(nextButton){
+                nextButton.disabled = activeIndex === slides.length - 1;
+            }
+        };
+
+        const scrollToSlide = (index) => {
+            const clampedIndex = Math.max(0, Math.min(index, slides.length - 1));
+
+            track.scrollTo({
+                left: clampedIndex * track.clientWidth,
+                behavior: 'smooth'
+            });
+        };
+
+        previousButton?.addEventListener('click', () => {
+            scrollToSlide(activeIndex - 1);
+        });
+
+        nextButton?.addEventListener('click', () => {
+            scrollToSlide(activeIndex + 1);
+        });
+
+        track.addEventListener('keydown', (event) => {
+            if(event.key === 'ArrowLeft'){
+                event.preventDefault();
+                scrollToSlide(activeIndex - 1);
+            }
+
+            if(event.key === 'ArrowRight'){
+                event.preventDefault();
+                scrollToSlide(activeIndex + 1);
+            }
+        });
+
+        track.addEventListener('scroll', () => {
+            if(scrollFrame){
+                window.cancelAnimationFrame(scrollFrame);
+            }
+
+            scrollFrame = window.requestAnimationFrame(updateState);
+        }, { passive: true });
+
+        window.addEventListener('resize', updateState);
+        updateState();
+    });
+}
+
 configureBranchLocation();
 configureSahagunMenu();
 initSahagunGalleryCarousel();
+initTepeServiceCarousels();
 document.addEventListener('laquerendona:languagechange', configureBranchLocation);
 
 document.addEventListener('laquerendona:languagechange', () => {
