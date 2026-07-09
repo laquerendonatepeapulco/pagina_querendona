@@ -5817,6 +5817,18 @@ nav a:hover {
     font-weight: 600;
 }
 
+.tepeapulco-page .tepe-card-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 12px;
+    margin: 8px 0 0;
+    padding: 0;
+    color: var(--bone-muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    list-style: none;
+}
+
 .tepeapulco-page .tepe-roll-track {
     display: grid;
     grid-auto-flow: column;
@@ -6097,6 +6109,10 @@ nav a:hover {
     .tepeapulco-page .tepe-history-card {
         padding: 18px;
         border-radius: 20px;
+    }
+
+    .tepeapulco-page .tepe-card-list {
+        grid-template-columns: 1fr;
     }
 
     .tepeapulco-page .tepe-section-heading p,
