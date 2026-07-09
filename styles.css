@@ -5747,9 +5747,26 @@ nav a:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.tepeapulco-page .tepe-highlight-grid-services {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(330px, 410px);
+    grid-template-columns: none;
+    gap: 18px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 2px 20px;
+    scroll-padding-inline: 2px;
+    scroll-snap-type: x mandatory;
+    scrollbar-color: rgba(255, 63, 157, 0.75) rgba(255, 248, 236, 0.12);
+}
+
 .tepeapulco-page .tepe-highlight-grid-three .tepe-highlight-card:nth-child(n),
 .tepeapulco-page .tepe-highlight-grid-services .tepe-highlight-card:nth-child(n) {
     grid-column: auto;
+}
+
+.tepeapulco-page .tepe-highlight-grid-services .tepe-highlight-card {
+    scroll-snap-align: start;
 }
 
 .tepeapulco-page .tepe-highlight-grid-three .tepe-highlight-card img,
@@ -6044,6 +6061,11 @@ nav a:hover {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .tepeapulco-page .tepe-highlight-grid-services {
+        grid-auto-columns: minmax(320px, 44vw);
+        grid-template-columns: none;
+    }
+
     .tepeapulco-page .tepe-highlight-card:nth-child(n) {
         grid-column: auto;
     }
@@ -6059,6 +6081,11 @@ nav a:hover {
     .tepeapulco-page .tepe-highlight-grid,
     .tepeapulco-page .tepe-detail-card {
         grid-template-columns: 1fr;
+    }
+
+    .tepeapulco-page .tepe-highlight-grid-services {
+        grid-auto-columns: minmax(290px, 78vw);
+        grid-template-columns: none;
     }
 
     .tepeapulco-page .tepe-detail-card-reverse .tepe-detail-image {
@@ -6129,6 +6156,11 @@ nav a:hover {
     .tepeapulco-page .tepe-highlight-grid-three,
     .tepeapulco-page .tepe-highlight-grid-services {
         grid-template-columns: 1fr;
+    }
+
+    .tepeapulco-page .tepe-highlight-grid-services {
+        grid-auto-columns: minmax(270px, 86vw);
+        grid-template-columns: none;
     }
 
     .tepeapulco-page .tepe-highlight-card img,
