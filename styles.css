@@ -1324,6 +1324,16 @@ width: 100%;
     margin-bottom: 30px;
 }
 
+.map-location + .map-location {
+    margin-top: 34px;
+}
+
+.map-location h3 {
+    margin: 0 0 14px;
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    color: #050505;
+}
+
 .map-placeholder {
     height: 420px;
 
