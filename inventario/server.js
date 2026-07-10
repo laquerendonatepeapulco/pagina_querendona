@@ -143,6 +143,7 @@ function reservationDto(row) {
   return {
     id: row.id,
     customerNumber: row.customer_number,
+    branch: row.branch,
     name: row.name,
     email: row.email,
     phone: row.phone,
@@ -224,6 +225,7 @@ async function ensureSchema() {
     CREATE TABLE IF NOT EXISTS reservations (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       customer_number TEXT NOT NULL UNIQUE,
+      branch TEXT NOT NULL DEFAULT 'Tepeapulco, Hidalgo',
       name TEXT NOT NULL,
       email TEXT NOT NULL,
       phone TEXT NOT NULL,
@@ -236,6 +238,7 @@ async function ensureSchema() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `);
+  await query(`ALTER TABLE reservations ADD COLUMN IF NOT EXISTS branch TEXT NOT NULL DEFAULT 'Tepeapulco, Hidalgo'`);
   await query(`CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)`);
   await query(`CREATE INDEX IF NOT EXISTS idx_movements_created_at ON movements(created_at DESC)`);
   await query(`CREATE INDEX IF NOT EXISTS idx_stock_alerts_status ON stock_alerts(status, created_at DESC)`);
@@ -343,6 +346,7 @@ function adminRequired(req, res, next) {
 
 function sanitizeReservation(input = {}) {
   const reservation = {
+    branch: String(input.branch || "").trim(),
     name: String(input.name || "").trim(),
     email: String(input.email || "").trim().toLowerCase(),
     phone: String(input.phone || "").trim(),
@@ -352,8 +356,14 @@ function sanitizeReservation(input = {}) {
     message: String(input.message || "").trim().slice(0, 1000)
   };
 
-  if (!reservation.name || !reservation.email || !reservation.phone || !reservation.date || !reservation.time || !reservation.celebrationType) {
-    const error = new Error("Completa nombre, correo, telefono, fecha, hora y tipo de celebracion");
+  if (!reservation.branch || !reservation.name || !reservation.email || !reservation.phone || !reservation.date || !reservation.time || !reservation.celebrationType) {
+    const error = new Error("Completa sucursal, nombre, correo, telefono, fecha, hora y tipo de celebracion");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!["Tepeapulco, Hidalgo", "Ciudad Sahagún, Hidalgo"].includes(reservation.branch)) {
+    const error = new Error("Sucursal invalida");
     error.status = 400;
     throw error;
   }
@@ -421,6 +431,7 @@ function createWhatsAppReservation(reservation) {
   return {
     id: null,
     customerNumber: `CL-${compactDate}-${timePart}${randomPart}`,
+    branch: reservation.branch,
     name: reservation.name,
     email: reservation.email,
     phone: reservation.phone,
@@ -454,11 +465,12 @@ app.post("/api/reservations", async (req, res, next) => {
 
     const customerNumber = await getNextReservationCustomerNumber(client, reservation.date);
     const result = await client.query(
-      `INSERT INTO reservations (customer_number, name, email, phone, reservation_date, reservation_time, celebration_type, message)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO reservations (customer_number, branch, name, email, phone, reservation_date, reservation_time, celebration_type, message)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         customerNumber,
+        reservation.branch,
         reservation.name,
         reservation.email,
         reservation.phone,

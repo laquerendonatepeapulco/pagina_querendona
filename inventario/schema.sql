@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS stock_alerts (
 CREATE TABLE IF NOT EXISTS reservations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   customer_number TEXT NOT NULL UNIQUE,
+  branch TEXT NOT NULL DEFAULT 'Tepeapulco, Hidalgo',
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   phone TEXT NOT NULL,
