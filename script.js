@@ -141,6 +141,7 @@ function configureSahagunTeam(){
 
     const leadChefImage = document.getElementById('branchLeadChefImage');
     const leadChefName = document.getElementById('branchLeadChefName');
+    const edithCard = document.getElementById('chefEdithCard');
 
     if(leadChefImage){
         leadChefImage.src = 'img/personal/margarita-vargas.png';
@@ -150,6 +151,8 @@ function configureSahagunTeam(){
     if(leadChefName){
         leadChefName.textContent = 'Chef Margarita Vargas';
     }
+
+    edithCard?.remove();
 }
 
 function initSahagunGalleryCarousel(){
