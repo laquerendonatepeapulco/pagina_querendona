@@ -134,6 +134,24 @@ function configureSahagunMenu(){
     gallery.replaceChildren(fragment);
 }
 
+function configureSahagunTeam(){
+    if(!isSahagunContext()){
+        return;
+    }
+
+    const leadChefImage = document.getElementById('branchLeadChefImage');
+    const leadChefName = document.getElementById('branchLeadChefName');
+
+    if(leadChefImage){
+        leadChefImage.src = 'img/personal/margarita-vargas.png';
+        leadChefImage.alt = 'Chef Margarita Vargas';
+    }
+
+    if(leadChefName){
+        leadChefName.textContent = 'Chef Margarita Vargas';
+    }
+}
+
 function initSahagunGalleryCarousel(){
     document.querySelectorAll('[data-gallery-carousel]').forEach((carousel) => {
         const track = carousel.querySelector('[data-gallery-track]');
@@ -330,6 +348,7 @@ function initTepeServiceCarousels(){
 
 configureBranchLocation();
 configureSahagunMenu();
+configureSahagunTeam();
 initSahagunGalleryCarousel();
 initTepeServiceCarousels();
 document.addEventListener('laquerendona:languagechange', configureBranchLocation);
