@@ -145,6 +145,8 @@ function configureSahagunTeam(){
     const servicePersonImage = document.getElementById('branchServicePersonImage');
     const servicePersonName = document.getElementById('branchServicePersonName');
     const servicePersonDescription = document.getElementById('branchServicePersonDescription');
+    const secondServicePersonImage = document.getElementById('branchSecondServicePersonImage');
+    const secondServicePersonName = document.getElementById('branchSecondServicePersonName');
 
     if(leadChefImage){
         leadChefImage.src = 'img/personal/margarita-vargas.png';
@@ -167,6 +169,15 @@ function configureSahagunTeam(){
     if(servicePersonDescription){
         servicePersonDescription.textContent =
             'Recibe a cada cliente con una sonrisa y una atención cercana, procurando que cada visita sea cómoda y agradable. Su amabilidad, disposición y cuidado en los detalles ayudan a crear el ambiente cálido que distingue a La Querendona Sahagún.';
+    }
+
+    if(secondServicePersonImage){
+        secondServicePersonImage.src = 'img/personal/diego.png';
+        secondServicePersonImage.alt = 'Diego';
+    }
+
+    if(secondServicePersonName){
+        secondServicePersonName.textContent = 'Diego';
     }
 
     edithCard?.remove();
