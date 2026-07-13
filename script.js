@@ -582,7 +582,7 @@ async function readJsonResponse(response){
 
 function openReservationWhatsApp(reservation){
 
-    const whatsappNumber = '527713420990';
+    const whatsappNumber = '527751051325';
     const whatsappUrl =
         `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(buildReservationMessage(reservation))}`;
     const whatsappWindow = window.open(whatsappUrl, '_blank', 'noopener');
