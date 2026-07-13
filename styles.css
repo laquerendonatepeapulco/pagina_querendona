@@ -5456,12 +5456,33 @@ nav a:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 32px;
+    gap: clamp(36px, 6vw, 82px);
     margin-bottom: 100px;
-    padding: 48px;
+    padding: 52px 56px;
     border-radius: 30px;
     background: var(--bone);
+    border: 1px solid rgba(255, 63, 157, .18);
     box-shadow: 0 24px 58px rgba(0, 0, 0, .22);
+}
+
+.sahagun-cta > div {
+    min-width: 0;
+    max-width: 800px;
+}
+
+.sahagun-cta .mini-tag {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-bottom: 16px;
+    padding: 9px 15px;
+    border-color: rgba(198, 40, 88, .28) !important;
+    background: #fff7f9 !important;
+    color: #b5164c !important;
+    font-size: .78rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .sahagun-cta h2,
@@ -5469,8 +5490,27 @@ nav a:hover {
     color: var(--bone-text);
 }
 
+.sahagun-cta h2 {
+    max-width: 820px;
+    margin-bottom: 18px;
+    font-size: 3.9rem;
+}
+
 .sahagun-cta p {
+    margin: 0;
     max-width: 740px;
+}
+
+.sahagun-cta .cta {
+    flex: 0 0 auto;
+    min-width: 190px;
+    min-height: 58px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 17px 30px;
+    font-size: 1rem;
+    white-space: nowrap;
 }
 
 @media(max-width:992px){
@@ -5515,6 +5555,15 @@ nav a:hover {
     .sahagun-cta {
         align-items: flex-start;
         flex-direction: column;
+        gap: 28px;
+    }
+
+    .sahagun-cta h2 {
+        font-size: 3.25rem;
+    }
+
+    .sahagun-cta .cta {
+        min-width: 220px;
     }
 }
 
@@ -5587,8 +5636,32 @@ nav a:hover {
     }
 
     .sahagun-cta {
-        padding: 28px;
+        gap: 24px;
+        padding: 28px 24px 24px;
         border-radius: 24px;
+    }
+
+    .sahagun-cta .mini-tag {
+        margin-bottom: 12px;
+        padding: 8px 13px;
+        font-size: .72rem;
+    }
+
+    .sahagun-cta h2 {
+        margin-bottom: 14px;
+        font-size: 2.5rem;
+        line-height: 1.05;
+    }
+
+    .sahagun-cta p {
+        font-size: 1rem;
+        line-height: 1.65;
+    }
+
+    .sahagun-cta .cta {
+        width: 100%;
+        min-width: 0;
+        min-height: 56px;
     }
 }
 
