@@ -147,6 +147,8 @@ function configureSahagunTeam(){
     const servicePersonDescription = document.getElementById('branchServicePersonDescription');
     const secondServicePersonImage = document.getElementById('branchSecondServicePersonImage');
     const secondServicePersonName = document.getElementById('branchSecondServicePersonName');
+    const thirdServicePersonImage = document.getElementById('branchThirdServicePersonImage');
+    const thirdServicePersonName = document.getElementById('branchThirdServicePersonName');
 
     if(leadChefImage){
         leadChefImage.src = 'img/personal/margarita-vargas.png';
@@ -178,6 +180,15 @@ function configureSahagunTeam(){
 
     if(secondServicePersonName){
         secondServicePersonName.textContent = 'Diego';
+    }
+
+    if(thirdServicePersonImage){
+        thirdServicePersonImage.src = 'img/personal/jesus.png';
+        thirdServicePersonImage.alt = 'Jesus';
+    }
+
+    if(thirdServicePersonName){
+        thirdServicePersonName.textContent = 'Jesus';
     }
 
     edithCard?.remove();
