@@ -666,6 +666,65 @@ gap: 30px;
 align-items: center;
 box-shadow: var(--shadow);
 }
+
+/* RESERVATION DETAILS */
+
+.reservation-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.reservation-detail-field {
+    min-width: 0;
+}
+
+.reservation-detail-field label {
+    position: absolute;
+    z-index: 1;
+    top: 9px;
+    left: 18px;
+    color: #ff3f9d;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.reservation-detail-field input {
+    min-height: 64px;
+    padding: 27px 18px 10px !important;
+    font-weight: 600;
+}
+
+.reservation-detail-field input::placeholder {
+    color: rgba(255, 247, 234, .72);
+}
+
+.reservation-time-field input[type="time"] {
+    padding-right: 48px !important;
+    color-scheme: dark;
+    cursor: text;
+}
+
+.reservation-time-field input[type="time"]::-webkit-calendar-picker-indicator {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    cursor: pointer;
+    opacity: .9;
+}
+
+.reservation-detail-field:focus-within label {
+    color: #ffd23f;
+}
+
+@media(max-width:560px) {
+    .reservation-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+}
 .featured-copy {
 display: flex;
 flex-direction: column;

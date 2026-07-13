@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS reservations (
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   phone TEXT NOT NULL,
+  party_size INTEGER NOT NULL DEFAULT 1 CHECK (party_size BETWEEN 1 AND 100),
   reservation_date DATE NOT NULL,
   reservation_time TIME NOT NULL,
   celebration_type TEXT NOT NULL,

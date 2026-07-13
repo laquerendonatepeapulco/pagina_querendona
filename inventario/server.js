@@ -147,6 +147,7 @@ function reservationDto(row) {
     name: row.name,
     email: row.email,
     phone: row.phone,
+    partySize: row.party_size,
     date: formatDateOnly(row.reservation_date),
     time: formatTimeOnly(row.reservation_time),
     celebrationType: row.celebration_type,
@@ -229,6 +230,7 @@ async function ensureSchema() {
       name TEXT NOT NULL,
       email TEXT NOT NULL,
       phone TEXT NOT NULL,
+      party_size INTEGER NOT NULL DEFAULT 1 CHECK (party_size BETWEEN 1 AND 100),
       reservation_date DATE NOT NULL,
       reservation_time TIME NOT NULL,
       celebration_type TEXT NOT NULL,
@@ -239,6 +241,7 @@ async function ensureSchema() {
     )
   `);
   await query(`ALTER TABLE reservations ADD COLUMN IF NOT EXISTS branch TEXT NOT NULL DEFAULT 'Tepeapulco, Hidalgo'`);
+  await query(`ALTER TABLE reservations ADD COLUMN IF NOT EXISTS party_size INTEGER NOT NULL DEFAULT 1 CHECK (party_size BETWEEN 1 AND 100)`);
   await query(`CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)`);
   await query(`CREATE INDEX IF NOT EXISTS idx_movements_created_at ON movements(created_at DESC)`);
   await query(`CREATE INDEX IF NOT EXISTS idx_stock_alerts_status ON stock_alerts(status, created_at DESC)`);
@@ -350,14 +353,15 @@ function sanitizeReservation(input = {}) {
     name: String(input.name || "").trim(),
     email: String(input.email || "").trim().toLowerCase(),
     phone: String(input.phone || "").trim(),
+    partySize: Number.parseInt(String(input.partySize || ""), 10),
     date: String(input.date || "").trim(),
     time: String(input.time || "").trim(),
     celebrationType: String(input.celebrationType || "").trim(),
     message: String(input.message || "").trim().slice(0, 1000)
   };
 
-  if (!reservation.branch || !reservation.name || !reservation.email || !reservation.phone || !reservation.date || !reservation.time || !reservation.celebrationType) {
-    const error = new Error("Completa sucursal, nombre, correo, telefono, fecha, hora y tipo de celebracion");
+  if (!reservation.branch || !reservation.name || !reservation.email || !reservation.phone || !Number.isInteger(reservation.partySize) || !reservation.date || !reservation.time || !reservation.celebrationType) {
+    const error = new Error("Completa sucursal, nombre, correo, telefono, numero de personas, fecha, hora y tipo de celebracion");
     error.status = 400;
     throw error;
   }
@@ -370,6 +374,12 @@ function sanitizeReservation(input = {}) {
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reservation.email)) {
     const error = new Error("Correo electronico invalido");
+    error.status = 400;
+    throw error;
+  }
+
+  if (reservation.partySize < 1 || reservation.partySize > 100) {
+    const error = new Error("Numero de personas invalido");
     error.status = 400;
     throw error;
   }
@@ -389,7 +399,7 @@ function sanitizeReservation(input = {}) {
   const [hours, minutes] = reservation.time.split(":").map(Number);
   const selectedDate = new Date(`${reservation.date}T00:00:00`);
 
-  if (Number.isNaN(selectedDate.getTime()) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+  if (Number.isNaN(selectedDate.getTime()) || hours < 9 || hours > 21 || minutes < 0 || minutes > 59 || (hours === 21 && minutes > 0)) {
     const error = new Error("Fecha u hora invalida");
     error.status = 400;
     throw error;
@@ -435,6 +445,7 @@ function createWhatsAppReservation(reservation) {
     name: reservation.name,
     email: reservation.email,
     phone: reservation.phone,
+    partySize: reservation.partySize,
     date: reservation.date,
     time: reservation.time,
     celebrationType: reservation.celebrationType,
@@ -465,8 +476,8 @@ app.post("/api/reservations", async (req, res, next) => {
 
     const customerNumber = await getNextReservationCustomerNumber(client, reservation.date);
     const result = await client.query(
-      `INSERT INTO reservations (customer_number, branch, name, email, phone, reservation_date, reservation_time, celebration_type, message)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO reservations (customer_number, branch, name, email, phone, party_size, reservation_date, reservation_time, celebration_type, message)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
       [
         customerNumber,
@@ -474,6 +485,7 @@ app.post("/api/reservations", async (req, res, next) => {
         reservation.name,
         reservation.email,
         reservation.phone,
+        reservation.partySize,
         reservation.date,
         reservation.time,
         reservation.celebrationType,

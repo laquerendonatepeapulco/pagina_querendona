@@ -567,6 +567,7 @@ if(reservationForm){
             name: String(formData.get('name') || '').trim(),
             email: String(formData.get('email') || '').trim(),
             phone: String(formData.get('phone') || '').trim(),
+            partySize: Number.parseInt(String(formData.get('partySize') || ''), 10),
             date: String(formData.get('date') || ''),
             time: String(formData.get('time') || ''),
             celebrationType: String(formData.get('celebrationType') || '').trim(),
@@ -598,7 +599,8 @@ if(reservationForm){
                 ...reservationPayload,
                 customerNumber,
                 date: savedReservation.date || reservationPayload.date,
-                time: savedReservation.time || reservationPayload.time
+                time: savedReservation.time || reservationPayload.time,
+                partySize: savedReservation.partySize || reservationPayload.partySize
             };
 
             openReservationWhatsApp(reservationForWhatsApp);
@@ -666,6 +668,7 @@ function buildReservationMessage(reservation){
         `${translateSiteText('Nombre')}: ${reservation.name}`,
         `${translateSiteText('Correo')}: ${reservation.email}`,
         `${translateSiteText('Teléfono')}: ${reservation.phone}`,
+        `${translateSiteText('Personas')}: ${reservation.partySize}`,
         `${translateSiteText('Sucursal')}: ${translateSiteText(reservation.branch)}`,
         `${translateSiteText('Fecha')}: ${formattedDate}`,
         `${translateSiteText('Hora')}: ${formattedTime}`,
