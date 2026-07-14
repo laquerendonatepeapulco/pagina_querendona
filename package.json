@@ -14,5 +14,9 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "terser": "^5.49.0"
   }
 }
