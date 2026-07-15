@@ -1237,6 +1237,61 @@ width: 100%;
     color: #666;
 }
 
+.location-info-card > div {
+    flex: 1;
+    min-width: 0;
+}
+
+.contact-location-list {
+    display: grid;
+    gap: 10px;
+}
+
+.contact-location {
+    display: block;
+    padding: 12px 14px;
+    color: inherit;
+    text-decoration: none;
+    border: 1px solid rgba(157, 36, 92, 0.18);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.34);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.contact-location strong,
+.contact-location span {
+    display: block;
+}
+
+.contact-location strong {
+    margin-bottom: 4px;
+    color: #9d245c;
+    font-size: 0.95rem;
+}
+
+.contact-location span {
+    color: #4f4438;
+    font-size: 0.88rem;
+    line-height: 1.55;
+}
+
+.contact-location:hover,
+.contact-location:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(255, 63, 157, 0.55);
+    background: rgba(255, 255, 255, 0.62);
+}
+
+@media(max-width:768px){
+    .location-info-card {
+        gap: 14px;
+    }
+
+    .contact-location {
+        padding: 12px;
+    }
+}
+
 /* FORM */
 
 .contact-form form {
