@@ -194,6 +194,23 @@ function configureSahagunTeam(){
     edithCard?.remove();
 }
 
+function orderBranchServiceTeam(){
+    const secondPersonImage = document.getElementById('branchSecondServicePersonImage');
+    const thirdPersonImage = document.getElementById('branchThirdServicePersonImage');
+    const secondPersonCard = secondPersonImage?.closest('.chef-card');
+    const thirdPersonCard = thirdPersonImage?.closest('.chef-card');
+
+    if(!secondPersonCard || !thirdPersonCard){
+        return;
+    }
+
+    if(isSahagunContext()){
+        secondPersonCard.after(thirdPersonCard);
+    }else{
+        secondPersonCard.before(thirdPersonCard);
+    }
+}
+
 function initSahagunGalleryCarousel(){
     document.querySelectorAll('[data-gallery-carousel]').forEach((carousel) => {
         const track = carousel.querySelector('[data-gallery-track]');
@@ -391,6 +408,7 @@ function initTepeServiceCarousels(){
 configureBranchLocation();
 configureSahagunMenu();
 configureSahagunTeam();
+orderBranchServiceTeam();
 initSahagunGalleryCarousel();
 initTepeServiceCarousels();
 document.addEventListener('laquerendona:languagechange', configureBranchLocation);
