@@ -204,11 +204,12 @@ function orderBranchServiceTeam(){
         return;
     }
 
-    if(isSahagunContext()){
-        secondPersonCard.after(thirdPersonCard);
-    }else{
-        secondPersonCard.before(thirdPersonCard);
+    if(!isSahagunContext()){
+        secondPersonCard.remove();
+        return;
     }
+
+    secondPersonCard.after(thirdPersonCard);
 }
 
 function initSahagunGalleryCarousel(){
