@@ -330,7 +330,7 @@ function initSahagunGalleryCarousel(){
 function initTepeServiceCarousels(){
     document.querySelectorAll('[data-service-carousel]').forEach((carousel) => {
         const track = carousel.querySelector('[data-service-track]');
-        const slides = track ? Array.from(track.querySelectorAll('img')) : [];
+        const slides = track ? Array.from(track.querySelectorAll('img, video')) : [];
         const previousButton = carousel.querySelector('[data-service-prev]');
         const nextButton = carousel.querySelector('[data-service-next]');
 
@@ -340,6 +340,7 @@ function initTepeServiceCarousels(){
 
         let activeIndex = 0;
         let scrollFrame = null;
+        let carouselVisible = !('IntersectionObserver' in window);
 
         const getActiveIndex = () => {
             if(track.clientWidth === 0){
@@ -354,6 +355,18 @@ function initTepeServiceCarousels(){
 
         const updateState = () => {
             activeIndex = getActiveIndex();
+
+            slides.forEach((slide, index) => {
+                if(!(slide instanceof HTMLVideoElement)){
+                    return;
+                }
+
+                if(index === activeIndex && carouselVisible){
+                    slide.play().catch(() => {});
+                }else{
+                    slide.pause();
+                }
+            });
 
             if(previousButton){
                 previousButton.disabled = activeIndex === 0;
@@ -402,6 +415,16 @@ function initTepeServiceCarousels(){
         }, { passive: true });
 
         window.addEventListener('resize', updateState);
+
+        if('IntersectionObserver' in window){
+            const observer = new IntersectionObserver((entries) => {
+                carouselVisible = entries[0]?.isIntersecting ?? false;
+                updateState();
+            }, { threshold: 0.15 });
+
+            observer.observe(carousel);
+        }
+
         updateState();
     });
 }
