@@ -5501,8 +5501,34 @@ nav a:hover {
     padding: 0 0 118px;
 }
 
-.sahagun-highlights .section-title {
-    margin-bottom: 38px;
+.sahagun-antojitos-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
+    align-items: end;
+    gap: 54px;
+    margin-bottom: 42px;
+}
+
+.sahagun-antojitos-heading .mini-tag {
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 18px;
+}
+
+.sahagun-antojitos-heading h2 {
+    max-width: 760px;
+    margin: 0;
+    color: #fff8ec;
+    font-size: clamp(3rem, 5vw, 5.25rem);
+    line-height: .98;
+}
+
+.sahagun-antojitos-heading > p {
+    max-width: 470px;
+    margin: 0 0 7px;
+    color: rgba(255, 248, 236, .8);
+    font-size: 1.05rem;
+    line-height: 1.8;
 }
 
 .sahagun-card-grid {
@@ -5765,6 +5791,11 @@ nav a:hover {
         gap: 34px;
     }
 
+    .sahagun-antojitos-heading {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
     .branch-hero-content,
     .sahagun-hero-content {
         order: -1;
@@ -5857,6 +5888,19 @@ nav a:hover {
 
     .sahagun-broths-content > h2 {
         font-size: clamp(2.35rem, 10vw, 3.2rem);
+    }
+
+    .sahagun-antojitos-heading {
+        margin-bottom: 30px;
+    }
+
+    .sahagun-antojitos-heading h2 {
+        font-size: clamp(2.45rem, 11vw, 3.45rem);
+    }
+
+    .sahagun-antojitos-heading > p {
+        font-size: 1rem;
+        line-height: 1.7;
     }
 
     .sahagun-broth-item {
