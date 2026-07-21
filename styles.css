@@ -5284,6 +5284,7 @@ nav a:hover {
 .branch-hero,
 .sahagun-hero,
 .sahagun-intro,
+.sahagun-broths,
 .sahagun-highlights,
 .sahagun-gallery,
 .sahagun-cta {
@@ -5393,6 +5394,107 @@ nav a:hover {
     aspect-ratio: 1 / 1.08;
     height: auto;
     object-position: center;
+}
+
+.sahagun-broths {
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: 58px;
+    padding: 0 0 118px;
+}
+
+.sahagun-broths-media {
+    position: relative;
+    min-height: 620px;
+    overflow: hidden;
+    border-radius: 30px;
+    box-shadow: 0 26px 58px rgba(0, 0, 0, .3);
+}
+
+.sahagun-broths-media img {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    display: block;
+    object-fit: cover;
+}
+
+.sahagun-broths-media span {
+    position: absolute;
+    right: 22px;
+    bottom: 22px;
+    left: 22px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 210, 63, .5);
+    border-radius: 8px;
+    background: rgba(14, 14, 16, .88);
+    color: #fff8ec;
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.sahagun-broths-content > .mini-tag {
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 18px;
+}
+
+.sahagun-broths-content > h2 {
+    max-width: 690px;
+    margin: 0 0 20px;
+    color: #fff8ec;
+    font-size: clamp(2.7rem, 4.2vw, 4.35rem);
+    line-height: 1;
+}
+
+.sahagun-broths-content > p {
+    max-width: 680px;
+    margin: 0 0 30px;
+    color: rgba(255, 248, 236, .8);
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+.sahagun-broths-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.sahagun-broth-item {
+    min-height: 188px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-content: start;
+    gap: 14px;
+    padding: 22px;
+    border: 1px solid rgba(255, 210, 63, .58);
+    border-radius: 8px;
+    background: #f5ead5;
+    color: #171719;
+}
+
+.sahagun-broth-item > span {
+    color: var(--sahagun-red);
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+}
+
+.sahagun-broth-item h3 {
+    margin: 0 0 9px;
+    font-size: 1.25rem;
+    line-height: 1.15;
+}
+
+.sahagun-broth-item p {
+    margin: 0;
+    color: #574d43;
+    font-size: .94rem;
+    line-height: 1.6;
 }
 
 .sahagun-highlights {
@@ -5657,7 +5759,8 @@ nav a:hover {
 @media(max-width:992px){
     .branch-hero,
     .sahagun-hero,
-    .sahagun-intro {
+    .sahagun-intro,
+    .sahagun-broths {
         grid-template-columns: 1fr;
         gap: 34px;
     }
@@ -5724,6 +5827,18 @@ nav a:hover {
         padding-bottom: 76px;
     }
 
+    .sahagun-broths {
+        padding-bottom: 82px;
+    }
+
+    .sahagun-broths-media {
+        min-height: 500px;
+    }
+
+    .sahagun-broths-grid {
+        grid-template-columns: 1fr;
+    }
+
     .sahagun-intro-grid {
         grid-template-columns: 1fr;
         min-height: 0;
@@ -5733,6 +5848,19 @@ nav a:hover {
     .sahagun-intro-grid img:first-child {
         height: 310px;
         aspect-ratio: auto;
+    }
+
+    .sahagun-broths-media {
+        min-height: 420px;
+        border-radius: 24px;
+    }
+
+    .sahagun-broths-content > h2 {
+        font-size: clamp(2.35rem, 10vw, 3.2rem);
+    }
+
+    .sahagun-broth-item {
+        min-height: 0;
     }
 
     .sahagun-feature-card {
