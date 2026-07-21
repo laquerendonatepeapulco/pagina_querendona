@@ -5343,10 +5343,15 @@ nav a:hover {
 
 .sahagun-intro {
     display: grid;
-    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    grid-template-columns: minmax(0, .92fr) minmax(440px, 1.08fr);
     align-items: center;
     gap: 52px;
     padding: 28px 0 108px;
+}
+
+.sahagun-intro-text,
+.sahagun-breakfast-media {
+    min-width: 0;
 }
 
 .sahagun-intro .mini-tag {
@@ -5364,6 +5369,12 @@ nav a:hover {
     line-height: 1.06;
 }
 
+.sahagun-intro-text h2 {
+    max-width: 100%;
+    font-size: clamp(2.5rem, 4.15vw, 4.35rem);
+    line-height: 1.02;
+}
+
 .sahagun-intro-text p,
 .sahagun-gallery .section-header p,
 .sahagun-cta p {
@@ -5372,28 +5383,66 @@ nav a:hover {
     line-height: 1.85;
 }
 
-.sahagun-intro-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-    align-items: stretch;
-}
-
-.sahagun-intro-grid img,
 .sahagun-gallery-grid figure {
     border-radius: 26px;
     overflow: hidden;
     box-shadow: 0 22px 48px rgba(0, 0, 0, .25);
 }
 
-.sahagun-intro-grid img:first-child {
-    align-self: stretch;
+.sahagun-breakfast-carousel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 210, 63, .34);
+    border-radius: 30px;
+    box-shadow: 0 26px 58px rgba(0, 0, 0, .34);
 }
 
-.sahagun-intro-grid img {
-    aspect-ratio: 1 / 1.08;
-    height: auto;
-    object-position: center;
+.sahagun-breakfast-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+
+.sahagun-breakfast-track::-webkit-scrollbar {
+    display: none;
+}
+
+.sahagun-breakfast-carousel .sahagun-breakfast-slide {
+    min-height: 520px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    scroll-snap-align: start;
+}
+
+.sahagun-breakfast-carousel .sahagun-breakfast-slide img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sahagun-breakfast-carousel .sahagun-breakfast-slide figcaption {
+    left: 28px;
+    right: 28px;
+    bottom: 26px;
+}
+
+.sahagun-breakfast-carousel .sahagun-gallery-button-prev {
+    left: 18px;
+}
+
+.sahagun-breakfast-carousel .sahagun-gallery-button-next {
+    right: 18px;
+}
+
+.sahagun-breakfast-dots {
+    margin-top: 16px;
 }
 
 .sahagun-broths {
@@ -5870,15 +5919,20 @@ nav a:hover {
         grid-template-columns: 1fr;
     }
 
-    .sahagun-intro-grid {
-        grid-template-columns: 1fr;
-        min-height: 0;
+    .sahagun-breakfast-carousel .sahagun-breakfast-slide {
+        min-height: 420px;
     }
 
-    .sahagun-intro-grid img,
-    .sahagun-intro-grid img:first-child {
-        height: 310px;
-        aspect-ratio: auto;
+    .sahagun-breakfast-carousel {
+        border-radius: 24px;
+    }
+
+    .sahagun-breakfast-carousel .sahagun-gallery-button-prev {
+        left: 12px;
+    }
+
+    .sahagun-breakfast-carousel .sahagun-gallery-button-next {
+        right: 12px;
     }
 
     .sahagun-broths-media {

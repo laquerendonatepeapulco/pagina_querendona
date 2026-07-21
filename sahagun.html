@@ -19,7 +19,7 @@
     <meta name="twitter:description" content="Comida mexicana tradicional y ambiente familiar en Ciudad Sahagún, Hidalgo.">
     <meta name="twitter:image" content="https://www.laquerendonacg.com/img/sahagun/interior.jpg">
     <link rel="icon" href="img/logo_pestaña.png" type="image/jpeg">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20260721-1">
     <link rel="stylesheet" href="opcion.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -80,20 +80,37 @@
             </div>
         </section>
 
-        <section class="sahagun-intro reveal">
+        <section class="sahagun-intro reveal" aria-labelledby="sahagun-breakfast-title">
             <div class="sahagun-intro-text">
                 <span class="mini-tag">MA&Ntilde;ANAS CON SABOR DE CASA</span>
-                <h2>DESAYUNOS TRADICIONALES</h2>
+                <h2 id="sahagun-breakfast-title">DESAYUNOS<br>TRADICIONALES</h2>
                 <p>
-                    Comienza el d&iacute;a con recetas mexicanas preparadas al momento, caf&eacute; caliente,
-                    jugos frescos y ese saz&oacute;n familiar que convierte cada desayuno en una
-                    experiencia c&aacute;lida para compartir.
+                    Empieza la ma&ntilde;ana con desayunos preparados al momento, caf&eacute; caliente,
+                    jugos frescos y el saz&oacute;n casero de La Querendona. Recetas tradicionales
+                    para compartir en familia y disfrutar sin prisa.
                 </p>
             </div>
 
-            <div class="sahagun-intro-grid">
-                <img src="img/sahagun/chilaquiles-cuchara.jpg" alt="Chilaquiles servidos al momento">
-                <img src="img/sahagun/desayuno.jpg" alt="Desayuno tradicional con caf&eacute; y jugo">
+            <div class="sahagun-breakfast-media">
+                <div class="sahagun-breakfast-carousel" data-gallery-carousel aria-label="Fotograf&iacute;as de desayunos tradicionales">
+                    <button class="sahagun-gallery-button sahagun-gallery-button-prev" type="button" data-gallery-prev aria-label="Ver desayuno anterior">&lsaquo;</button>
+
+                    <div class="sahagun-breakfast-track" data-gallery-track tabindex="0">
+                        <figure class="sahagun-breakfast-slide sahagun-gallery-slide">
+                            <img src="img/sahagun/chilaquiles-cuchara.jpg" alt="Chilaquiles servidos al momento">
+                            <figcaption>Chilaquiles preparados al momento</figcaption>
+                        </figure>
+
+                        <figure class="sahagun-breakfast-slide sahagun-gallery-slide">
+                            <img src="img/sahagun/desayuno.jpg" alt="Desayuno tradicional con caf&eacute; y jugo">
+                            <figcaption>Desayuno con caf&eacute; y jugo fresco</figcaption>
+                        </figure>
+                    </div>
+
+                    <button class="sahagun-gallery-button sahagun-gallery-button-next" type="button" data-gallery-next aria-label="Ver siguiente desayuno">&rsaquo;</button>
+                </div>
+
+                <div class="sahagun-gallery-dots sahagun-breakfast-dots" data-gallery-dots aria-label="Seleccionar fotograf&iacute;a"></div>
             </div>
         </section>
 
