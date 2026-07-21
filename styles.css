@@ -5911,10 +5911,6 @@ nav a:hover {
         padding-bottom: 82px;
     }
 
-    .sahagun-broths-media {
-        min-height: 500px;
-    }
-
     .sahagun-broths-grid {
         grid-template-columns: 1fr;
     }
@@ -5936,8 +5932,13 @@ nav a:hover {
     }
 
     .sahagun-broths-media {
+        order: 2;
         min-height: 420px;
         border-radius: 24px;
+    }
+
+    .sahagun-broths-content {
+        order: 1;
     }
 
     .sahagun-broths-content > h2 {
