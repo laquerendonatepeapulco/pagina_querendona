@@ -2800,6 +2800,14 @@ body{
     padding:100px 8%;
 }
 
+.chefs-hero.chefs-hero-without-video{
+    min-height:auto;
+    grid-template-columns:minmax(0, 760px);
+    justify-content:start;
+    padding-top:140px;
+    padding-bottom:90px;
+}
+
 /* TEXT */
 
 .chefs-hero-text{

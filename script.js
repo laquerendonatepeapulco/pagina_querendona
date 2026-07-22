@@ -43,6 +43,27 @@ function isSahagunContext(){
     return branch === 'sahagun' || getCurrentPageName() === 'sahagun.html';
 }
 
+function configureTeamHero(){
+    const hero = document.querySelector('.chefs-hero');
+    const media = document.getElementById('teamHeroMedia');
+
+    if(!hero || !media){
+        return;
+    }
+
+    if(isSahagunContext()){
+        media.remove();
+        hero.classList.add('chefs-hero-without-video');
+        return;
+    }
+
+    const frame = media.querySelector('iframe[data-src]');
+
+    if(frame){
+        frame.src = frame.dataset.src;
+    }
+}
+
 function configureBranchLocation(){
     if(!isSahagunContext()){
         return;
@@ -431,6 +452,7 @@ function initTepeServiceCarousels(){
 
 configureBranchLocation();
 configureSahagunMenu();
+configureTeamHero();
 configureSahagunTeam();
 orderBranchServiceTeam();
 initSahagunGalleryCarousel();
