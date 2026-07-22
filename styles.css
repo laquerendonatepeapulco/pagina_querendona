@@ -5311,10 +5311,18 @@ nav a:hover {
 
 .branch-hero-media,
 .sahagun-hero-media {
+    position: relative;
     min-height: 620px;
     border-radius: 34px;
     overflow: hidden;
     box-shadow: 0 28px 65px rgba(0, 0, 0, .34);
+}
+
+.sahagun-hero-media .youtube-video-frame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .tepeapulco-branch-hero .branch-hero-media {
