@@ -19,7 +19,7 @@
     <meta name="twitter:description" content="Comida mexicana tradicional y ambiente familiar en Ciudad Sahagún, Hidalgo.">
     <meta name="twitter:image" content="https://www.laquerendonacg.com/img/sahagun/interior.jpg">
     <link rel="icon" href="img/logo_pestaña.png" type="image/jpeg">
-    <link rel="stylesheet" href="styles.css?v=20260722-2">
+    <link rel="stylesheet" href="styles.css?v=20260723-2">
     <link rel="stylesheet" href="opcion.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -183,31 +183,39 @@
                 </p>
             </div>
 
-            <div class="sahagun-card-grid">
-                <article class="sahagun-feature-card">
-                    <img src="img/sahagun/chilaquiles.jpg" alt="Chilaquiles tradicionales">
-                    <div>
-                        <h3>Desayunos tradicionales</h3>
-                        <p>Chilaquiles, caf&eacute;, jugos y sabores de ma&ntilde;ana servidos con el toque de casa.</p>
-                    </div>
-                </article>
+            <div class="sahagun-antojitos-carousel" data-gallery-carousel aria-label="Antojitos mexicanos de La Querendona Ciudad Sahag&uacute;n">
+                <button class="sahagun-gallery-button sahagun-gallery-button-prev" type="button" data-gallery-prev aria-label="Ver antojito anterior">&lsaquo;</button>
 
-                <article class="sahagun-feature-card">
-                    <img src="img/sahagun/carne-asada.jpg" alt="Carne asada en plato de barro">
-                    <div>
-                        <h3>Platillos con saz&oacute;n</h3>
-                        <p>Recetas mexicanas servidas en barro, con porciones generosas y presentaci&oacute;n c&aacute;lida.</p>
-                    </div>
-                </article>
+                <div class="sahagun-antojitos-track" data-gallery-track tabindex="0">
+                    <article class="sahagun-feature-card sahagun-gallery-slide">
+                        <img src="img/sahagun/chilaquiles.jpg" alt="Chilaquiles tradicionales">
+                        <div>
+                            <h3>Desayunos tradicionales</h3>
+                            <p>Chilaquiles, caf&eacute;, jugos y sabores de ma&ntilde;ana servidos con el toque de casa.</p>
+                        </div>
+                    </article>
 
-                <article class="sahagun-feature-card">
-                    <img src="img/sahagun/interior.jpg" alt="Decoraci&oacute;n de La Querendona Sahag&uacute;n">
-                    <div>
-                        <h3>Ambiente colorido</h3>
-                        <p>Un comedor con identidad mexicana, luces, detalles artesanales y un ambiente familiar.</p>
-                    </div>
-                </article>
+                    <article class="sahagun-feature-card sahagun-gallery-slide">
+                        <img src="img/sahagun/carne-asada.jpg" alt="Carne asada en plato de barro">
+                        <div>
+                            <h3>Platillos con saz&oacute;n</h3>
+                            <p>Recetas mexicanas servidas en barro, con porciones generosas y presentaci&oacute;n c&aacute;lida.</p>
+                        </div>
+                    </article>
+
+                    <article class="sahagun-feature-card sahagun-gallery-slide">
+                        <img src="img/sahagun/interior.jpg" alt="Decoraci&oacute;n de La Querendona Ciudad Sahag&uacute;n">
+                        <div>
+                            <h3>Ambiente colorido</h3>
+                            <p>Un comedor con identidad mexicana, luces, detalles artesanales y un ambiente familiar.</p>
+                        </div>
+                    </article>
+                </div>
+
+                <button class="sahagun-gallery-button sahagun-gallery-button-next" type="button" data-gallery-next aria-label="Ver siguiente antojito">&rsaquo;</button>
             </div>
+
+            <div class="sahagun-gallery-dots sahagun-antojitos-dots" data-gallery-dots aria-label="Seleccionar antojito"></div>
         </section>
 
         <section class="team-invite-card sahagun-team-invite reveal" aria-labelledby="sahagun-team-invite-title">
