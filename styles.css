@@ -5387,8 +5387,8 @@ nav a:hover {
 
 .sahagun-intro-text h2 {
     max-width: 100%;
-    font-size: clamp(2.5rem, 4.15vw, 4.35rem);
-    line-height: 1.02;
+    font-size: 3.45rem;
+    line-height: 1.04;
 }
 
 .sahagun-intro-text p,
@@ -5923,6 +5923,10 @@ nav a:hover {
         padding-bottom: 76px;
     }
 
+    .sahagun-intro-text h2 {
+        font-size: 3rem;
+    }
+
     .sahagun-broths {
         padding-bottom: 82px;
     }
@@ -6046,6 +6050,12 @@ nav a:hover {
         width: 100%;
         min-width: 0;
         min-height: 56px;
+    }
+}
+
+@media(max-width:480px){
+    .sahagun-intro-text h2 {
+        font-size: 2.2rem;
     }
 }
 
