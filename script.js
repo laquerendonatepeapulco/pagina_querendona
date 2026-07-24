@@ -1164,3 +1164,106 @@ mobileMenu.querySelectorAll('a').forEach((link)=>{
     });
 });
 }
+
+/* ========================= */
+/* PROMOCION DE CUMPLEANOS */
+/* ========================= */
+
+window.addEventListener('DOMContentLoaded', ()=>{
+    const promoModal = document.getElementById('birthdayPromo');
+
+    if(!promoModal){
+        return;
+    }
+
+    const storageKey = 'querendonaBirthdayPromoSeen';
+    const closeButton = promoModal.querySelector('.promo-modal__close');
+    const promoLink = promoModal.querySelector('.promo-modal__link');
+    const closeControls = promoModal.querySelectorAll('[data-promo-close]');
+    const focusableElements = [closeButton, promoLink].filter(Boolean);
+    let previousFocus = null;
+    let closeTimer = null;
+
+    const wasAlreadyShown = ()=>{
+        try{
+            return window.sessionStorage.getItem(storageKey) === 'true';
+        }catch(error){
+            return false;
+        }
+    };
+
+    const rememberPromotion = ()=>{
+        try{
+            window.sessionStorage.setItem(storageKey, 'true');
+        }catch(error){
+            // The promotion still works when storage is unavailable.
+        }
+    };
+
+    const closePromotion = ()=>{
+        if(promoModal.hidden){
+            return;
+        }
+
+        promoModal.classList.remove('is-visible');
+        document.body.classList.remove('promo-modal-open');
+
+        window.clearTimeout(closeTimer);
+        closeTimer = window.setTimeout(()=>{
+            promoModal.hidden = true;
+
+            if(previousFocus && typeof previousFocus.focus === 'function'){
+                previousFocus.focus({preventScroll: true});
+            }
+        }, 230);
+    };
+
+    const openPromotion = ()=>{
+        if(wasAlreadyShown()){
+            return;
+        }
+
+        previousFocus = document.activeElement;
+        promoModal.hidden = false;
+        document.body.classList.add('promo-modal-open');
+        rememberPromotion();
+
+        window.requestAnimationFrame(()=>{
+            promoModal.classList.add('is-visible');
+            closeButton?.focus({preventScroll: true});
+        });
+    };
+
+    closeControls.forEach((control)=>{
+        control.addEventListener('click', closePromotion);
+    });
+
+    promoLink?.addEventListener('click', closePromotion);
+
+    document.addEventListener('keydown', (event)=>{
+        if(promoModal.hidden){
+            return;
+        }
+
+        if(event.key === 'Escape'){
+            event.preventDefault();
+            closePromotion();
+            return;
+        }
+
+        if(event.key === 'Tab' && focusableElements.length > 1){
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if(event.shiftKey && document.activeElement === firstElement){
+                event.preventDefault();
+                lastElement.focus();
+            }else if(!event.shiftKey && document.activeElement === lastElement){
+                event.preventDefault();
+                firstElement.focus();
+            }
+        }
+    });
+
+    window.setTimeout(openPromotion, 450);
+});
