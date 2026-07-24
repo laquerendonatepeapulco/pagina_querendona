@@ -5614,12 +5614,23 @@ nav a:hover {
     padding: 0 0 118px;
 }
 
-.sahagun-antojitos-heading {
+.sahagun-antojitos {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
-    align-items: end;
-    gap: 54px;
-    margin-bottom: 42px;
+    grid-template-columns: minmax(340px, .82fr) minmax(0, 1.18fr);
+    grid-template-areas:
+        "heading carousel"
+        "heading dots";
+    align-items: center;
+    gap: 18px 64px;
+}
+
+.sahagun-antojitos-heading {
+    grid-area: heading;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 0;
 }
 
 .sahagun-antojitos-heading .mini-tag {
@@ -5638,16 +5649,17 @@ nav a:hover {
 
 .sahagun-antojitos-heading > p {
     max-width: 470px;
-    margin: 0 0 7px;
+    margin: 0;
     color: rgba(255, 248, 236, .8);
     font-size: 1.05rem;
     line-height: 1.8;
 }
 
 .sahagun-antojitos-carousel {
+    grid-area: carousel;
     position: relative;
-    width: min(1040px, 100%);
-    margin-inline: auto;
+    width: 100%;
+    min-width: 0;
 }
 
 .sahagun-antojitos-track {
@@ -5677,6 +5689,7 @@ nav a:hover {
 }
 
 .sahagun-antojitos-dots {
+    grid-area: dots;
     margin-top: 18px;
 }
 
@@ -5954,8 +5967,16 @@ nav a:hover {
     }
 
     .sahagun-antojitos-heading {
-        grid-template-columns: 1fr;
         gap: 20px;
+    }
+
+    .sahagun-antojitos {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "heading"
+            "carousel"
+            "dots";
+        gap: 24px;
     }
 
     .branch-hero-content,
@@ -6080,7 +6101,7 @@ nav a:hover {
     }
 
     .sahagun-antojitos-heading {
-        margin-bottom: 30px;
+        margin-bottom: 0;
     }
 
     .sahagun-antojitos-heading h2 {
