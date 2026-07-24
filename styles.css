@@ -5471,34 +5471,82 @@ nav a:hover {
 
 .sahagun-broths-media {
     position: relative;
-    min-height: 620px;
+    min-width: 0;
+}
+
+.sahagun-broths-carousel {
+    position: relative;
     overflow: hidden;
+    border: 1px solid rgba(255, 210, 63, .34);
     border-radius: 30px;
     box-shadow: 0 26px 58px rgba(0, 0, 0, .3);
 }
 
-.sahagun-broths-media img {
-    width: 100%;
-    height: 100%;
+.sahagun-broths-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+
+.sahagun-broths-track::-webkit-scrollbar {
+    display: none;
+}
+
+.sahagun-broths-carousel .sahagun-broths-slide {
+    min-height: 620px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    scroll-snap-align: start;
+}
+
+.sahagun-broths-carousel .sahagun-broths-slide img {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
     display: block;
     object-fit: cover;
 }
 
-.sahagun-broths-media span {
-    position: absolute;
+.sahagun-broths-carousel .sahagun-broths-slide figcaption {
     right: 22px;
     bottom: 22px;
     left: 22px;
+    display: grid;
+    gap: 4px;
     padding: 16px 18px;
     border: 1px solid rgba(255, 210, 63, .5);
     border-radius: 8px;
     background: rgba(14, 14, 16, .88);
     color: #fff8ec;
-    font-weight: 700;
     line-height: 1.45;
     text-align: center;
+}
+
+.sahagun-broths-carousel .sahagun-broths-slide figcaption strong {
+    font-size: 1.2rem;
+}
+
+.sahagun-broths-carousel .sahagun-broths-slide figcaption span {
+    font-size: .92rem;
+    font-weight: 500;
+}
+
+.sahagun-broths-carousel .sahagun-gallery-button-prev {
+    left: 18px;
+}
+
+.sahagun-broths-carousel .sahagun-gallery-button-next {
+    right: 18px;
+}
+
+.sahagun-broths-dots {
+    margin-top: 16px;
 }
 
 .sahagun-broths-content > .mini-tag {
@@ -5982,8 +6030,29 @@ nav a:hover {
 
     .sahagun-broths-media {
         order: 2;
-        min-height: 420px;
+    }
+
+    .sahagun-broths-carousel {
         border-radius: 24px;
+    }
+
+    .sahagun-broths-carousel .sahagun-broths-slide {
+        min-height: 420px;
+    }
+
+    .sahagun-broths-carousel .sahagun-gallery-button-prev {
+        left: 12px;
+    }
+
+    .sahagun-broths-carousel .sahagun-gallery-button-next {
+        right: 12px;
+    }
+
+    .sahagun-broths-carousel .sahagun-broths-slide figcaption {
+        right: 14px;
+        bottom: 14px;
+        left: 14px;
+        padding: 12px 14px;
     }
 
     .sahagun-broths-content {

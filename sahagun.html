@@ -19,7 +19,7 @@
     <meta name="twitter:description" content="Comida mexicana tradicional y ambiente familiar en Ciudad Sahagún, Hidalgo.">
     <meta name="twitter:image" content="https://www.laquerendonacg.com/img/sahagun/interior.jpg">
     <link rel="icon" href="img/logo_pestaña.png" type="image/jpeg">
-    <link rel="stylesheet" href="styles.css?v=20260723-2">
+    <link rel="stylesheet" href="styles.css?v=20260724-1">
     <link rel="stylesheet" href="opcion.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -123,8 +123,47 @@
 
         <section class="sahagun-broths reveal" aria-labelledby="sahagun-broths-title">
             <div class="sahagun-broths-media">
-                <img src="img/sahagun/pozole-artesanal.jpg" alt="Pozole tradicional servido en barro en La Querendona Ciudad Sahag&uacute;n">
-                <span>Servidos calientes y con el saz&oacute;n de casa</span>
+                <div class="sahagun-broths-carousel" data-gallery-carousel aria-label="Caldos tradicionales de La Querendona">
+                    <button class="sahagun-gallery-button sahagun-gallery-button-prev" type="button" data-gallery-prev aria-label="Ver caldo anterior">&lsaquo;</button>
+
+                    <div class="sahagun-broths-track" data-gallery-track tabindex="0">
+                        <figure class="sahagun-broths-slide sahagun-gallery-slide">
+                            <img src="img/sahagun/pozole-artesanal.jpg" alt="Pozole tradicional servido en barro">
+                            <figcaption>
+                                <strong>Pozole</strong>
+                                <span>Una receta abundante con acompa&ntilde;amientos tradicionales.</span>
+                            </figcaption>
+                        </figure>
+
+                        <figure class="sahagun-broths-slide sahagun-gallery-slide">
+                            <img src="img/sahagun/birria.jpg" alt="Birria de La Querendona acompa&ntilde;ada con tortilla">
+                            <figcaption>
+                                <strong>Birria</strong>
+                                <span>Carne suave y saz&oacute;n casero para disfrutar cada bocado.</span>
+                            </figcaption>
+                        </figure>
+
+                        <figure class="sahagun-broths-slide sahagun-gallery-slide">
+                            <img src="img/sahagun/caldo-gallina.jpg" alt="Caldo de gallina servido con garbanzos">
+                            <figcaption>
+                                <strong>Caldo de gallina</strong>
+                                <span>Caliente, generoso y preparado para reconfortar.</span>
+                            </figcaption>
+                        </figure>
+
+                        <figure class="sahagun-broths-slide sahagun-gallery-slide">
+                            <img src="img/sahagun/pancita.jpg" alt="Pancita tradicional con sus acompa&ntilde;amientos">
+                            <figcaption>
+                                <strong>Pancita</strong>
+                                <span>Un cl&aacute;sico de sabor intenso con cebolla, lim&oacute;n y chile.</span>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <button class="sahagun-gallery-button sahagun-gallery-button-next" type="button" data-gallery-next aria-label="Ver siguiente caldo">&rsaquo;</button>
+                </div>
+
+                <div class="sahagun-gallery-dots sahagun-broths-dots" data-gallery-dots aria-label="Seleccionar caldo"></div>
             </div>
 
             <div class="sahagun-broths-content">
