@@ -1176,29 +1176,12 @@ window.addEventListener('DOMContentLoaded', ()=>{
         return;
     }
 
-    const storageKey = 'querendonaBirthdayPromoSeen';
     const closeButton = promoModal.querySelector('.promo-modal__close');
     const promoLink = promoModal.querySelector('.promo-modal__link');
     const closeControls = promoModal.querySelectorAll('[data-promo-close]');
     const focusableElements = [closeButton, promoLink].filter(Boolean);
     let previousFocus = null;
     let closeTimer = null;
-
-    const wasAlreadyShown = ()=>{
-        try{
-            return window.sessionStorage.getItem(storageKey) === 'true';
-        }catch(error){
-            return false;
-        }
-    };
-
-    const rememberPromotion = ()=>{
-        try{
-            window.sessionStorage.setItem(storageKey, 'true');
-        }catch(error){
-            // The promotion still works when storage is unavailable.
-        }
-    };
 
     const closePromotion = ()=>{
         if(promoModal.hidden){
@@ -1219,14 +1202,9 @@ window.addEventListener('DOMContentLoaded', ()=>{
     };
 
     const openPromotion = ()=>{
-        if(wasAlreadyShown()){
-            return;
-        }
-
         previousFocus = document.activeElement;
         promoModal.hidden = false;
         document.body.classList.add('promo-modal-open');
-        rememberPromotion();
 
         window.requestAnimationFrame(()=>{
             promoModal.classList.add('is-visible');
