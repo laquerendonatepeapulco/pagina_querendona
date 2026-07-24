@@ -5463,15 +5463,17 @@ nav a:hover {
 
 .sahagun-broths {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 38px;
+    grid-template-columns: minmax(0, 1.05fr) minmax(360px, .95fr);
+    align-items: center;
+    gap: 64px;
     padding: 0 0 118px;
 }
 
 .sahagun-broths-media {
+    grid-column: 1;
+    grid-row: 1;
     position: relative;
-    width: min(760px, 100%);
-    margin-inline: auto;
+    width: 100%;
     min-width: 0;
 }
 
@@ -5580,15 +5582,16 @@ nav a:hover {
 }
 
 .sahagun-broths-content {
-    display: grid;
-    grid-template-columns: minmax(0, .95fr) minmax(320px, .65fr);
-    align-items: end;
-    gap: 36px 70px;
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
 }
 
 .sahagun-broths-content > .mini-tag {
-    grid-column: 1 / -1;
-    margin-bottom: -20px;
+    margin-bottom: 0;
 }
 
 .sahagun-broths-content > h2 {
@@ -5600,7 +5603,7 @@ nav a:hover {
 }
 
 .sahagun-broths-content > p {
-    max-width: 680px;
+    max-width: 620px;
     margin: 0;
     color: rgba(255, 248, 236, .8);
     font-size: 1.05rem;
@@ -5932,9 +5935,18 @@ nav a:hover {
     }
 
     .sahagun-broths-content {
+        grid-column: auto;
+        grid-row: auto;
         grid-template-columns: 1fr;
         align-items: start;
         gap: 18px;
+    }
+
+    .sahagun-broths-media {
+        grid-column: auto;
+        grid-row: auto;
+        width: min(760px, 100%);
+        margin-inline: auto;
     }
 
     .sahagun-broths-content > .mini-tag {
