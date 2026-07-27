@@ -1178,8 +1178,9 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
     const closeButton = promoModal.querySelector('.promo-modal__close');
     const promoLink = promoModal.querySelector('.promo-modal__link');
+    const morePromotionsLink = promoModal.querySelector('.promo-modal__more');
     const closeControls = promoModal.querySelectorAll('[data-promo-close]');
-    const focusableElements = [closeButton, promoLink].filter(Boolean);
+    const focusableElements = [closeButton, promoLink, morePromotionsLink].filter(Boolean);
     let previousFocus = null;
     let closeTimer = null;
 

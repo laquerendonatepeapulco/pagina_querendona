@@ -8,6 +8,7 @@ const outDir = path.join(rootDir, "dist");
 
 const staticEntries = [
   "index.html",
+  "promociones.html",
   "tepeapulco.html",
   "sahagun.html",
   "menu.html",
