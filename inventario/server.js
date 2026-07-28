@@ -360,8 +360,8 @@ function sanitizeReservation(input = {}) {
     message: String(input.message || "").trim().slice(0, 1000)
   };
 
-  if (!reservation.branch || !reservation.name || !reservation.email || !reservation.phone || !Number.isInteger(reservation.partySize) || !reservation.date || !reservation.time || !reservation.celebrationType) {
-    const error = new Error("Completa sucursal, nombre, correo, telefono, numero de personas, fecha, hora y tipo de celebracion");
+  if (!reservation.branch || !reservation.name || !reservation.phone || !Number.isInteger(reservation.partySize) || !reservation.date || !reservation.time || !reservation.celebrationType) {
+    const error = new Error("Completa sucursal, nombre, telefono, numero de personas, fecha, hora y tipo de celebracion");
     error.status = 400;
     throw error;
   }
@@ -372,7 +372,7 @@ function sanitizeReservation(input = {}) {
     throw error;
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reservation.email)) {
+  if (reservation.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reservation.email)) {
     const error = new Error("Correo electronico invalido");
     error.status = 400;
     throw error;

@@ -629,7 +629,6 @@ if(reservationForm){
         const reservationPayload = {
             branch: String(formData.get('branch') || '').trim(),
             name: String(formData.get('name') || '').trim(),
-            email: String(formData.get('email') || '').trim(),
             phone: String(formData.get('phone') || '').trim(),
             partySize: Number.parseInt(String(formData.get('partySize') || ''), 10),
             date: String(formData.get('date') || ''),
@@ -730,7 +729,6 @@ function buildReservationMessage(reservation){
         '',
         `${translateSiteText('No. de cliente')}: ${reservation.customerNumber}`,
         `${translateSiteText('Nombre')}: ${reservation.name}`,
-        `${translateSiteText('Correo')}: ${reservation.email}`,
         `${translateSiteText('Teléfono')}: ${reservation.phone}`,
         `${translateSiteText('Personas')}: ${reservation.partySize}`,
         `${translateSiteText('Sucursal')}: ${translateSiteText(reservation.branch)}`,
