@@ -480,3 +480,75 @@
         min-width: 90px;
     }
 }
+
+/* Menú Tepeapulco: recomendación ordenada en pantallas móviles */
+@media (max-width: 768px) {
+    .featured-section .featured-card {
+        display: flex !important;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px !important;
+    }
+
+    .featured-section .featured-copy {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+    }
+
+    .featured-section .featured-copy h2 {
+        font-size: 1.45rem;
+        line-height: 1.2;
+    }
+
+    .featured-section .featured-copy h1 {
+        width: 100%;
+        margin-bottom: 16px;
+        font-size: 2.5rem;
+        line-height: 1;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+
+    .featured-section .featured-copy p {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.65;
+        overflow-wrap: break-word;
+    }
+
+    .featured-section .chef-image-container {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        animation: none;
+    }
+
+    .featured-section .chef-image-container .chef-image {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        object-position: center 58%;
+        border-radius: 18px;
+    }
+}
+
+@media (max-width: 420px) {
+    .featured-section .featured-card {
+        gap: 20px;
+        padding: 20px !important;
+    }
+
+    .featured-section .featured-copy h1 {
+        font-size: 2.1rem;
+    }
+
+    .featured-section .featured-copy p {
+        font-size: .95rem;
+    }
+}
