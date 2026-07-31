@@ -5291,6 +5291,7 @@ nav a:hover {
 
 .branch-hero,
 .sahagun-hero,
+.sahagun-place,
 .sahagun-intro,
 .sahagun-broths,
 .sahagun-highlights,
@@ -5355,6 +5356,126 @@ nav a:hover {
     color: rgba(255, 248, 236, .84);
     font-size: 1.16rem;
     line-height: 1.85;
+}
+
+.sahagun-place {
+    display: grid;
+    grid-template-columns: minmax(280px, .72fr) minmax(0, 1.28fr);
+    align-items: center;
+    gap: clamp(42px, 6vw, 76px);
+    padding: 8px 0 112px;
+}
+
+.sahagun-place-copy {
+    min-width: 0;
+}
+
+.sahagun-place-copy .mini-tag {
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 18px;
+}
+
+.sahagun-place-copy h2 {
+    margin: 0 0 22px;
+    color: #fff8ec;
+    font-size: clamp(2.55rem, 4.6vw, 4.85rem);
+    line-height: 1.02;
+}
+
+.sahagun-place-copy p {
+    margin: 0;
+    max-width: 500px;
+    color: rgba(255, 248, 236, .8);
+    font-size: 1.08rem;
+    line-height: 1.82;
+}
+
+.sahagun-place-media {
+    min-width: 0;
+}
+
+.sahagun-place-carousel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 210, 63, .38);
+    border-radius: 30px;
+    background: #08080a;
+    box-shadow: 0 28px 62px rgba(0, 0, 0, .38);
+}
+
+.sahagun-place-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+
+.sahagun-place-track::-webkit-scrollbar {
+    display: none;
+}
+
+.sahagun-place-carousel .sahagun-place-slide {
+    display: grid;
+    grid-template-rows: 560px auto;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    scroll-snap-align: start;
+}
+
+.sahagun-place-carousel .sahagun-place-slide::after {
+    display: none;
+}
+
+.sahagun-place-carousel .sahagun-place-slide img {
+    width: 100%;
+    height: 560px;
+    object-fit: contain;
+    background: #08080a;
+}
+
+.sahagun-place-carousel .sahagun-place-slide figcaption {
+    position: static;
+    display: grid;
+    gap: 5px;
+    min-height: 104px;
+    padding: 20px 30px 22px;
+    color: #161319;
+    background: var(--bone);
+    text-shadow: none;
+}
+
+.sahagun-place-carousel .sahagun-place-slide figcaption strong {
+    font-size: 1.28rem;
+    line-height: 1.2;
+}
+
+.sahagun-place-carousel .sahagun-place-slide figcaption span {
+    color: #5b4a3c;
+    font-size: .96rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.sahagun-place-carousel .sahagun-gallery-button {
+    top: 280px;
+}
+
+.sahagun-place-carousel .sahagun-gallery-button-prev {
+    left: 18px;
+}
+
+.sahagun-place-carousel .sahagun-gallery-button-next {
+    right: 18px;
+}
+
+.sahagun-place-dots {
+    margin-top: 18px;
 }
 
 .sahagun-intro {
@@ -5941,6 +6062,7 @@ nav a:hover {
 @media(max-width:992px){
     .branch-hero,
     .sahagun-hero,
+    .sahagun-place,
     .sahagun-intro,
     .sahagun-broths {
         grid-template-columns: 1fr;
@@ -5982,6 +6104,15 @@ nav a:hover {
     .branch-hero-content,
     .sahagun-hero-content {
         order: -1;
+    }
+
+    .sahagun-place {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .sahagun-place-copy {
+        max-width: 720px;
     }
 
     .branch-hero-media,
@@ -6038,6 +6169,50 @@ nav a:hover {
 
     .sahagun-intro {
         padding-bottom: 76px;
+    }
+
+    .sahagun-place {
+        gap: 26px;
+        padding: 0 0 82px;
+    }
+
+    .sahagun-place-copy h2 {
+        margin-bottom: 16px;
+        font-size: clamp(2.35rem, 11vw, 3.45rem);
+    }
+
+    .sahagun-place-copy p {
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    .sahagun-place-carousel {
+        border-radius: 24px;
+    }
+
+    .sahagun-place-carousel .sahagun-place-slide {
+        grid-template-rows: min(118vw, 520px) auto;
+    }
+
+    .sahagun-place-carousel .sahagun-place-slide img {
+        height: min(118vw, 520px);
+    }
+
+    .sahagun-place-carousel .sahagun-place-slide figcaption {
+        min-height: 112px;
+        padding: 18px 20px 20px;
+    }
+
+    .sahagun-place-carousel .sahagun-gallery-button {
+        top: min(59vw, 260px);
+    }
+
+    .sahagun-place-carousel .sahagun-gallery-button-prev {
+        left: 12px;
+    }
+
+    .sahagun-place-carousel .sahagun-gallery-button-next {
+        right: 12px;
     }
 
     .sahagun-intro-text h2 {
