@@ -9,6 +9,7 @@ const outDir = path.join(rootDir, "dist");
 const staticEntries = [
   "index.html",
   "promociones.html",
+  "latidos-de-mexico.html",
   "tepeapulco.html",
   "sahagun.html",
   "menu.html",
@@ -18,6 +19,7 @@ const staticEntries = [
   "styles.css",
   "styles2.css",
   "opcion.css",
+  "evento.css",
   "script.js",
   "translations.js",
   "googleea7d02d04b945bef.html",
