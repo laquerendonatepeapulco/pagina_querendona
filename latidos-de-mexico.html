@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="evento.css?v=20260810-1">
+  <link rel="stylesheet" href="evento.css?v=20260810-2">
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
@@ -170,6 +170,69 @@
       </div>
       <figure class="final-photo"><img src="img/tepeapulco/lugar/lugar-patio.jpg" alt="Patio de La Querendona en Tepeapulco" loading="lazy"></figure>
     </section>
+
+    <section class="latidos-section registration-section" id="registro" aria-labelledby="registration-title">
+      <div class="registration-heading">
+        <div class="editorial-label">Registro de reserva</div>
+        <h2 id="registration-title">Forma parte de esta experiencia.</h2>
+        <p>Comparte tus datos para preparar tu visita a Latidos de M&eacute;xico. Nuestro equipo revisar&aacute; la informaci&oacute;n y se pondr&aacute; en contacto contigo para confirmar disponibilidad.</p>
+      </div>
+
+      <form class="registration-form" id="latidos-registration-form">
+        <div class="registration-grid">
+          <label class="registration-field registration-field-wide">
+            <span>Nombre o raz&oacute;n social</span>
+            <input type="text" name="nombre" autocomplete="name" placeholder="Escribe tu nombre o empresa" required>
+          </label>
+          <label class="registration-field">
+            <span>Lugar de procedencia</span>
+            <input type="text" name="procedencia" autocomplete="address-level2" placeholder="Ciudad y estado" required>
+          </label>
+          <label class="registration-field">
+            <span>Representante legal o contacto</span>
+            <input type="text" name="representante" autocomplete="name" placeholder="Nombre de la persona de contacto" required>
+          </label>
+          <label class="registration-field">
+            <span>Edad</span>
+            <input type="number" name="edad" min="0" max="120" inputmode="numeric" placeholder="Edad" required>
+          </label>
+          <label class="registration-field">
+            <span>Correo electr&oacute;nico</span>
+            <input type="email" name="correo" autocomplete="email" placeholder="nombre@correo.com" required>
+          </label>
+          <label class="registration-field">
+            <span>N&uacute;mero de celular</span>
+            <input type="tel" name="celular" autocomplete="tel" inputmode="tel" placeholder="10 d&iacute;gitos" required>
+          </label>
+          <label class="registration-field">
+            <span>Indique el giro de la empresa (si aplica)</span>
+            <select name="giro">
+              <option value="" selected>Selecciona una opci&oacute;n</option>
+              <option value="industria">Industria</option>
+              <option value="comercio">Comercio</option>
+              <option value="servicio">Servicio</option>
+            </select>
+          </label>
+          <label class="registration-field registration-field-wide">
+            <span>Seleccione el tipo de experiencia</span>
+            <select name="experiencia" required>
+              <option value="" selected>Selecciona una experiencia</option>
+              <option value="tradicional">Experiencia tradicional - Buffet de antojitos mexicanos ($349)</option>
+              <option value="gastronomica">Experiencia gastron&oacute;mica - Cena mexicana de gala ($599)</option>
+            </select>
+          </label>
+          <label class="registration-field">
+            <span>No. de acompa&ntilde;antes</span>
+            <input type="number" name="acompanantes" min="0" inputmode="numeric" placeholder="Ej. 3" required>
+          </label>
+        </div>
+        <div class="registration-actions">
+          <p class="registration-note">El registro no confirma por s&iacute; solo la reserva; recibir&aacute;s confirmaci&oacute;n del equipo organizador.</p>
+          <button class="registration-submit" type="submit">Enviar solicitud</button>
+        </div>
+        <p class="registration-feedback" id="registration-feedback" role="status" aria-live="polite" hidden></p>
+      </form>
+    </section>
   </main>
 
   <footer class="latidos-footer">
@@ -191,6 +254,16 @@
         toggle.setAttribute('aria-expanded', 'false');
       }
     });
+
+    const registrationForm = document.querySelector('#latidos-registration-form');
+    const registrationFeedback = document.querySelector('#registration-feedback');
+    if (registrationForm && registrationFeedback) {
+      registrationForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        registrationFeedback.hidden = false;
+        registrationFeedback.textContent = 'Tu solicitud est\u00e1 lista para revisi\u00f3n. Falta conectar este formulario con el canal de confirmaci\u00f3n del evento.';
+      });
+    }
   </script>
 </body>
 </html>
