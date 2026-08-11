@@ -130,6 +130,7 @@ body.latidos-page a { color: inherit; }
 .offer-note { font-size: 15px; }
 .offer-visual { position: relative; padding: 14px; border: 1px solid var(--ochre); }
 .offer-visual img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; filter: saturate(0.86); }
+.offer-visual img.veracruz-visual { object-position: 58% center; filter: saturate(0.94); }
 .visual-stamp { position: absolute; right: -22px; bottom: 34px; padding: 16px 15px; color: var(--white); background: var(--wine); font-family: "Cormorant Garamond", Georgia, serif; font-size: 20px; line-height: 0.9; letter-spacing: 0.08em; transform: rotate(-6deg); }
 
 .program-section { overflow: hidden; text-align: center; }
