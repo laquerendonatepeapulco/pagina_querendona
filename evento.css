@@ -162,15 +162,6 @@ body.latidos-page a { color: inherit; }
 .capacity-note { font-family: "Cormorant Garamond", Georgia, serif; font-size: 22px; text-transform: uppercase; letter-spacing: 0.1em; }
 .capacity-note span { margin: 0 16px; color: var(--wine); }
 
-.allies-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10%; }
-.allies-intro h2 { color: var(--wine); }
-.latidos-button-dark { color: var(--paper) !important; background: var(--ink); border-color: var(--ink); }
-.latidos-button-dark:hover { color: var(--ink) !important; background: transparent; }
-.benefits-list { border-top: 1px solid var(--ink); }
-.benefits-list h3 { margin: 0; padding: 16px 0; font-family: "Cormorant Garamond", Georgia, serif; font-size: 36px; font-weight: 500; }
-.benefits-list p { max-width: none; margin: 0; padding: 17px 0; border-top: 1px solid var(--line); font-family: "Cormorant Garamond", Georgia, serif; font-size: 24px; }
-.benefits-list p::before { content: "◆"; margin-right: 14px; color: var(--wine); font-size: 10px; vertical-align: middle; }
-
 .final-section { display: grid; grid-template-columns: 1fr 0.85fr; gap: 8%; align-items: end; padding-top: 135px; overflow: hidden; }
 .textile-border { position: absolute; top: 0; left: 0; right: 0; display: flex; height: 26px; background: repeating-linear-gradient(90deg, var(--wine) 0 36px, var(--ochre) 36px 72px, var(--ink) 72px 108px); }
 .textile-border span { flex: 1; border-right: 1px solid rgba(255,255,255,0.35); transform: skew(-28deg); }
@@ -240,7 +231,7 @@ body.latidos-page a { color: inherit; }
   .cover-meta span + span::before { display: none; }
   .latidos-section { padding: 76px 8vw; }
   .latidos-section h2 { font-size: 48px; }
-  .about-section, .offer-section, .allies-section { display: block; }
+  .about-section, .offer-section { display: block; }
   .about-section > .editorial-label { margin-bottom: 24px; }
   .about-collage { grid-template-rows: 140px 140px; margin-top: 36px; }
   .offer-list { grid-template-columns: 1fr; }
@@ -255,8 +246,6 @@ body.latidos-page a { color: inherit; }
   .experience-grid { display: block; }
   .experience-item { border-right: 0; border-bottom: 1px solid var(--line); padding: 30px 24px; }
   .experience-item:last-child { border-bottom: 0; }
-  .benefits-list { margin-top: 48px; }
-  .benefits-list p { font-size: 21px; }
   .final-copy h2 { font-size: 43px; }
   .event-details div { grid-template-columns: 1fr; gap: 2px; }
   .registration-section { margin-top: 0; padding-top: 76px; }
