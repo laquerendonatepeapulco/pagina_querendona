@@ -156,11 +156,31 @@
       <div class="registration-heading">
         <div class="editorial-label">Registro de reserva</div>
         <h2 id="registration-title">Forma parte de esta experiencia.</h2>
-        <p>Comparte tus datos para preparar tu visita a Latidos de M&eacute;xico. Nuestro equipo revisar&aacute; la informaci&oacute;n y se pondr&aacute; en contacto contigo para confirmar disponibilidad.</p>
+        <p>Primero realiza el pago &uacute;nico en Mercado Pago. Despu&eacute;s comparte tus datos, el monto y el n&uacute;mero de operaci&oacute;n; nuestro equipo revisar&aacute; manualmente la informaci&oacute;n y se pondr&aacute; en contacto contigo para confirmar disponibilidad.</p>
+      </div>
+
+      <div class="payment-panel" aria-labelledby="payment-title">
+        <div class="payment-panel-copy">
+          <div class="editorial-label">Paso 1: Pago</div>
+          <h3 id="payment-title">Confirma tu aportaci&oacute;n</h3>
+          <p>Realiza el pago &uacute;nico por el monto correspondiente y conserva tu comprobante.</p>
+        </div>
+        <div class="payment-panel-action">
+          <a class="payment-link" href="https://link.mercadopago.com.mx/latidosdemexico" target="_blank" rel="noopener noreferrer">Abrir Mercado Pago</a>
+          <span class="payment-panel-note">Despu&eacute;s registra el monto y el n&uacute;mero de operaci&oacute;n.</span>
+        </div>
       </div>
 
       <form class="registration-form" id="latidos-registration-form">
         <div class="registration-grid">
+          <label class="registration-field">
+            <span>Monto pagado (MXN)</span>
+            <input id="payment-amount" type="number" name="montoPago" min="1" step="0.01" inputmode="decimal" placeholder="Ej. 500.00" required>
+          </label>
+          <label class="registration-field">
+            <span>N&uacute;mero de operaci&oacute;n / referencia</span>
+            <input id="payment-operation" type="text" name="operacionPago" autocomplete="off" placeholder="Referencia de Mercado Pago" required>
+          </label>
           <label class="registration-field registration-field-wide">
             <span>Nombre o raz&oacute;n social</span>
             <input type="text" name="nombre" autocomplete="name" placeholder="Escribe tu nombre o empresa" required>
@@ -208,7 +228,7 @@
           </label>
         </div>
         <div class="registration-actions">
-          <p class="registration-note">El registro no confirma por s&iacute; solo la reserva; recibir&aacute;s confirmaci&oacute;n del equipo organizador.</p>
+          <p class="registration-note">La solicitud queda pendiente de validaci&oacute;n manual. El equipo verificar&aacute; el monto y la operaci&oacute;n antes de confirmar tu registro.</p>
           <button class="registration-submit" type="submit">Enviar solicitud</button>
         </div>
         <p class="registration-feedback" id="registration-feedback" role="status" aria-live="polite" hidden></p>
@@ -238,11 +258,25 @@
 
     const registrationForm = document.querySelector('#latidos-registration-form');
     const registrationFeedback = document.querySelector('#registration-feedback');
-    if (registrationForm && registrationFeedback) {
+    const paymentAmount = document.querySelector('#payment-amount');
+    const paymentOperation = document.querySelector('#payment-operation');
+    if (registrationForm && registrationFeedback && paymentAmount && paymentOperation) {
       registrationForm.addEventListener('submit', (event) => {
         event.preventDefault();
+        if (!registrationForm.checkValidity()) {
+          registrationForm.reportValidity();
+          return;
+        }
+
+        const amount = Number(paymentAmount.value);
+        const operation = paymentOperation.value.trim();
+        const formattedAmount = new Intl.NumberFormat('es-MX', {
+          style: 'currency',
+          currency: 'MXN'
+        }).format(amount);
+
         registrationFeedback.hidden = false;
-        registrationFeedback.textContent = 'Tu solicitud est\u00e1 lista para revisi\u00f3n. Falta conectar este formulario con el canal de confirmaci\u00f3n del evento.';
+        registrationFeedback.textContent = `Solicitud recibida. El equipo validar\u00e1 manualmente tu pago de ${formattedAmount} con la operaci\u00f3n ${operation} y te contactar\u00e1 para confirmar tu registro.`;
       });
     }
   </script>
