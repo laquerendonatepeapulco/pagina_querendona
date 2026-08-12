@@ -257,9 +257,10 @@ body.latidos-page a { color: inherit; }
 .registration-submit:hover { color: var(--wine); background: transparent; transform: translateY(-2px); }
 .registration-feedback { margin: 22px 0 0; padding: 14px 16px; color: var(--ink); background: rgba(176, 144, 90, 0.13); border-left: 3px solid var(--ochre); font-size: 13px; }
 
-.latidos-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 34px 5vw; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 12px; }
+.latidos-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding: 34px 5vw 22px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 12px; }
 .latidos-footer img { width: 70px; height: 80px; object-fit: contain; mix-blend-mode: multiply; }
 .latidos-footer p { margin: 0; }
+.latidos-footer .latidos-copyright { flex: 0 0 100%; padding-top: 18px; border-top: 1px solid var(--line); text-align: center; }
 
 @media (max-width: 980px) {
   .latidos-header {
