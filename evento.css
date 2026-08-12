@@ -218,9 +218,10 @@ body.latidos-page a { color: inherit; }
   border: 1px solid var(--ochre);
   background: rgba(176, 144, 90, 0.08);
 }
-.payment-panel-copy { max-width: 620px; }
+.payment-panel-copy { flex: 1 1 620px; min-width: 0; max-width: 620px; }
 .payment-panel h3 { margin: 12px 0 8px; color: var(--wine); font-size: clamp(24px, 3vw, 36px); }
 .payment-panel p { margin: 0; color: var(--ink-soft); }
+.payment-panel-copy > p { max-width: 600px; line-height: 1.6; text-wrap: balance; }
 .payment-panel-action { display: flex; flex: 0 0 260px; flex-direction: column; align-items: stretch; gap: 10px; }
 .payment-brand { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 68px; padding: 8px 14px; background: #fff; border: 1px solid rgba(30, 51, 35, 0.18); }
 .payment-brand span { flex: 0 0 54px; color: var(--ink-soft); font-size: 9px; font-weight: 700; line-height: 1.3; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -348,6 +349,7 @@ body.latidos-page a { color: inherit; }
   .event-details div { grid-template-columns: 1fr; gap: 2px; }
   .registration-section { margin-top: 0; padding-top: 76px; }
   .payment-panel { align-items: flex-start; flex-direction: column; }
+  .payment-panel-copy { flex: 0 0 auto; width: 100%; max-width: none; }
   .payment-panel-action { flex: 0 0 auto; width: 100%; }
   .payment-link { width: 100%; }
   .payment-panel-note { max-width: none; }
