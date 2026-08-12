@@ -235,12 +235,36 @@ body.latidos-page a { color: inherit; }
 .latidos-footer a { color: var(--wine); text-decoration: underline; text-underline-offset: 4px; }
 
 @media (max-width: 980px) {
-  .latidos-header { padding: 12px 6vw; }
-  .latidos-menu-toggle { display: block; }
-  .latidos-nav { position: absolute; top: 100%; left: 0; right: 0; display: none; flex-direction: column; align-items: stretch; gap: 0; padding: 12px 6vw 18px; background: var(--paper); border-bottom: 1px solid var(--line); }
-  .latidos-nav.is-open { display: flex; }
-  .latidos-nav a { padding: 12px 0; }
-  .latidos-nav-cta { text-align: center; }
+  .latidos-header {
+    display: grid;
+    grid-template-columns: minmax(160px, 0.75fr) minmax(0, 1.4fr);
+    gap: 16px;
+    min-height: 88px;
+    padding: 12px 4vw;
+  }
+  .latidos-menu-toggle { display: none; }
+  .latidos-nav {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    border: 0;
+  }
+  .latidos-nav.is-open { display: grid; }
+  .latidos-nav a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 6px 8px;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .latidos-nav a:not(.latidos-nav-cta) { border: 1px solid rgba(30, 51, 35, 0.2); }
+  .latidos-nav-cta { min-height: 42px; padding: 6px 8px; text-align: center; }
   .about-section { grid-template-columns: 1fr 1.2fr; }
   .about-section > .editorial-label { grid-column: span 2; }
   .offer-section { grid-template-columns: 1fr; }
@@ -250,10 +274,19 @@ body.latidos-page a { color: inherit; }
 }
 @media (max-width: 700px) {
   body.latidos-page { font-size: 15px; }
-  .latidos-header { min-height: 70px; }
-  .latidos-wordmark strong { font-size: 18px; }
-  .latidos-wordmark small { font-size: 7px; }
-  .wordmark-mark { width: 30px; height: 30px; font-size: 20px; }
+  .latidos-header {
+    grid-template-columns: minmax(128px, 0.9fr) minmax(168px, 1.1fr);
+    gap: 10px;
+    min-height: 98px;
+    padding: 10px 3vw;
+  }
+  .latidos-wordmark { gap: 7px; letter-spacing: 0.08em; }
+  .latidos-wordmark strong { font-size: 16px; letter-spacing: 0.14em; }
+  .latidos-wordmark small { font-size: 6px; letter-spacing: 0.26em; }
+  .wordmark-mark { width: 28px; height: 28px; font-size: 18px; }
+  .latidos-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; font-size: 9px; letter-spacing: 0.05em; }
+  .latidos-nav a,
+  .latidos-nav-cta { min-height: 34px; padding: 4px; }
   .latidos-cover, .latidos-section { width: 100%; }
   .latidos-cover { min-height: 680px; padding: 60px 8vw; }
   .latidos-cover::before { inset: 16% 7%; }
@@ -292,4 +325,18 @@ body.latidos-page a { color: inherit; }
   .registration-note { margin-bottom: 24px; }
   .registration-submit { width: 100%; }
   .latidos-footer { flex-direction: column; text-align: center; }
+}
+@media (max-width: 360px) {
+  .latidos-header {
+    grid-template-columns: minmax(118px, 0.82fr) minmax(150px, 1.18fr);
+    gap: 6px;
+    padding: 8px 2vw;
+  }
+  .latidos-wordmark { gap: 4px; }
+  .latidos-wordmark strong { font-size: 14px; letter-spacing: 0.12em; }
+  .latidos-wordmark small { font-size: 5px; letter-spacing: 0.22em; }
+  .wordmark-mark { width: 24px; height: 24px; font-size: 16px; }
+  .latidos-nav { font-size: 8px; }
+  .latidos-nav a,
+  .latidos-nav-cta { padding: 3px 2px; }
 }
