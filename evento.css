@@ -23,6 +23,28 @@ body.latidos-page {
 body.latidos-page img { max-width: 100%; display: block; }
 body.latidos-page a { color: inherit; }
 
+.latidos-motion-ready .latidos-reveal {
+  --latidos-reveal-x: 0px;
+  --latidos-reveal-y: 64px;
+  opacity: 0;
+  transform: translate3d(var(--latidos-reveal-x), var(--latidos-reveal-y), 0) scale(0.98);
+  transition: opacity 900ms cubic-bezier(0.22, 1, 0.36, 1), transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.latidos-motion-ready .latidos-reveal-left { --latidos-reveal-x: -56px; --latidos-reveal-y: 18px; }
+.latidos-motion-ready .latidos-reveal-right { --latidos-reveal-x: 56px; --latidos-reveal-y: 18px; }
+.latidos-motion-ready .latidos-reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  will-change: auto;
+}
+.latidos-motion-ready .latidos-delay-1 { transition-delay: 90ms; }
+.latidos-motion-ready .latidos-delay-2 { transition-delay: 180ms; }
+.latidos-motion-ready .latidos-delay-3 { transition-delay: 270ms; }
+.latidos-motion-ready .latidos-delay-4 { transition-delay: 360ms; }
+.latidos-motion-ready .latidos-delay-5 { transition-delay: 450ms; }
+.latidos-motion-ready .latidos-button.latidos-reveal.is-visible:hover { transform: translateY(-2px); }
+
 .latidos-header {
   position: sticky;
   top: 0;
@@ -325,6 +347,9 @@ body.latidos-page a { color: inherit; }
   .registration-note { margin-bottom: 24px; }
   .registration-submit { width: 100%; }
   .latidos-footer { flex-direction: column; text-align: center; }
+  .latidos-motion-ready .latidos-reveal { --latidos-reveal-y: 38px; }
+  .latidos-motion-ready .latidos-reveal-left { --latidos-reveal-x: -26px; --latidos-reveal-y: 12px; }
+  .latidos-motion-ready .latidos-reveal-right { --latidos-reveal-x: 26px; --latidos-reveal-y: 12px; }
 }
 @media (max-width: 360px) {
   .latidos-header {
@@ -338,4 +363,14 @@ body.latidos-page a { color: inherit; }
   .latidos-nav { gap: 2px; font-size: 7px; letter-spacing: 0.02em; }
   .latidos-nav a,
   .latidos-nav-cta { padding: 3px 1px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .latidos-motion-ready .latidos-reveal,
+  .latidos-motion-ready .latidos-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
