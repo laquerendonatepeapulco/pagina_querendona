@@ -123,7 +123,7 @@ body.latidos-page a { color: inherit; }
 .latidos-cover { position: relative; display: grid; min-height: 760px; place-items: center; align-content: center; padding: 72px 10%; text-align: center; overflow: hidden; }
 .latidos-cover::before { content: ""; position: absolute; inset: 12% 23%; border: 1px solid rgba(176, 144, 90, 0.7); border-radius: 50% 50% 44% 56%; transform: rotate(-13deg); pointer-events: none; }
 .latidos-logo { position: relative; z-index: 1; width: 215px; height: 250px; object-fit: contain; mix-blend-mode: multiply; }
-.cover-kicker { position: relative; z-index: 1; margin: -14px 0 10px; color: var(--wine); font-family: "Cormorant Garamond", Georgia, serif; font-size: 24px; font-style: italic; }
+.cover-kicker { position: relative; z-index: 1; margin: 14px 0 16px; color: var(--wine); font-family: "Cormorant Garamond", Georgia, serif; font-size: 24px; font-style: italic; line-height: 1.2; }
 .latidos-cover h1 { position: relative; z-index: 1; max-width: 920px; margin: 0; font-family: "Cormorant Garamond", Georgia, serif; font-size: 72px; font-weight: 500; line-height: 0.98; letter-spacing: 0.02em; }
 .cover-rule { display: flex; align-items: center; width: min(470px, 80%); height: 20px; margin: 24px 0 10px; }
 .cover-rule::before, .cover-rule::after { content: ""; flex: 1; height: 1px; background: var(--ochre); }
@@ -361,7 +361,7 @@ body.latidos-page a { color: inherit; }
   .latidos-cover { min-height: 680px; padding: 60px 8vw; }
   .latidos-cover::before { inset: 16% 7%; }
   .latidos-logo { width: 180px; height: 210px; }
-  .cover-kicker { font-size: 20px; }
+  .cover-kicker { margin: 10px 0 14px; font-size: 20px; }
   .latidos-cover h1 { font-size: 43px; }
   .cover-meta { flex-direction: column; gap: 3px; }
   .cover-meta span + span::before { display: none; }
