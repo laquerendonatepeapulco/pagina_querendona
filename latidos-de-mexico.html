@@ -276,7 +276,9 @@
 
         window.requestAnimationFrame(() => {
           window.requestAnimationFrame(() => {
-            loadRevealElements.forEach((element) => element.classList.add('is-visible'));
+            window.setTimeout(() => {
+              loadRevealElements.forEach((element) => element.classList.add('is-visible'));
+            }, 160);
           });
         });
       }
