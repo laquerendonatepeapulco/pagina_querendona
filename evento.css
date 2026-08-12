@@ -33,6 +33,7 @@ body.latidos-page a { color: inherit; }
 }
 .latidos-motion-ready .latidos-reveal-left { --latidos-reveal-x: -56px; --latidos-reveal-y: 18px; }
 .latidos-motion-ready .latidos-reveal-right { --latidos-reveal-x: 56px; --latidos-reveal-y: 18px; }
+.latidos-motion-ready .latidos-reveal-top { --latidos-reveal-x: 0px; --latidos-reveal-y: -28px; }
 .latidos-motion-ready .latidos-reveal.is-visible {
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
@@ -44,6 +45,11 @@ body.latidos-page a { color: inherit; }
 .latidos-motion-ready .latidos-delay-4 { transition-delay: 360ms; }
 .latidos-motion-ready .latidos-delay-5 { transition-delay: 450ms; }
 .latidos-motion-ready .latidos-button.latidos-reveal.is-visible:hover { transform: translateY(-2px); }
+.latidos-motion-ready.latidos-motion-timeout .latidos-reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
 
 .latidos-header {
   position: sticky;

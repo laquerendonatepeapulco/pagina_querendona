@@ -11,7 +11,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="evento.css?v=20260812-1">
+  <script>
+    document.documentElement.classList.add('latidos-motion-ready');
+    window.latidosMotionFallback = window.setTimeout(() => document.documentElement.classList.add('latidos-motion-timeout'), 2500);
+  </script>
+  <link rel="stylesheet" href="evento.css?v=20260812-2">
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
@@ -36,7 +40,7 @@
   </script>
 </head>
 <body class="latidos-page">
-  <header class="latidos-header">
+  <header class="latidos-header latidos-reveal latidos-reveal-top">
     <a class="latidos-wordmark" href="#inicio" aria-label="Ir al inicio de Latidos de M&eacute;xico">
       <span class="wordmark-mark">L</span>
       <span><strong>LATIDOS</strong><small>DE M&Eacute;XICO</small></span>
@@ -243,14 +247,15 @@
   </footer>
 
   <script>
+    window.clearTimeout(window.latidosMotionFallback);
     const revealElements = document.querySelectorAll('.latidos-reveal');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (revealElements.length) {
-      document.body.classList.add('latidos-motion-ready');
-
       if (reducedMotion || !('IntersectionObserver' in window)) {
         revealElements.forEach((element) => element.classList.add('is-visible'));
       } else {
+        const loadRevealElements = document.querySelectorAll('.latidos-header.latidos-reveal, .latidos-cover .latidos-reveal');
+        const loadRevealSet = new Set(loadRevealElements);
         const revealObserver = new IntersectionObserver((entries, observer) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
@@ -263,13 +268,15 @@
           rootMargin: '0px 0px -10% 0px'
         });
 
-        revealElements.forEach((element) => revealObserver.observe(element));
+        revealElements.forEach((element) => {
+          if (!loadRevealSet.has(element)) {
+            revealObserver.observe(element);
+          }
+        });
 
-        const coverRevealElements = document.querySelectorAll('.latidos-cover .latidos-reveal');
         window.requestAnimationFrame(() => {
-          coverRevealElements.forEach((element) => {
-            element.classList.add('is-visible');
-            revealObserver.unobserve(element);
+          window.requestAnimationFrame(() => {
+            loadRevealElements.forEach((element) => element.classList.add('is-visible'));
           });
         });
       }
