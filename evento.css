@@ -244,7 +244,7 @@ body.latidos-page a { color: inherit; }
 }
 .payment-link:hover { color: var(--wine); background: transparent; transform: translateY(-2px); }
 .payment-panel-action .payment-link { width: 100%; }
-.payment-panel-note { max-width: 240px; color: var(--ink-soft); font-size: 12px; }
+.payment-panel-note { display: block; width: 100%; max-width: none; margin: 0; padding: 0 10px; color: var(--ink-soft); font-size: 12px; line-height: 1.5; text-align: center; text-wrap: balance; }
 .registration-form { padding: 34px 0 0; border-top: 1px solid var(--ink); }
 .registration-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px; }
 .registration-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
