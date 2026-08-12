@@ -218,11 +218,40 @@ body.latidos-page a { color: inherit; }
   border: 1px solid var(--ochre);
   background: rgba(176, 144, 90, 0.08);
 }
-.payment-panel-copy { flex: 1 1 620px; min-width: 0; max-width: 620px; text-align: left; }
+.payment-panel-copy { flex: 1 1 700px; min-width: 0; max-width: 760px; text-align: left; }
 .payment-panel h3 { margin: 12px 0 8px; color: var(--wine); font-size: clamp(24px, 3vw, 36px); }
 .payment-panel p { margin: 0; color: var(--ink-soft); }
-.payment-panel-copy > p { max-width: 600px; margin-inline: 0; line-height: 1.6; text-wrap: balance; }
-.payment-panel-action { display: flex; flex: 0 0 260px; flex-direction: column; align-items: stretch; gap: 10px; }
+.payment-panel-copy > p { max-width: 680px; margin-inline: 0; line-height: 1.6; text-wrap: balance; }
+.ticket-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 24px 0 18px; padding: 0; border: 0; }
+.ticket-options legend { grid-column: 1 / -1; margin-bottom: 10px; color: var(--wine); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.ticket-option { position: relative; min-width: 0; cursor: pointer; }
+.ticket-option input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.ticket-option-content { display: flex; min-height: 142px; flex-direction: column; padding: 16px; border: 1px solid rgba(30, 51, 35, 0.28); background: rgba(255, 253, 248, 0.6); transition: border-color 180ms ease, background 180ms ease, transform 180ms ease, box-shadow 180ms ease; }
+.ticket-option:hover .ticket-option-content { border-color: var(--ochre); transform: translateY(-2px); }
+.ticket-option input:focus-visible + .ticket-option-content { outline: 2px solid var(--ochre); outline-offset: 3px; }
+.ticket-option input:checked + .ticket-option-content { border-color: var(--wine); background: rgba(174, 61, 62, 0.08); box-shadow: inset 0 0 0 1px var(--wine); }
+.ticket-option input:checked + .ticket-option-content::before { content: "✓"; position: absolute; top: 10px; right: 12px; display: grid; width: 22px; height: 22px; place-items: center; color: var(--paper); background: var(--wine); border-radius: 50%; font-size: 13px; }
+.ticket-option-name { padding-right: 24px; color: var(--wine); font-size: 10px; font-weight: 700; letter-spacing: 0.13em; line-height: 1.4; text-transform: uppercase; }
+.ticket-option-description { margin: 7px 0 14px; color: var(--ink); font-family: "Cormorant Garamond", Georgia, serif; font-size: 21px; font-weight: 600; line-height: 1.05; }
+.ticket-option strong { margin-top: auto; color: var(--wine); font-family: "Cormorant Garamond", Georgia, serif; font-size: 27px; }
+.ticket-option strong small { color: var(--ink-soft); font-family: "DM Sans", Arial, sans-serif; font-size: 10px; font-weight: 500; }
+.ticket-calculation { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
+.ticket-quantity { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; color: var(--wine); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.ticket-quantity > small { color: var(--ink-soft); font-size: 9px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.ticket-stepper { display: grid; grid-template-columns: 38px 64px 38px; }
+.ticket-stepper button,
+.ticket-stepper input { height: 40px; color: var(--ink); background: rgba(255, 253, 248, 0.78); border: 1px solid rgba(30, 51, 35, 0.36); border-radius: 0; font: inherit; text-align: center; }
+.ticket-stepper button { padding: 0; font-size: 20px; cursor: pointer; }
+.ticket-stepper button + input,
+.ticket-stepper input + button { border-left: 0; }
+.ticket-stepper input { width: 64px; appearance: textfield; }
+.ticket-stepper input::-webkit-inner-spin-button,
+.ticket-stepper input::-webkit-outer-spin-button { margin: 0; appearance: none; }
+.ticket-stepper button:hover { color: var(--paper); background: var(--wine); }
+.ticket-total { flex: 0 0 auto; text-align: right; }
+.ticket-total span { display: block; color: var(--ink-soft); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.ticket-total strong { display: block; margin-top: 3px; color: var(--wine); font-family: "Cormorant Garamond", Georgia, serif; font-size: 38px; line-height: 1; }
+.payment-panel-action { display: flex; flex: 0 0 292px; flex-direction: column; align-items: stretch; gap: 10px; }
 .payment-brand { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 68px; padding: 8px 14px; background: #fff; border: 1px solid rgba(30, 51, 35, 0.18); }
 .payment-brand span { flex: 0 0 54px; color: var(--ink-soft); font-size: 9px; font-weight: 700; line-height: 1.3; letter-spacing: 0.08em; text-transform: uppercase; }
 .payment-brand img { width: 150px; height: auto; }
@@ -244,8 +273,14 @@ body.latidos-page a { color: inherit; }
   transition: background 180ms ease, color 180ms ease, transform 180ms ease;
 }
 .payment-link:hover { color: var(--wine); background: transparent; transform: translateY(-2px); }
+.payment-link:focus-visible { outline: 2px solid var(--ochre); outline-offset: 3px; }
+.payment-link:disabled { color: rgba(255, 253, 248, 0.76) !important; background: rgba(174, 61, 62, 0.62); border-color: transparent; cursor: not-allowed; transform: none; }
 .payment-panel-action .payment-link { width: 100%; }
 .payment-panel-note { display: block; width: 100%; max-width: none; margin: 0; padding: 0 10px; color: var(--ink-soft); font-size: 12px; line-height: 1.5; text-align: center; text-wrap: balance; }
+.payment-panel .checkout-feedback { padding: 10px 12px; color: var(--ink); background: rgba(176, 144, 90, 0.13); border-left: 3px solid var(--ochre); font-size: 12px; line-height: 1.45; }
+.payment-panel .checkout-feedback.is-success { background: rgba(30, 96, 56, 0.1); border-left-color: #356c48; }
+.payment-panel .checkout-feedback.is-error { background: rgba(174, 61, 62, 0.1); border-left-color: var(--wine); }
+.payment-panel .checkout-feedback.is-pending { background: rgba(176, 144, 90, 0.13); border-left-color: var(--ochre); }
 .registration-form { padding: 34px 0 0; border-top: 1px solid var(--ink); }
 .registration-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px; }
 .registration-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -254,12 +289,14 @@ body.latidos-page a { color: inherit; }
 .registration-field input,
 .registration-field select { width: 100%; min-height: 50px; padding: 12px 14px; color: var(--ink); background: rgba(255, 253, 248, 0.6); border: 1px solid rgba(30, 51, 35, 0.38); border-radius: 0; font: inherit; }
 .registration-field input::placeholder { color: rgba(82, 96, 82, 0.8); }
+.registration-field input[readonly] { color: var(--ink); background: rgba(176, 144, 90, 0.08); cursor: default; }
 .registration-field input:focus,
 .registration-field select:focus { outline: 2px solid var(--ochre); outline-offset: 2px; border-color: var(--wine); }
 .registration-actions { display: flex; align-items: center; justify-content: space-between; gap: 28px; margin-top: 38px; padding-top: 24px; border-top: 1px solid var(--line); }
 .registration-note { max-width: 560px; margin: 0; color: var(--ink-soft); font-size: 13px; }
 .registration-submit { flex: 0 0 auto; min-width: 220px; padding: 15px 22px; color: var(--paper); background: var(--wine); border: 1px solid var(--wine); border-radius: 0; font: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: background 180ms ease, color 180ms ease, transform 180ms ease; }
 .registration-submit:hover { color: var(--wine); background: transparent; transform: translateY(-2px); }
+.registration-submit:disabled { color: rgba(255, 253, 248, 0.76); background: rgba(174, 61, 62, 0.56); border-color: transparent; cursor: not-allowed; transform: none; }
 .registration-feedback { margin: 22px 0 0; padding: 14px 16px; color: var(--ink); background: rgba(176, 144, 90, 0.13); border-left: 3px solid var(--ochre); font-size: 13px; }
 
 .latidos-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding: 34px 5vw 22px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 12px; }
@@ -363,6 +400,12 @@ body.latidos-page a { color: inherit; }
   .latidos-motion-ready .latidos-reveal-left { --latidos-reveal-x: -26px; --latidos-reveal-y: 12px; }
   .latidos-motion-ready .latidos-reveal-right { --latidos-reveal-x: 26px; --latidos-reveal-y: 12px; }
 }
+@media (max-width: 620px) {
+  .ticket-options { grid-template-columns: 1fr; }
+  .ticket-option-content { min-height: 124px; }
+  .ticket-calculation { align-items: center; }
+  .ticket-total strong { font-size: 32px; }
+}
 @media (max-width: 360px) {
   .latidos-header {
     gap: 7px;
@@ -375,6 +418,8 @@ body.latidos-page a { color: inherit; }
   .latidos-nav { gap: 2px; font-size: 7px; letter-spacing: 0.02em; }
   .latidos-nav a,
   .latidos-nav-cta { padding: 3px 1px; }
+  .ticket-calculation { align-items: stretch; flex-direction: column; }
+  .ticket-total { text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {

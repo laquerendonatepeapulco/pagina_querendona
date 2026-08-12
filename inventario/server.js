@@ -12,6 +12,19 @@ const pool = new Pool({
 });
 
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 8;
+const LATIDOS_MAX_TICKETS = 50;
+const LATIDOS_EXPERIENCES = Object.freeze({
+  tradicional: Object.freeze({
+    id: "tradicional",
+    title: "Experiencia tradicional - Buffet de antojitos mexicanos",
+    unitPrice: 349
+  }),
+  gastronomica: Object.freeze({
+    id: "gastronomica",
+    title: "Experiencia gastronomica - Cena mexicana de gala",
+    unitPrice: 599
+  })
+});
 let initPromise;
 
 const demoProducts = [
@@ -304,8 +317,17 @@ function isReservationCreateRequest(req) {
   return req.method === "POST" && req.originalUrl.split("?")[0] === "/api/reservations";
 }
 
+function isLatidosPaymentRequest(req) {
+  const requestPath = req.originalUrl.split("?")[0];
+
+  return (
+    (req.method === "POST" && requestPath === "/api/latidos/checkout") ||
+    (req.method === "GET" && requestPath === "/api/latidos/payment")
+  );
+}
+
 app.use("/api", async (req, res, next) => {
-  if (!process.env.DATABASE_URL && isReservationCreateRequest(req)) {
+  if (isLatidosPaymentRequest(req) || (!process.env.DATABASE_URL && isReservationCreateRequest(req))) {
     next();
     return;
   }
@@ -313,6 +335,182 @@ app.use("/api", async (req, res, next) => {
   try {
     await getInitPromise();
     next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+function getMercadoPagoToken() {
+  const token = String(process.env.MERCADO_PAGO_ACCESS_TOKEN || "").trim();
+
+  if (!token) {
+    const error = new Error("El pago en linea esta temporalmente fuera de servicio. Intenta nuevamente mas tarde.");
+    error.status = 503;
+    throw error;
+  }
+
+  return token;
+}
+
+function sanitizeLatidosSelection(input = {}) {
+  const experienceId = String(input.experience || "").trim();
+  const experience = LATIDOS_EXPERIENCES[experienceId];
+  const quantity = Number.parseInt(String(input.quantity || ""), 10);
+
+  if (!experience) {
+    const error = new Error("Selecciona una experiencia valida");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > LATIDOS_MAX_TICKETS) {
+    const error = new Error(`La cantidad debe ser de 1 a ${LATIDOS_MAX_TICKETS} boletos`);
+    error.status = 400;
+    throw error;
+  }
+
+  return { experience, quantity, total: experience.unitPrice * quantity };
+}
+
+function getPublicSiteUrl() {
+  const configuredUrl = String(process.env.PUBLIC_SITE_URL || "https://laquerendonacg.com").trim();
+
+  try {
+    const url = new URL(configuredUrl);
+    if (url.protocol !== "https:") throw new Error("invalid protocol");
+    return url.origin;
+  } catch (cause) {
+    const error = new Error("PUBLIC_SITE_URL debe ser una URL publica con HTTPS");
+    error.status = 500;
+    throw error;
+  }
+}
+
+function createLatidosReference(experienceId, quantity) {
+  return `latidos:${experienceId}:${quantity}:${crypto.randomUUID()}`;
+}
+
+function parseLatidosReference(reference) {
+  const match = /^latidos:(tradicional|gastronomica):(\d{1,2}):[0-9a-f-]{36}$/i.exec(String(reference || ""));
+  if (!match) return null;
+
+  try {
+    return sanitizeLatidosSelection({ experience: match[1].toLowerCase(), quantity: match[2] });
+  } catch (error) {
+    return null;
+  }
+}
+
+async function mercadoPagoRequest(pathname, options = {}) {
+  const response = await fetch(`https://api.mercadopago.com${pathname}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${getMercadoPagoToken()}`,
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error("Mercado Pago no pudo procesar la solicitud. Intenta nuevamente.");
+    error.status = response.status >= 400 && response.status < 500 ? 400 : 502;
+    error.mercadoPagoCause = payload;
+    throw error;
+  }
+
+  return payload;
+}
+
+app.post("/api/latidos/checkout", async (req, res, next) => {
+  try {
+    const selection = sanitizeLatidosSelection(req.body);
+    const siteUrl = getPublicSiteUrl();
+    const returnPage = `${siteUrl}/latidos-de-mexico.html`;
+    const externalReference = createLatidosReference(selection.experience.id, selection.quantity);
+    const preference = await mercadoPagoRequest("/checkout/preferences", {
+      method: "POST",
+      headers: { "X-Idempotency-Key": crypto.randomUUID() },
+      body: JSON.stringify({
+        items: [
+          {
+            id: `latidos-${selection.experience.id}`,
+            title: selection.experience.title,
+            description: "Acceso a Latidos de Mexico - 12 de septiembre de 2026",
+            category_id: "tickets",
+            quantity: selection.quantity,
+            currency_id: "MXN",
+            unit_price: selection.experience.unitPrice
+          }
+        ],
+        external_reference: externalReference,
+        metadata: {
+          event: "latidos-de-mexico-2026",
+          experience: selection.experience.id,
+          quantity: selection.quantity
+        },
+        back_urls: {
+          success: `${returnPage}?payment=success#registro`,
+          pending: `${returnPage}?payment=pending#registro`,
+          failure: `${returnPage}?payment=failure#registro`
+        },
+        auto_return: "approved",
+        statement_descriptor: "LA QUERENDONA"
+      })
+    });
+
+    if (!preference.init_point) {
+      const error = new Error("Mercado Pago no devolvio un enlace de pago valido");
+      error.status = 502;
+      throw error;
+    }
+
+    res.status(201).json({
+      checkoutUrl: preference.init_point,
+      preferenceId: preference.id,
+      total: selection.total
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/latidos/payment", async (req, res, next) => {
+  try {
+    const paymentId = String(req.query.payment_id || "").trim();
+
+    if (!/^\d{6,30}$/.test(paymentId)) {
+      const error = new Error("Identificador de pago invalido");
+      error.status = 400;
+      throw error;
+    }
+
+    const payment = await mercadoPagoRequest(`/v1/payments/${paymentId}`);
+    const selection = parseLatidosReference(payment.external_reference);
+
+    if (!selection) {
+      const error = new Error("Este pago no corresponde a Latidos de Mexico");
+      error.status = 400;
+      throw error;
+    }
+
+    const amount = Number(payment.transaction_amount);
+    const amountMatches = Number.isFinite(amount) && Math.abs(amount - selection.total) < 0.01;
+    const currencyMatches = payment.currency_id === "MXN";
+    const approved = payment.status === "approved" && amountMatches && currencyMatches;
+
+    res.json({
+      approved,
+      status: String(payment.status || "unknown"),
+      paymentId: String(payment.id),
+      experience: selection.experience.id,
+      experienceTitle: selection.experience.title,
+      quantity: selection.quantity,
+      unitPrice: selection.experience.unitPrice,
+      amount,
+      currency: String(payment.currency_id || ""),
+      paidAt: payment.date_approved || null
+    });
   } catch (error) {
     next(error);
   }

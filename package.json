@@ -8,6 +8,7 @@
     "build": "node scripts/build-static.js",
     "start": "node server.js",
     "dev": "node server.js",
+    "test:latidos": "node scripts/test-latidos-checkout.js",
     "db:init": "psql \"$DATABASE_URL\" -f inventario/schema.sql"
   },
   "dependencies": {

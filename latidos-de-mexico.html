@@ -15,7 +15,7 @@
     document.documentElement.classList.add('latidos-motion-ready');
     window.latidosMotionFallback = window.setTimeout(() => document.documentElement.classList.add('latidos-motion-timeout'), 2500);
   </script>
-  <link rel="stylesheet" href="evento.css?v=20260812-2">
+  <link rel="stylesheet" href="evento.css?v=20260812-3">
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
@@ -160,22 +160,59 @@
       <div class="registration-heading latidos-reveal">
         <div class="editorial-label">Registro de reserva</div>
         <h2 id="registration-title">Forma parte de esta experiencia.</h2>
-        <p>Primero realiza el pago &uacute;nico en Mercado Pago. Despu&eacute;s comparte tus datos, el monto y el n&uacute;mero de operaci&oacute;n; nuestro equipo revisar&aacute; manualmente la informaci&oacute;n y se pondr&aacute; en contacto contigo para confirmar disponibilidad.</p>
+        <p>Elige la experiencia y la cantidad de boletos. Al completar el pago en Mercado Pago regresar&aacute;s autom&aacute;ticamente para terminar tu registro.</p>
       </div>
 
       <div class="payment-panel latidos-reveal latidos-delay-1" aria-labelledby="payment-title">
         <div class="payment-panel-copy">
           <div class="editorial-label">Paso 1: Pago</div>
-          <h3 id="payment-title">Confirma tu aportaci&oacute;n</h3>
-          <p>Realiza el pago &uacute;nico por el monto correspondiente y conserva tu comprobante.</p>
+          <h3 id="payment-title">Selecciona tus boletos</h3>
+          <p>El precio se calcula autom&aacute;ticamente de acuerdo con la experiencia y el n&uacute;mero de asistentes.</p>
+
+          <fieldset class="ticket-options">
+            <legend>Selecciona una experiencia</legend>
+            <label class="ticket-option">
+              <input type="radio" name="checkoutExperience" value="tradicional" data-price="349">
+              <span class="ticket-option-content">
+                <span class="ticket-option-name">Experiencia tradicional</span>
+                <span class="ticket-option-description">Buffet de antojitos mexicanos</span>
+                <strong>$349 <small>por persona</small></strong>
+              </span>
+            </label>
+            <label class="ticket-option">
+              <input type="radio" name="checkoutExperience" value="gastronomica" data-price="599">
+              <span class="ticket-option-content">
+                <span class="ticket-option-name">Experiencia gastron&oacute;mica</span>
+                <span class="ticket-option-description">Cena mexicana de gala</span>
+                <strong>$599 <small>por persona</small></strong>
+              </span>
+            </label>
+          </fieldset>
+
+          <div class="ticket-calculation">
+            <label class="ticket-quantity" for="ticket-quantity">
+              <span>Cantidad de boletos</span>
+              <span class="ticket-stepper">
+                <button type="button" data-quantity-action="decrease" aria-label="Quitar un boleto">&minus;</button>
+                <input id="ticket-quantity" type="number" min="1" max="50" value="1" inputmode="numeric" aria-describedby="ticket-limit">
+                <button type="button" data-quantity-action="increase" aria-label="Agregar un boleto">+</button>
+              </span>
+              <small id="ticket-limit">M&aacute;ximo 50 boletos por pago</small>
+            </label>
+            <div class="ticket-total" aria-live="polite">
+              <span>Total</span>
+              <strong id="ticket-total">$0.00</strong>
+            </div>
+          </div>
         </div>
         <div class="payment-panel-action">
           <div class="payment-brand">
             <span>Pago seguro con</span>
             <img src="img/mercado-pago-logo.svg" alt="Mercado Pago" width="150" height="61">
           </div>
-          <a class="payment-link" href="https://link.mercadopago.com.mx/latidosdemexico" target="_blank" rel="noopener noreferrer">Abrir Mercado Pago</a>
-          <span class="payment-panel-note">Despu&eacute;s registra el monto y el n&uacute;mero de operaci&oacute;n.</span>
+          <button class="payment-link" id="mercado-pago-button" type="button" disabled>Selecciona una experiencia</button>
+          <span class="payment-panel-note">Regresar&aacute;s a esta p&aacute;gina despu&eacute;s de pagar.</span>
+          <p class="checkout-feedback" id="checkout-feedback" role="status" aria-live="polite" hidden></p>
         </div>
       </div>
 
@@ -183,11 +220,11 @@
         <div class="registration-grid">
           <label class="registration-field">
             <span>Monto pagado (MXN)</span>
-            <input id="payment-amount" type="number" name="montoPago" min="1" step="0.01" inputmode="decimal" placeholder="Ej. 500.00" required>
+            <input id="payment-amount" type="text" name="montoPago" placeholder="Se completar&aacute; al regresar del pago" readonly required>
           </label>
           <label class="registration-field">
             <span>N&uacute;mero de operaci&oacute;n / referencia</span>
-            <input id="payment-operation" type="text" name="operacionPago" autocomplete="off" placeholder="Referencia de Mercado Pago" required>
+            <input id="payment-operation" type="text" name="operacionPago" autocomplete="off" placeholder="Se completar&aacute; al regresar del pago" readonly required>
           </label>
           <label class="registration-field registration-field-wide">
             <span>Nombre o raz&oacute;n social</span>
@@ -223,21 +260,18 @@
             </select>
           </label>
           <label class="registration-field registration-field-wide">
-            <span>Seleccione el tipo de experiencia</span>
-            <select name="experiencia" required>
-              <option value="" selected>Selecciona una experiencia</option>
-              <option value="tradicional">Experiencia tradicional - Buffet de antojitos mexicanos ($349)</option>
-              <option value="gastronomica">Experiencia gastron&oacute;mica - Cena mexicana de gala ($599)</option>
-            </select>
+            <span>Experiencia pagada</span>
+            <input id="registration-experience" type="text" name="experienciaNombre" placeholder="Se completar&aacute; al regresar del pago" readonly required>
+            <input id="registration-experience-value" type="hidden" name="experiencia">
           </label>
           <label class="registration-field">
-            <span>No. de acompa&ntilde;antes</span>
-            <input type="number" name="acompanantes" min="0" inputmode="numeric" placeholder="Ej. 3" required>
+            <span>N&uacute;mero de boletos</span>
+            <input id="registration-ticket-quantity" type="number" name="boletos" min="1" inputmode="numeric" placeholder="Se completar&aacute; al regresar del pago" readonly required>
           </label>
         </div>
         <div class="registration-actions">
-          <p class="registration-note">La solicitud queda pendiente de validaci&oacute;n manual. El equipo verificar&aacute; el monto y la operaci&oacute;n antes de confirmar tu registro.</p>
-          <button class="registration-submit" type="submit">Enviar solicitud</button>
+          <p class="registration-note">El bot&oacute;n se habilitar&aacute; cuando Mercado Pago confirme que el pago fue aprobado.</p>
+          <button class="registration-submit" type="submit" disabled>Enviar solicitud</button>
         </div>
         <p class="registration-feedback" id="registration-feedback" role="status" aria-live="polite" hidden></p>
       </form>
@@ -311,27 +345,192 @@
       });
     }
 
+    const experienceDetails = {
+      tradicional: {
+        title: 'Experiencia tradicional - Buffet de antojitos mexicanos',
+        unitPrice: 349
+      },
+      gastronomica: {
+        title: 'Experiencia gastron\u00f3mica - Cena mexicana de gala',
+        unitPrice: 599
+      }
+    };
+    const currencyFormatter = new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN'
+    });
+    const ticketRadios = Array.from(document.querySelectorAll('input[name="checkoutExperience"]'));
+    const ticketQuantity = document.querySelector('#ticket-quantity');
+    const ticketTotal = document.querySelector('#ticket-total');
+    const checkoutButton = document.querySelector('#mercado-pago-button');
+    const checkoutFeedback = document.querySelector('#checkout-feedback');
+    const quantityButtons = document.querySelectorAll('[data-quantity-action]');
     const registrationForm = document.querySelector('#latidos-registration-form');
     const registrationFeedback = document.querySelector('#registration-feedback');
+    const registrationSubmit = registrationForm?.querySelector('.registration-submit');
     const paymentAmount = document.querySelector('#payment-amount');
     const paymentOperation = document.querySelector('#payment-operation');
+    const registrationExperience = document.querySelector('#registration-experience');
+    const registrationExperienceValue = document.querySelector('#registration-experience-value');
+    const registrationTicketQuantity = document.querySelector('#registration-ticket-quantity');
+    let verifiedPayment = null;
+
+    function getTicketSelection() {
+      const selected = ticketRadios.find((radio) => radio.checked);
+      const quantity = Math.min(50, Math.max(1, Number.parseInt(ticketQuantity?.value || '1', 10) || 1));
+      if (ticketQuantity) ticketQuantity.value = String(quantity);
+      if (!selected || !experienceDetails[selected.value]) return null;
+      return {
+        experience: selected.value,
+        quantity,
+        total: experienceDetails[selected.value].unitPrice * quantity
+      };
+    }
+
+    function updateTicketSummary() {
+      const selection = getTicketSelection();
+      if (ticketTotal) ticketTotal.textContent = currencyFormatter.format(selection?.total || 0);
+      if (!checkoutButton) return;
+      checkoutButton.disabled = !selection;
+      checkoutButton.textContent = selection ? `Pagar ${currencyFormatter.format(selection.total)}` : 'Selecciona una experiencia';
+    }
+
+    ticketRadios.forEach((radio) => radio.addEventListener('change', updateTicketSummary));
+    ticketQuantity?.addEventListener('input', updateTicketSummary);
+    ticketQuantity?.addEventListener('change', updateTicketSummary);
+    quantityButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!ticketQuantity) return;
+        const change = button.dataset.quantityAction === 'increase' ? 1 : -1;
+        const nextQuantity = Math.min(50, Math.max(1, (Number.parseInt(ticketQuantity.value, 10) || 1) + change));
+        ticketQuantity.value = String(nextQuantity);
+        updateTicketSummary();
+      });
+    });
+    try {
+      const savedSelection = JSON.parse(window.localStorage.getItem('latidosCheckoutSelection') || 'null');
+      const savedRadio = ticketRadios.find((radio) => radio.value === savedSelection?.experience);
+      const savedQuantity = Number.parseInt(savedSelection?.quantity, 10);
+      if (savedRadio) savedRadio.checked = true;
+      if (ticketQuantity && Number.isInteger(savedQuantity) && savedQuantity >= 1 && savedQuantity <= 50) {
+        ticketQuantity.value = String(savedQuantity);
+      }
+    } catch (error) {
+      window.localStorage.removeItem('latidosCheckoutSelection');
+    }
+    updateTicketSummary();
+
+    checkoutButton?.addEventListener('click', async () => {
+      const selection = getTicketSelection();
+      if (!selection || !checkoutFeedback) return;
+
+      checkoutButton.disabled = true;
+      checkoutButton.setAttribute('aria-busy', 'true');
+      checkoutButton.textContent = 'Preparando pago...';
+      checkoutFeedback.hidden = false;
+      checkoutFeedback.className = 'checkout-feedback';
+      checkoutFeedback.textContent = 'Estamos preparando tu pago seguro.';
+
+      try {
+        window.localStorage.setItem('latidosCheckoutSelection', JSON.stringify(selection));
+        const response = await fetch('/api/latidos/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(selection)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.checkoutUrl) {
+          throw new Error(result.error || 'No fue posible iniciar el pago. Intenta nuevamente.');
+        }
+        window.location.assign(result.checkoutUrl);
+      } catch (error) {
+        checkoutFeedback.classList.add('is-error');
+        checkoutFeedback.textContent = error.message;
+        checkoutButton.removeAttribute('aria-busy');
+        updateTicketSummary();
+      }
+    });
+
+    async function verifyReturnedPayment() {
+      if (!checkoutFeedback) return;
+      const params = new URLSearchParams(window.location.search);
+      const returnStatus = params.get('payment');
+      const paymentId = params.get('payment_id') || params.get('collection_id');
+
+      if (!returnStatus && !paymentId) return;
+      registrationSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      if (returnStatus === 'failure' && !paymentId) {
+        checkoutFeedback.hidden = false;
+        checkoutFeedback.className = 'checkout-feedback is-error';
+        checkoutFeedback.textContent = 'El pago no se complet\u00f3. Puedes revisar tus datos e intentarlo nuevamente.';
+        return;
+      }
+
+      if (!paymentId) {
+        checkoutFeedback.hidden = false;
+        checkoutFeedback.className = 'checkout-feedback is-pending';
+        checkoutFeedback.textContent = 'El pago est\u00e1 pendiente. Cuando Mercado Pago genere la operaci\u00f3n podr\u00e1s continuar.';
+        return;
+      }
+
+      checkoutFeedback.hidden = false;
+      checkoutFeedback.className = 'checkout-feedback is-pending';
+      checkoutFeedback.textContent = 'Verificando tu pago con Mercado Pago...';
+
+      try {
+        const response = await fetch(`/api/latidos/payment?payment_id=${encodeURIComponent(paymentId)}`);
+        const payment = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payment.error || 'No pudimos verificar el pago.');
+
+        const matchingRadio = ticketRadios.find((radio) => radio.value === payment.experience);
+        if (matchingRadio) matchingRadio.checked = true;
+        if (ticketQuantity) ticketQuantity.value = String(payment.quantity);
+        updateTicketSummary();
+
+        if (!payment.approved) {
+          checkoutFeedback.className = 'checkout-feedback is-pending';
+          checkoutFeedback.textContent = payment.status === 'pending'
+            ? 'Tu pago est\u00e1 pendiente. Actualiza esta p\u00e1gina cuando Mercado Pago lo apruebe.'
+            : 'El pago no fue aprobado. Puedes intentarlo nuevamente.';
+          return;
+        }
+
+        verifiedPayment = payment;
+        paymentAmount.value = currencyFormatter.format(payment.amount);
+        paymentOperation.value = payment.paymentId;
+        registrationExperience.value = payment.experienceTitle;
+        registrationExperienceValue.value = payment.experience;
+        registrationTicketQuantity.value = String(payment.quantity);
+        registrationSubmit.disabled = false;
+        checkoutButton.disabled = true;
+        checkoutButton.removeAttribute('aria-busy');
+        checkoutButton.textContent = 'Pago confirmado';
+        window.localStorage.removeItem('latidosCheckoutSelection');
+        checkoutFeedback.className = 'checkout-feedback is-success';
+        checkoutFeedback.textContent = `Pago aprobado por ${currencyFormatter.format(payment.amount)}. Completa tus datos para finalizar el registro.`;
+      } catch (error) {
+        checkoutFeedback.className = 'checkout-feedback is-error';
+        checkoutFeedback.textContent = error.message;
+      }
+    }
+    verifyReturnedPayment();
+
     if (registrationForm && registrationFeedback && paymentAmount && paymentOperation) {
       registrationForm.addEventListener('submit', (event) => {
         event.preventDefault();
+        if (!verifiedPayment?.approved) {
+          registrationFeedback.hidden = false;
+          registrationFeedback.textContent = 'Primero completa y verifica el pago con Mercado Pago.';
+          return;
+        }
         if (!registrationForm.checkValidity()) {
           registrationForm.reportValidity();
           return;
         }
 
-        const amount = Number(paymentAmount.value);
-        const operation = paymentOperation.value.trim();
-        const formattedAmount = new Intl.NumberFormat('es-MX', {
-          style: 'currency',
-          currency: 'MXN'
-        }).format(amount);
-
         registrationFeedback.hidden = false;
-        registrationFeedback.textContent = `Solicitud recibida. El equipo validar\u00e1 manualmente tu pago de ${formattedAmount} con la operaci\u00f3n ${operation} y te contactar\u00e1 para confirmar tu registro.`;
+        registrationFeedback.textContent = `Solicitud recibida. Tu pago de ${currencyFormatter.format(verifiedPayment.amount)} con la operaci\u00f3n ${verifiedPayment.paymentId} fue validado; el equipo se pondr\u00e1 en contacto contigo para confirmar tu registro.`;
       });
     }
   </script>
