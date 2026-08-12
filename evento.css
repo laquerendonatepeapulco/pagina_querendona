@@ -275,18 +275,18 @@ body.latidos-page a { color: inherit; }
 @media (max-width: 700px) {
   body.latidos-page { font-size: 15px; }
   .latidos-header {
-    grid-template-columns: minmax(128px, 0.9fr) minmax(168px, 1.1fr);
-    gap: 10px;
-    min-height: 98px;
-    padding: 10px 3vw;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    min-height: 110px;
+    padding: 10px 3vw 8px;
   }
-  .latidos-wordmark { gap: 7px; letter-spacing: 0.08em; }
+  .latidos-wordmark { justify-self: center; gap: 7px; letter-spacing: 0.08em; }
   .latidos-wordmark strong { font-size: 16px; letter-spacing: 0.14em; }
   .latidos-wordmark small { font-size: 6px; letter-spacing: 0.26em; }
   .wordmark-mark { width: 28px; height: 28px; font-size: 18px; }
-  .latidos-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; font-size: 9px; letter-spacing: 0.05em; }
+  .latidos-nav { grid-template-columns: 0.9fr 0.9fr 1.15fr 1.35fr; gap: 3px; font-size: 8px; letter-spacing: 0.035em; }
   .latidos-nav a,
-  .latidos-nav-cta { min-height: 34px; padding: 4px; }
+  .latidos-nav-cta { min-height: 34px; padding: 4px 2px; white-space: nowrap; }
   .latidos-cover, .latidos-section { width: 100%; }
   .latidos-cover { min-height: 680px; padding: 60px 8vw; }
   .latidos-cover::before { inset: 16% 7%; }
@@ -328,15 +328,14 @@ body.latidos-page a { color: inherit; }
 }
 @media (max-width: 360px) {
   .latidos-header {
-    grid-template-columns: minmax(118px, 0.82fr) minmax(150px, 1.18fr);
-    gap: 6px;
-    padding: 8px 2vw;
+    gap: 7px;
+    padding-inline: 2vw;
   }
-  .latidos-wordmark { gap: 4px; }
+  .latidos-wordmark { gap: 5px; }
   .latidos-wordmark strong { font-size: 14px; letter-spacing: 0.12em; }
   .latidos-wordmark small { font-size: 5px; letter-spacing: 0.22em; }
   .wordmark-mark { width: 24px; height: 24px; font-size: 16px; }
-  .latidos-nav { font-size: 8px; }
+  .latidos-nav { gap: 2px; font-size: 7px; letter-spacing: 0.02em; }
   .latidos-nav a,
-  .latidos-nav-cta { padding: 3px 2px; }
+  .latidos-nav-cta { padding: 3px 1px; }
 }
