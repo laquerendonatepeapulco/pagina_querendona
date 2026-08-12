@@ -200,8 +200,10 @@ body.latidos-page a { color: inherit; }
 .event-details dt { color: var(--wine); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
 .event-details dd { margin: 0; color: var(--ink-soft); }
 .event-details dd span { font-size: 13px; }
+.final-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .map-button { width: fit-content; color: var(--paper) !important; background: var(--wine); }
 .map-button span { margin-right: 8px; font-size: 20px; }
+.final-reserve-button { width: fit-content; }
 .final-photo { margin: 0; padding: 12px; border: 1px solid var(--ochre); }
 .final-photo img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 
