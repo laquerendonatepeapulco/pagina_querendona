@@ -256,6 +256,16 @@
       }
     });
 
+    const reservationLink = document.querySelector('.latidos-nav-cta[href="#registro"]');
+    const registrationSection = document.querySelector('#registro');
+    if (reservationLink && registrationSection) {
+      reservationLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        registrationSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.pushState(null, '', reservationLink.hash);
+      });
+    }
+
     const registrationForm = document.querySelector('#latidos-registration-form');
     const registrationFeedback = document.querySelector('#registration-feedback');
     const paymentAmount = document.querySelector('#payment-amount');
