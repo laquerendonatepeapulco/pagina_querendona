@@ -221,14 +221,17 @@ body.latidos-page a { color: inherit; }
 .payment-panel-copy { max-width: 620px; }
 .payment-panel h3 { margin: 12px 0 8px; color: var(--wine); font-size: clamp(24px, 3vw, 36px); }
 .payment-panel p { margin: 0; color: var(--ink-soft); }
-.payment-panel-action { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.payment-panel-action { display: flex; flex: 0 0 260px; flex-direction: column; align-items: stretch; gap: 10px; }
+.payment-brand { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 68px; padding: 8px 14px; background: #fff; border: 1px solid rgba(30, 51, 35, 0.18); }
+.payment-brand span { flex: 0 0 54px; color: var(--ink-soft); font-size: 9px; font-weight: 700; line-height: 1.3; letter-spacing: 0.08em; text-transform: uppercase; }
+.payment-brand img { width: 150px; height: auto; }
 .payment-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 48px;
   padding: 13px 18px;
-  color: var(--paper);
+  color: var(--paper) !important;
   background: var(--wine);
   border: 1px solid var(--wine);
   font: inherit;
@@ -240,6 +243,7 @@ body.latidos-page a { color: inherit; }
   transition: background 180ms ease, color 180ms ease, transform 180ms ease;
 }
 .payment-link:hover { color: var(--wine); background: transparent; transform: translateY(-2px); }
+.payment-panel-action .payment-link { width: 100%; }
 .payment-panel-note { max-width: 240px; color: var(--ink-soft); font-size: 12px; }
 .registration-form { padding: 34px 0 0; border-top: 1px solid var(--ink); }
 .registration-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px; }
@@ -344,7 +348,7 @@ body.latidos-page a { color: inherit; }
   .event-details div { grid-template-columns: 1fr; gap: 2px; }
   .registration-section { margin-top: 0; padding-top: 76px; }
   .payment-panel { align-items: flex-start; flex-direction: column; }
-  .payment-panel-action { width: 100%; }
+  .payment-panel-action { flex: 0 0 auto; width: 100%; }
   .payment-link { width: 100%; }
   .payment-panel-note { max-width: none; }
   .registration-grid { grid-template-columns: 1fr; gap: 20px; }
