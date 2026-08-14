@@ -7316,9 +7316,53 @@ body.promo-modal-open {
 /* PAGINA DE PROMOCIONES */
 /* ========================= */
 
+.promotions-motion-ready .promotions-reveal {
+    --promotions-reveal-x: 0px;
+    --promotions-reveal-y: 58px;
+    opacity: 0;
+    transform: translate3d(var(--promotions-reveal-x), var(--promotions-reveal-y), 0) scale(0.985);
+    transition:
+        opacity 850ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 850ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+}
+
+.promotions-motion-ready .promotions-reveal-left {
+    --promotions-reveal-x: -52px;
+    --promotions-reveal-y: 16px;
+}
+
+.promotions-motion-ready .promotions-reveal-right {
+    --promotions-reveal-x: 52px;
+    --promotions-reveal-y: 16px;
+}
+
+.promotions-motion-ready .promotions-reveal-top {
+    --promotions-reveal-x: 0px;
+    --promotions-reveal-y: -26px;
+}
+
+.promotions-motion-ready .promotions-reveal.is-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    will-change: auto;
+}
+
+.promotions-motion-ready .promotions-delay-1 { transition-delay: 80ms; }
+.promotions-motion-ready .promotions-delay-2 { transition-delay: 160ms; }
+.promotions-motion-ready .promotions-delay-3 { transition-delay: 240ms; }
+.promotions-motion-ready .promotions-delay-4 { transition-delay: 320ms; }
+
+.promotions-motion-ready.promotions-motion-timeout .promotions-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+}
+
 .promotions-page {
     padding-top: 44px;
     padding-bottom: 28px;
+    overflow: clip;
 }
 
 .promotions-hero {
@@ -7807,5 +7851,14 @@ body.promo-modal-open {
 
     .promotions-cta h2 {
         font-size: 2.35rem;
+    }
+}
+
+@media(prefers-reduced-motion: reduce) {
+    .promotions-motion-ready .promotions-reveal,
+    .promotions-motion-ready .promotions-reveal.is-visible {
+        opacity: 1;
+        transform: none;
+        transition: none;
     }
 }

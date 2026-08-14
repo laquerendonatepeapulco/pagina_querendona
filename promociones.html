@@ -18,7 +18,13 @@
     <meta name="twitter:description" content="Celebra momentos especiales con las promociones de La Querendona.">
     <meta name="twitter:image" content="https://www.laquerendonacg.com/img/promociones/promocion-cumpleanos.jpg">
     <link rel="icon" href="img/logo_pesta%C3%B1a.png?v=20260724-2" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=20260727-1">
+    <script>
+        document.documentElement.classList.add('promotions-motion-ready');
+        window.promotionsMotionFallback = window.setTimeout(() => {
+            document.documentElement.classList.add('promotions-motion-timeout');
+        }, 2500);
+    </script>
+    <link rel="stylesheet" href="styles.css?v=20260814-1">
     <link rel="stylesheet" href="opcion.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,7 +51,7 @@
 <body>
     <div class="bg-decoration"></div>
 
-    <div class="page index-navbar-shell">
+    <div class="page index-navbar-shell promotions-reveal promotions-reveal-top">
         <header class="navbar selector-navbar">
             <button class="menu-toggle selector-menu-toggle" id="menuToggle" aria-label="Abrir men&uacute;">&#9776;</button>
 
@@ -69,7 +75,7 @@
 
     <main class="page promotions-page">
         <section class="promotions-hero promotions-hero--seasonal" aria-labelledby="seasonalPromotionTitle">
-            <div class="promotions-hero__copy">
+            <div class="promotions-hero__copy promotions-reveal promotions-reveal-left">
                 <span class="promotions-kicker">Promoci&oacute;n de temporada</span>
                 <h1 id="seasonalPromotionTitle">Temporada de chiles en nogada</h1>
                 <p class="promotions-hero__lead">
@@ -90,7 +96,7 @@
                 </div>
             </div>
 
-            <figure class="promotions-artwork promotions-artwork--seasonal">
+            <figure class="promotions-artwork promotions-artwork--seasonal promotions-reveal promotions-reveal-right promotions-delay-2">
                 <img
                     src="img/promociones/temporada-chiles-en-nogada.webp"
                     alt="Temporada de chiles en nogada en La Querendona: tradici&oacute;n que se disfruta, sabor que se recuerda"
@@ -101,7 +107,7 @@
         </section>
 
         <section class="promotions-hero promotions-hero--birthday" aria-labelledby="promotionsTitle">
-            <div class="promotions-hero__copy">
+            <div class="promotions-hero__copy promotions-reveal promotions-reveal-right promotions-delay-2">
                 <span class="promotions-kicker">Promociones La Querendona</span>
                 <h2 id="promotionsTitle">Celebra en grande</h2>
                 <p class="promotions-hero__lead">
@@ -122,7 +128,7 @@
                 </div>
             </div>
 
-            <figure class="promotions-artwork">
+            <figure class="promotions-artwork promotions-reveal promotions-reveal-left">
                 <img
                     src="img/promociones/promocion-cumpleanos.jpg"
                     alt="Promoci&oacute;n El mero mero cumplea&ntilde;ero: botella participante gratis al visitar con cuatro amigos y presentar identificaci&oacute;n vigente"
@@ -135,7 +141,7 @@
         </section>
 
         <section class="promotions-details" aria-labelledby="promotionDetailsTitle">
-            <div class="promotions-details__heading">
+            <div class="promotions-details__heading promotions-reveal">
                 <div>
                     <span class="promotions-kicker">El mero mero cumplea&ntilde;ero</span>
                     <h2 id="promotionDetailsTitle">Tu cumple merece sabor</h2>
@@ -148,32 +154,32 @@
             </div>
 
             <div class="promotions-conditions">
-                <article class="promotions-condition">
+                <article class="promotions-condition promotions-reveal promotions-delay-1">
                     <span class="promotions-condition__number">01</span>
                     <h3>Ven acompa&ntilde;ado</h3>
                     <p>Vis&iacute;tanos con cuatro amigos y conviertan la celebraci&oacute;n en un momento para recordar.</p>
                 </article>
 
-                <article class="promotions-condition">
+                <article class="promotions-condition promotions-reveal promotions-delay-2">
                     <span class="promotions-condition__number">02</span>
                     <h3>Presenta tu INE</h3>
                     <p>Muestra una identificaci&oacute;n oficial vigente para validar tu mes de cumplea&ntilde;os.</p>
                 </article>
 
-                <article class="promotions-condition">
+                <article class="promotions-condition promotions-reveal promotions-delay-3">
                     <span class="promotions-condition__number">03</span>
                     <h3>Botella de cortes&iacute;a</h3>
                     <p>Recibe una botella participante sin costo, sujeta a las condiciones de consumo de la promoci&oacute;n.</p>
                 </article>
 
-                <article class="promotions-condition">
+                <article class="promotions-condition promotions-reveal promotions-delay-4">
                     <span class="promotions-condition__number">04</span>
                     <h3>Confirma tu visita</h3>
                     <p>Escr&iacute;benos por WhatsApp para consultar horarios, disponibilidad y detalles antes de llegar.</p>
                 </article>
             </div>
 
-            <div class="promotions-branches" aria-label="Sucursales participantes">
+            <div class="promotions-branches promotions-reveal promotions-delay-2" aria-label="Sucursales participantes">
                 <div class="promotions-branch">
                     <strong>La Querendona Tepeapulco</strong>
                     <span>Av. Ju&aacute;rez, Centro, Tepeapulco, Hidalgo.</span>
@@ -186,7 +192,7 @@
         </section>
 
         <section class="promotions-weekly" id="jueves-pozolero" aria-labelledby="juevesPozoleroTitle">
-            <figure class="promotions-weekly__artwork">
+            <figure class="promotions-weekly__artwork promotions-reveal promotions-reveal-right promotions-delay-2">
                 <img
                     src="img/promociones/jueves-pozolero.jpg"
                     alt="Promoci&oacute;n Jueves Pozolero 2x1, disponible todos los jueves en La Querendona"
@@ -197,7 +203,7 @@
                 >
             </figure>
 
-            <div class="promotions-weekly__copy">
+            <div class="promotions-weekly__copy promotions-reveal promotions-reveal-left">
                 <span class="promotions-kicker">Promoci&oacute;n de la semana</span>
                 <p class="promotions-weekly__day">Todos los jueves</p>
                 <h2 id="juevesPozoleroTitle">Jueves Pozolero</h2>
@@ -226,7 +232,7 @@
             </div>
         </section>
 
-        <section class="promotions-cta" aria-labelledby="promotionsCtaTitle">
+        <section class="promotions-cta promotions-reveal" aria-labelledby="promotionsCtaTitle">
             <div>
                 <h2 id="promotionsCtaTitle">Haz de tu celebraci&oacute;n un momento muy Querendona</h2>
                 <p>
@@ -240,7 +246,7 @@
         </section>
     </main>
 
-    <div class="page promotions-page-footer">
+    <div class="page promotions-page-footer promotions-reveal">
         <footer class="site-footer selector-footer">
             <div class="footer-main">
                 <div class="footer-brand">
@@ -278,6 +284,47 @@
         </footer>
     </div>
 
+    <script>
+        window.clearTimeout(window.promotionsMotionFallback);
+        const promotionRevealElements = document.querySelectorAll('.promotions-reveal');
+        const promotionReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (promotionRevealElements.length) {
+            if (promotionReducedMotion || !('IntersectionObserver' in window)) {
+                promotionRevealElements.forEach((element) => element.classList.add('is-visible'));
+            } else {
+                const promotionLoadElements = document.querySelectorAll(
+                    '.index-navbar-shell.promotions-reveal, .promotions-hero--seasonal .promotions-reveal'
+                );
+                const promotionLoadSet = new Set(promotionLoadElements);
+                const promotionRevealObserver = new IntersectionObserver((entries, observer) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.12,
+                    rootMargin: '0px 0px -10% 0px'
+                });
+
+                promotionRevealElements.forEach((element) => {
+                    if (!promotionLoadSet.has(element)) {
+                        promotionRevealObserver.observe(element);
+                    }
+                });
+
+                window.requestAnimationFrame(() => {
+                    window.requestAnimationFrame(() => {
+                        window.setTimeout(() => {
+                            promotionLoadElements.forEach((element) => element.classList.add('is-visible'));
+                        }, 160);
+                    });
+                });
+            }
+        }
+    </script>
     <script src="translations.js?v=20260723-1"></script>
     <script src="script.js?v=20260727-1"></script>
 </body>
