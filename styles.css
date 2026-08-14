@@ -7188,6 +7188,8 @@ body.promo-modal-open {
 
 .promo-modal__actions {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     padding: 11px;
     background: #171417;
     border-radius: 0 0 7px 7px;
@@ -7214,6 +7216,11 @@ body.promo-modal-open {
     color: #ffffff;
     filter: brightness(1.08);
     transform: translateY(-1px);
+}
+
+.promo-modal__more--promotions {
+    background: #171417;
+    box-shadow: none;
 }
 
 .promo-modal__more:focus-visible {
@@ -7278,6 +7285,8 @@ body.promo-modal-open {
     }
 
     .promo-modal__actions {
+        grid-template-columns: 1fr;
+        gap: 8px;
         padding: 9px;
     }
 
