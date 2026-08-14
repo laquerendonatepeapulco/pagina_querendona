@@ -1164,11 +1164,11 @@ mobileMenu.querySelectorAll('a').forEach((link)=>{
 }
 
 /* ========================= */
-/* PROMOCION DE CUMPLEANOS */
+/* PROMOCION DE TEMPORADA */
 /* ========================= */
 
 window.addEventListener('DOMContentLoaded', ()=>{
-    const promoModal = document.getElementById('birthdayPromo');
+    const promoModal = document.getElementById('seasonalPromo');
 
     if(!promoModal){
         return;
