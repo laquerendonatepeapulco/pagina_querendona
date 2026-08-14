@@ -7334,9 +7334,14 @@ body.promo-modal-open {
 }
 
 .promotions-hero--birthday {
+    grid-template-columns: minmax(420px, 1.18fr) minmax(0, 0.82fr);
     margin-top: 64px;
     padding-top: 72px;
     border-top: 1px solid rgba(255, 210, 63, 0.34);
+}
+
+.promotions-hero--birthday .promotions-artwork {
+    order: -1;
 }
 
 .promotions-hero__copy {
