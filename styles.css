@@ -7329,6 +7329,16 @@ body.promo-modal-open {
     min-height: 660px;
 }
 
+.promotions-hero--seasonal {
+    min-height: 560px;
+}
+
+.promotions-hero--birthday {
+    margin-top: 64px;
+    padding-top: 72px;
+    border-top: 1px solid rgba(255, 210, 63, 0.34);
+}
+
 .promotions-hero__copy {
     display: flex;
     flex-direction: column;
@@ -7350,7 +7360,8 @@ body.promo-modal-open {
     text-transform: uppercase;
 }
 
-.promotions-hero h1 {
+.promotions-hero h1,
+.promotions-hero h2 {
     max-width: 620px;
     color: #fff7ea;
     font-size: 4.5rem;
@@ -7430,6 +7441,13 @@ body.promo-modal-open {
     width: 100%;
     height: auto;
     object-fit: contain;
+}
+
+.promotions-artwork--seasonal {
+    background: #260c17;
+    box-shadow:
+        0 28px 58px rgba(0, 0, 0, 0.5),
+        0 0 36px rgba(197, 142, 0, 0.18);
 }
 
 .promotions-details {
@@ -7650,6 +7668,11 @@ body.promo-modal-open {
         min-height: 0;
     }
 
+    .promotions-hero--birthday {
+        margin-top: 54px;
+        padding-top: 54px;
+    }
+
     .promotions-hero__copy {
         max-width: 760px;
     }
@@ -7693,8 +7716,14 @@ body.promo-modal-open {
         gap: 28px;
     }
 
-    .promotions-hero h1 {
+    .promotions-hero h1,
+    .promotions-hero h2 {
         font-size: 3rem;
+    }
+
+    .promotions-hero--birthday {
+        margin-top: 44px;
+        padding-top: 44px;
     }
 
     .promotions-hero__lead {
