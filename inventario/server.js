@@ -13,16 +13,19 @@ const pool = new Pool({
 
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 8;
 const LATIDOS_MAX_TICKETS = 50;
+const LATIDOS_RESERVATION_MINUTES = 15;
 const LATIDOS_EXPERIENCES = Object.freeze({
   tradicional: Object.freeze({
     id: "tradicional",
     title: "Experiencia tradicional - Buffet de antojitos mexicanos",
-    unitPrice: 349
+    unitPrice: 349,
+    capacity: 60
   }),
   gastronomica: Object.freeze({
     id: "gastronomica",
     title: "Experiencia gastronomica - Cena mexicana de gala",
-    unitPrice: 599
+    unitPrice: 599,
+    capacity: 40
   })
 });
 let initPromise;
@@ -175,6 +178,83 @@ async function query(text, params = []) {
   return pool.query(text, params);
 }
 
+async function expireLatidosReservations(client = pool) {
+  await client.query(
+    "UPDATE latidos_orders SET status = 'expired', updated_at = now() WHERE status = 'reserved' AND reserved_until IS NOT NULL AND reserved_until < now()"
+  );
+}
+
+async function getLatidosAvailability(client = pool) {
+  await expireLatidosReservations(client);
+
+  const result = await client.query(`
+    SELECT
+      e.id,
+      e.name,
+      e.capacity,
+      e.price,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN o.status = 'approved'
+            THEN o.quantity
+            ELSE 0
+          END
+        ),
+        0
+      )::INTEGER AS sold,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN o.status = 'reserved'
+              AND o.reserved_until > now()
+            THEN o.quantity
+            ELSE 0
+          END
+        ),
+        0
+      )::INTEGER AS reserved
+
+    FROM latidos_experiences e
+
+    LEFT JOIN latidos_orders o
+      ON o.experience_id = e.id
+
+    GROUP BY
+      e.id,
+      e.name,
+      e.capacity,
+      e.price
+
+    ORDER BY e.id
+  `);
+
+  const experiences = {};
+
+  for (const row of result.rows) {
+    const capacity = Number(row.capacity);
+    const sold = Number(row.sold);
+    const reserved = Number(row.reserved);
+
+    experiences[row.id] = {
+      id: row.id,
+      name: row.name,
+      capacity,
+      sold,
+      reserved,
+      available: Math.max(
+        0,
+        capacity - sold - reserved
+      ),
+      price: Number(row.price)
+    };
+  }
+
+  return experiences;
+}
+
 async function ensureSchema() {
   await query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
   await query(`
@@ -260,6 +340,101 @@ async function ensureSchema() {
   await query(`CREATE INDEX IF NOT EXISTS idx_stock_alerts_status ON stock_alerts(status, created_at DESC)`);
   await query(`CREATE INDEX IF NOT EXISTS idx_reservations_date_time ON reservations(reservation_date, reservation_time)`);
   await query(`CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status, created_at DESC)`);
+  
+  await query(`
+    CREATE TABLE IF NOT EXISTS latidos_experiences (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      capacity INTEGER NOT NULL CHECK (capacity >= 0),
+      price NUMERIC(12, 2) NOT NULL CHECK (price >= 0),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+
+  await query(`
+  CREATE TABLE IF NOT EXISTS latidos_orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    external_reference TEXT NOT NULL UNIQUE,
+
+    mercadopago_preference_id TEXT,
+    mercadopago_payment_id TEXT UNIQUE,
+
+    experience_id TEXT NOT NULL
+      REFERENCES latidos_experiences(id),
+
+    quantity INTEGER NOT NULL
+      CHECK (quantity > 0),
+
+    unit_price NUMERIC(12, 2) NOT NULL
+      CHECK (unit_price >= 0),
+
+    total NUMERIC(12, 2) NOT NULL
+      CHECK (total >= 0),
+
+    status TEXT NOT NULL DEFAULT 'reserved'
+      CHECK (
+        status IN (
+          'reserved',
+          'approved',
+          'expired',
+          'cancelled',
+          'refunded'
+        )
+      ),
+
+    reserved_until TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    paid_at TIMESTAMPTZ
+  )
+`);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_latidos_orders_experience_status
+    ON latidos_orders(experience_id, status)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_latidos_orders_reserved_until
+    ON latidos_orders(reserved_until)
+  `);
+
+  await query(`
+    INSERT INTO latidos_experiences (
+      id, 
+      name, 
+      capacity, 
+      price
+    )
+    VALUES 
+      ($1, $2, $3, $4),
+      ($5, $6, $7, $8)
+
+      ON CONFLICT (id)
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        capacity = EXCLUDED.capacity,
+        price = EXCLUDED.price,
+        updated_at = now()
+    `,
+    [
+      "tradicional",
+      "Buffet de antojitos mexicanos",
+      60,
+      349,
+
+      "gastronomica",
+      "Cena mexicana de gala",
+      40,
+      599
+    ]
+  );
+
 }
 
 async function seedUsers() {
@@ -422,55 +597,248 @@ async function mercadoPagoRequest(pathname, options = {}) {
   return payload;
 }
 
-app.post("/api/latidos/checkout", async (req, res, next) => {
+
+app.get("/api/latidos/availability", async (req, res, next) => {
   try {
+    await getInitPromise();
+
+    const experiences = await getLatidosAvailability();
+
+    res.json({
+      experiences
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+app.post("/api/latidos/checkout", async (req, res, next) => {
+  let orderId = null;
+
+  try {
+    await getInitPromise();
+
     const selection = sanitizeLatidosSelection(req.body);
+
     const siteUrl = getPublicSiteUrl();
     const returnPage = `${siteUrl}/latidos-de-mexico.html`;
-    const externalReference = createLatidosReference(selection.experience.id, selection.quantity);
-    const preference = await mercadoPagoRequest("/checkout/preferences", {
-      method: "POST",
-      headers: { "X-Idempotency-Key": crypto.randomUUID() },
-      body: JSON.stringify({
-        items: [
-          {
-            id: `latidos-${selection.experience.id}`,
-            title: selection.experience.title,
-            description: "Acceso a Latidos de Mexico - 12 de septiembre de 2026",
-            category_id: "tickets",
-            quantity: selection.quantity,
-            currency_id: "MXN",
-            unit_price: selection.experience.unitPrice
-          }
-        ],
-        external_reference: externalReference,
-        metadata: {
-          event: "latidos-de-mexico-2026",
-          experience: selection.experience.id,
-          quantity: selection.quantity
+
+    const selectedExperience = selection.experience;
+    const quantity = selection.quantity;
+    const unitPrice = selectedExperience.unitPrice;
+    const total = selection.total;
+
+    const externalReference = createLatidosReference(
+      selectedExperience.id,
+      quantity
+    );
+
+    // 1. Crear el apartado en PostgreSQL
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      await expireLatidosReservations(client);
+
+      const experienceResult = await client.query(
+        `
+          SELECT *
+          FROM latidos_experiences
+          WHERE id = $1
+          FOR UPDATE
+        `,
+        [selectedExperience.id]
+      );
+
+      if (!experienceResult.rows.length) {
+        const error = new Error("Experiencia no encontrada.");
+        error.status = 404;
+        throw error;
+      }
+
+      const capacity =
+        Number(experienceResult.rows[0].capacity);
+
+      const occupiedResult = await client.query(
+        `
+          SELECT
+            COALESCE(SUM(quantity), 0)::INTEGER AS occupied
+          FROM latidos_orders
+          WHERE experience_id = $1
+            AND (
+              status = 'approved'
+              OR (
+                status = 'reserved'
+                AND reserved_until > now()
+              )
+            )
+        `,
+        [selectedExperience.id]
+      );
+
+      const occupied =
+        Number(occupiedResult.rows[0].occupied);
+
+      const available =
+        Math.max(0, capacity - occupied);
+
+      if (quantity > available) {
+        const error = new Error(
+          available === 0
+            ? "Esta experiencia está agotada."
+            : `Solo quedan ${available} lugares disponibles.`
+        );
+
+        error.status = 409;
+        throw error;
+      }
+
+      const orderResult = await client.query(
+        `
+          INSERT INTO latidos_orders (
+            external_reference,
+            experience_id,
+            quantity,
+            unit_price,
+            total,
+            status,
+            reserved_until
+          )
+          VALUES (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            'reserved',
+            now() + ($6 * interval '1 minute')
+          )
+          RETURNING id
+        `,
+        [
+          externalReference,
+          selectedExperience.id,
+          quantity,
+          unitPrice,
+          total,
+          LATIDOS_RESERVATION_MINUTES
+        ]
+      );
+
+      orderId = orderResult.rows[0].id;
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    // 2. Crear preferencia en Mercado Pago
+    const preference = await mercadoPagoRequest(
+      "/checkout/preferences",
+      {
+        method: "POST",
+
+        headers: {
+          "X-Idempotency-Key": crypto.randomUUID()
         },
-        back_urls: {
-          success: `${returnPage}?payment=success#registro`,
-          pending: `${returnPage}?payment=pending#registro`,
-          failure: `${returnPage}?payment=failure#registro`
-        },
-        auto_return: "approved",
-        statement_descriptor: "LA QUERENDONA"
-      })
-    });
+
+        body: JSON.stringify({
+          items: [
+            {
+              id: `latidos-${selectedExperience.id}`,
+              title: selectedExperience.title,
+              description:
+                "Acceso a Latidos de Mexico - 12 de septiembre de 2026",
+              category_id: "tickets",
+              quantity,
+              currency_id: "MXN",
+              unit_price: unitPrice
+            }
+          ],
+
+          external_reference: externalReference,
+
+          metadata: {
+            event: "latidos-de-mexico-2026",
+            experience: selectedExperience.id,
+            quantity
+          },
+
+          back_urls: {
+            success:
+              `${returnPage}?payment=success#registro`,
+            pending:
+              `${returnPage}?payment=pending#registro`,
+            failure:
+              `${returnPage}?payment=failure#registro`
+          },
+
+          auto_return: "approved",
+          statement_descriptor: "LA QUERENDONA"
+        })
+      }
+    );
 
     if (!preference.init_point) {
-      const error = new Error("Mercado Pago no devolvio un enlace de pago valido");
+      const error = new Error(
+        "Mercado Pago no devolvio un enlace de pago valido"
+      );
+
       error.status = 502;
       throw error;
     }
 
+    // 3. Guardar preference_id en la orden
+    await query(
+      `
+        UPDATE latidos_orders
+        SET
+          mercadopago_preference_id = $1,
+          updated_at = now()
+        WHERE id = $2
+      `,
+      [
+        preference.id,
+        orderId
+      ]
+    );
+
     res.status(201).json({
       checkoutUrl: preference.init_point,
       preferenceId: preference.id,
-      total: selection.total
+      total
     });
+
   } catch (error) {
+
+    // Si Mercado Pago falla después de crear el apartado,
+    // liberamos ese apartado.
+    if (orderId) {
+      try {
+        await query(
+          `
+            UPDATE latidos_orders
+            SET
+              status = 'cancelled',
+              updated_at = now()
+            WHERE id = $1
+              AND status = 'reserved'
+          `,
+          [orderId]
+        );
+      } catch (cancelError) {
+        console.error(
+          "No fue posible cancelar el apartado de Latidos:",
+          cancelError
+        );
+      }
+    }
+
     next(error);
   }
 });
@@ -1132,9 +1500,12 @@ function sanitizeProduct(input) {
 }
 
 if (require.main === module) {
-  app.use(express.static(__dirname));
+  const rootDir = path.join(__dirname, "..");
+
+  app.use(express.static(rootDir));
+
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "index.html"));
+    res.sendFile(path.join(rootDir, "index.html"));
   });
 }
 

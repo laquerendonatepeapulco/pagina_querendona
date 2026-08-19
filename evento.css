@@ -436,3 +436,19 @@ body.latidos-page a { color: inherit; }
     transition: none;
   }
 }
+
+
+.latidos-availability {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.latidos-availability.is-low {
+  font-weight: 700;
+}
+
+.latidos-availability.is-sold-out {
+  font-weight: 800;
+  text-transform: uppercase;
+}

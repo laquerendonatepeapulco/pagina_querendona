@@ -177,6 +177,7 @@
                 <span class="ticket-option-name">Experiencia tradicional</span>
                 <span class="ticket-option-description">Buffet de antojitos mexicanos</span>
                 <strong>$349 <small>por persona</small></strong>
+                <p class="latidos-availability" id="availability-tradicional"> Consultando disponibilidad... </p>
               </span>
             </label>
             <label class="ticket-option">
@@ -185,6 +186,7 @@
                 <span class="ticket-option-name">Experiencia gastron&oacute;mica</span>
                 <span class="ticket-option-description">Cena mexicana de gala</span>
                 <strong>$599 <small>por persona</small></strong>
+                <p class="latidos-availability" id="availability-gastronomica"> Consultando disponibilidad... </p>
               </span>
             </label>
           </fieldset>
@@ -433,6 +435,30 @@
 
       try {
         window.localStorage.setItem('latidosCheckoutSelection', JSON.stringify(selection));
+        
+      const availability =
+  latidosAvailability[selection.experience];
+
+if (availability) {
+  if (availability.available <= 0) {
+    throw new Error(
+      'Esta experiencia está agotada.'
+    );
+  }
+
+  if (selection.quantity > availability.available) {
+    await loadLatidosAvailability();
+
+    throw new Error(
+      `Solo quedan ${availability.available} lugares disponibles.`
+    );
+  }
+}
+
+
+
+
+
         const response = await fetch('/api/latidos/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -533,6 +559,106 @@
         registrationFeedback.textContent = `Solicitud recibida. Tu pago de ${currencyFormatter.format(verifiedPayment.amount)} con la operaci\u00f3n ${verifiedPayment.paymentId} fue validado; el equipo se pondr\u00e1 en contacto contigo para confirmar tu registro.`;
       });
     }
+
+    let latidosAvailability = {};
+    
+    async function loadLatidosAvailability() {
+    try {
+      const response = await fetch(
+        "/api/latidos/availability",
+        {
+          cache: "no-store"
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "No fue posible consultar disponibilidad."
+        );
+      }
+
+      const data = await response.json();
+
+      latidosAvailability =
+        data.experiences || {};
+
+      renderLatidosAvailability();
+
+    } catch (error) {
+
+      console.error(
+        "Error cargando disponibilidad:",
+        error
+      );
+
+      document
+        .querySelectorAll(".latidos-availability")
+        .forEach((element) => {
+
+          element.textContent =
+            "Disponibilidad no disponible";
+      });
+    }
+  }
+
+  function renderLatidosAvailability() {
+
+  for (
+    const experienceId
+    of ["tradicional", "gastronomica"]
+  ) {
+
+    const availability =
+      latidosAvailability[experienceId];
+
+    const element =
+      document.getElementById(
+        `availability-${experienceId}`
+      );
+
+    if (!element || !availability) {
+      continue;
+    }
+
+    element.classList.remove(
+      "is-low",
+      "is-sold-out"
+    );
+
+    if (availability.available <= 0) {
+
+      element.textContent =
+        "Agotado";
+
+      element.classList.add(
+        "is-sold-out"
+      );
+
+      continue;
+    }
+
+    if (availability.available <= 5) {
+
+      element.textContent =
+        `¡Últimos ${availability.available} lugares!`;
+
+      element.classList.add(
+        "is-low"
+      );
+
+      continue;
+    }
+
+    element.textContent =
+      `${availability.available} de ${availability.capacity} lugares disponibles`;
+  }
+}
+
+loadLatidosAvailability();
+setInterval(
+  loadLatidosAvailability,
+  30000
+);
   </script>
 </body>
 </html>

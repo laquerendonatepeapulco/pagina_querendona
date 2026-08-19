@@ -74,3 +74,110 @@ CREATE INDEX IF NOT EXISTS idx_movements_created_at ON movements(created_at DESC
 CREATE INDEX IF NOT EXISTS idx_stock_alerts_status ON stock_alerts(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reservations_date_time ON reservations(reservation_date, reservation_time);
 CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status, created_at DESC);
+
+
+
+-- =========================================================
+-- LATIDOS DE MÉXICO
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS latidos_experiences (
+  id TEXT PRIMARY KEY,
+
+  name TEXT NOT NULL,
+
+  capacity INTEGER NOT NULL
+    CHECK (capacity >= 0),
+
+  price NUMERIC(12, 2) NOT NULL
+    CHECK (price >= 0),
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+CREATE TABLE IF NOT EXISTS latidos_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  external_reference TEXT NOT NULL UNIQUE,
+
+  mercadopago_preference_id TEXT,
+
+  mercadopago_payment_id TEXT UNIQUE,
+
+  experience_id TEXT NOT NULL
+    REFERENCES latidos_experiences(id),
+
+  quantity INTEGER NOT NULL
+    CHECK (quantity > 0),
+
+  unit_price NUMERIC(12, 2) NOT NULL
+    CHECK (unit_price >= 0),
+
+  total NUMERIC(12, 2) NOT NULL
+    CHECK (total >= 0),
+
+  status TEXT NOT NULL DEFAULT 'reserved'
+    CHECK (
+      status IN (
+        'reserved',
+        'approved',
+        'expired',
+        'cancelled',
+        'refunded'
+      )
+    ),
+
+  reserved_until TIMESTAMPTZ,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  paid_at TIMESTAMPTZ
+);
+
+
+CREATE INDEX IF NOT EXISTS
+  idx_latidos_orders_experience_status
+ON latidos_orders (
+  experience_id,
+  status
+);
+
+
+CREATE INDEX IF NOT EXISTS
+  idx_latidos_orders_reserved_until
+ON latidos_orders (
+  reserved_until
+);
+
+
+INSERT INTO latidos_experiences (
+  id,
+  name,
+  capacity,
+  price
+)
+VALUES
+  (
+    'tradicional',
+    'Buffet de antojitos mexicanos',
+    60,
+    349
+  ),
+  (
+    'gastronomica',
+    'Cena mexicana de gala',
+    40,
+    599
+  )
+
+ON CONFLICT (id)
+DO UPDATE SET
+  name = EXCLUDED.name,
+  capacity = EXCLUDED.capacity,
+  price = EXCLUDED.price,
+  updated_at = now();
