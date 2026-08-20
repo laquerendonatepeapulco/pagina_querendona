@@ -596,9 +596,17 @@
     async function verifyReturnedPayment() {
       if (!checkoutFeedback) return;
       const params = new URLSearchParams(window.location.search);
-      const returnStatus = params.get('payment') || params.get('status') || params.get('collection_status');
-      const returnedPaymentId = params.get('payment_id') || params.get('collection_id');
-      const returnedOrderToken = params.get('order_token');
+      const fragment = window.location.hash.slice(1);
+      const fragmentQueryStart = [fragment.indexOf('?'), fragment.indexOf('&')]
+        .filter((index) => index >= 0)
+        .sort((a, b) => a - b)[0];
+      const fragmentParams = new URLSearchParams(
+        Number.isInteger(fragmentQueryStart) ? fragment.slice(fragmentQueryStart + 1) : ''
+      );
+      const getReturnParam = (name) => params.get(name) || fragmentParams.get(name);
+      const returnStatus = getReturnParam('payment') || getReturnParam('status') || getReturnParam('collection_status');
+      const returnedPaymentId = getReturnParam('payment_id') || getReturnParam('collection_id');
+      const returnedOrderToken = getReturnParam('order_token');
       const recovery = readPaymentRecovery();
       const paymentId = returnedPaymentId || recovery?.paymentId;
       const orderToken = returnedOrderToken || recovery?.orderToken;
@@ -717,6 +725,9 @@
           ['payment', 'payment_id', 'collection_id', 'status', 'collection_status', 'order_token'].forEach((name) => {
             cleanUrl.searchParams.delete(name);
           });
+          if (cleanUrl.hash.includes('?') || cleanUrl.hash.includes('&')) {
+            cleanUrl.hash = '#registro';
+          }
           window.history.replaceState(null, '', `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
         } catch (error) {
           registrationFeedback.textContent = error.message;

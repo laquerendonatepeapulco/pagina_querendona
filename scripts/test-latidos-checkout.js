@@ -398,6 +398,7 @@ function validateInlineScripts() {
   assert.ok(html.includes("latidosPaymentRecovery"), "El pago aprobado debe poder recuperarse despues de recargar");
   assert.ok(html.includes("collection_status"), "El regreso debe reconocer el estado oficial de Mercado Pago");
   assert.ok(html.includes("/api/latidos/payment-return"), "El regreso debe tener recuperacion por orden firmada");
+  assert.ok(html.includes("fragmentParams"), "Los regresos antiguos deben recuperar parametros ubicados despues del fragmento");
 }
 
 function validateScannerScript() {
