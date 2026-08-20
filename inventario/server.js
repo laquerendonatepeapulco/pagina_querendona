@@ -431,6 +431,46 @@ async function ensureSchema() {
     )
   `);
 
+  // Compatibilidad con instalaciones que ya tenian una primera version de la tabla.
+  await query(`
+    ALTER TABLE latidos_tickets
+      ADD COLUMN IF NOT EXISTS order_id UUID REFERENCES latidos_orders(id) ON DELETE CASCADE,
+      ADD COLUMN IF NOT EXISTS sequence INTEGER,
+      ADD COLUMN IF NOT EXISTS ticket_number TEXT,
+      ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active',
+      ADD COLUMN IF NOT EXISTS used_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS checked_in_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now()
+  `);
+
+  await query(`
+    WITH ranked AS (
+      SELECT
+        ctid,
+        ROW_NUMBER() OVER (
+          PARTITION BY order_id
+          ORDER BY sequence NULLS LAST, created_at NULLS LAST, id
+        ) AS migrated_sequence
+      FROM latidos_tickets
+      WHERE order_id IS NOT NULL
+    )
+    UPDATE latidos_tickets AS ticket
+    SET sequence = ranked.migrated_sequence
+    FROM ranked
+    WHERE ticket.ctid = ranked.ctid
+      AND ticket.sequence IS NULL
+  `);
+
+  await query(`
+    UPDATE latidos_tickets
+    SET ticket_number = CONCAT(
+      'LDM-M-',
+      UPPER(SUBSTRING(MD5(id::text || random()::text) FROM 1 FOR 10))
+    )
+    WHERE ticket_number IS NULL
+  `);
+
   await query(`
     CREATE INDEX IF NOT EXISTS idx_latidos_orders_experience_status
     ON latidos_orders(experience_id, status)
@@ -452,8 +492,13 @@ async function ensureSchema() {
   `);
 
   await query(`
-    CREATE INDEX IF NOT EXISTS idx_latidos_tickets_order
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_latidos_tickets_order
     ON latidos_tickets(order_id, sequence)
+  `);
+
+  await query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_latidos_tickets_number
+    ON latidos_tickets(ticket_number)
   `);
 
   await query(`
