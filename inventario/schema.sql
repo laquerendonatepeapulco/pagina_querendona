@@ -167,6 +167,33 @@ CREATE TABLE IF NOT EXISTS latidos_registrations (
 );
 
 
+CREATE TABLE IF NOT EXISTS latidos_tickets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  order_id UUID NOT NULL
+    REFERENCES latidos_orders(id) ON DELETE CASCADE,
+
+  sequence INTEGER NOT NULL
+    CHECK (sequence > 0),
+
+  ticket_number TEXT NOT NULL UNIQUE,
+
+  status TEXT NOT NULL DEFAULT 'active'
+    CHECK (status IN ('active', 'used', 'cancelled')),
+
+  used_at TIMESTAMPTZ,
+
+  checked_in_by UUID
+    REFERENCES users(id) ON DELETE SET NULL,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  UNIQUE (order_id, sequence)
+);
+
+
 CREATE INDEX IF NOT EXISTS
   idx_latidos_orders_experience_status
 ON latidos_orders (
@@ -186,6 +213,22 @@ CREATE INDEX IF NOT EXISTS
   idx_latidos_registrations_created_at
 ON latidos_registrations (
   created_at DESC
+);
+
+
+CREATE INDEX IF NOT EXISTS
+  idx_latidos_tickets_status
+ON latidos_tickets (
+  status,
+  created_at
+);
+
+
+CREATE INDEX IF NOT EXISTS
+  idx_latidos_tickets_order
+ON latidos_tickets (
+  order_id,
+  sequence
 );
 
 

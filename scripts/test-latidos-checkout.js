@@ -3,11 +3,13 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const crypto = require("crypto");
 const pg = require("pg");
 
 process.env.DATABASE_URL = "postgres://database-simulada/sin-red";
 process.env.MERCADO_PAGO_ACCESS_TOKEN = "TEST-token-simulado";
 process.env.PUBLIC_SITE_URL = "https://laquerendonacg.com";
+process.env.SESSION_SECRET = "secreto-seguro-para-pruebas-automatizadas-latidos";
 
 const experiences = new Map([
   ["tradicional", { id: "tradicional", name: "Buffet de antojitos mexicanos", capacity: 60, price: 349 }],
@@ -15,8 +17,20 @@ const experiences = new Map([
 ]);
 const orders = [];
 const registrations = [];
+const tickets = [];
 let nextOrderId = 1;
 let nextRegistrationId = 1;
+let nextTicketId = 1;
+const testUserSalt = "salt-de-prueba";
+const testUser = {
+  id: "00000000-0000-4000-8000-000000000001",
+  username: "staff-test",
+  password_hash: crypto.createHash("sha256").update(`${testUserSalt}:entrada-segura`).digest("hex"),
+  salt: testUserSalt,
+  name: "Personal de acceso",
+  role: "staff",
+  label: "Control de boletos"
+};
 
 function activeOrder(order) {
   return order.status === "approved" || (
@@ -40,6 +54,22 @@ function databaseQuery(sql, params = []) {
       }
     }
     return { rows: [], rowCount: updated };
+  }
+
+  if (/COUNT\(t\.id\).*AS issued/i.test(query)) {
+    const rows = [...experiences.values()].map((experience) => {
+      const relatedOrderIds = new Set(orders.filter((order) => order.experience_id === experience.id).map((order) => order.id));
+      const related = tickets.filter((ticket) => relatedOrderIds.has(ticket.order_id));
+      return {
+        id: experience.id,
+        name: experience.name,
+        issued: related.length,
+        active: related.filter((ticket) => ticket.status === "active").length,
+        used: related.filter((ticket) => ticket.status === "used").length,
+        cancelled: related.filter((ticket) => ticket.status === "cancelled").length
+      };
+    });
+    return { rows, rowCount: rows.length };
   }
 
   if (/FROM latidos_experiences e/i.test(query)) {
@@ -90,10 +120,15 @@ function databaseQuery(sql, params = []) {
     return { rows: [], rowCount: order ? 1 : 0 };
   }
 
-  if (/SET status = 'cancelled'/i.test(query)) {
+  if (/UPDATE latidos_orders SET status = 'cancelled'/i.test(query)) {
     const order = orders.find((item) => item.id === params[0] && item.status === "reserved");
     if (order) order.status = "cancelled";
     return { rows: [], rowCount: order ? 1 : 0 };
+  }
+
+  if (/SELECT \* FROM latidos_orders WHERE id = \$1 FOR UPDATE/i.test(query)) {
+    const order = orders.find((item) => item.id === params[0]);
+    return { rows: order ? [{ ...order }] : [], rowCount: order ? 1 : 0 };
   }
 
   if (/FROM latidos_orders WHERE external_reference = \$1 FOR UPDATE/i.test(query)) {
@@ -127,6 +162,94 @@ function databaseQuery(sql, params = []) {
       business_type: params[7]
     });
     return { rows: [{ id: registration.id }], rowCount: 1 };
+  }
+
+  if (/INSERT INTO latidos_tickets/i.test(query)) {
+    let ticket = tickets.find((item) => item.order_id === params[0] && item.sequence === Number(params[1]));
+    if (!ticket) {
+      ticket = {
+        id: `00000000-0000-4000-8000-${String(nextTicketId++).padStart(12, "0")}`,
+        order_id: params[0],
+        sequence: Number(params[1]),
+        ticket_number: params[2],
+        status: "active",
+        used_at: null,
+        checked_in_by: null
+      };
+      tickets.push(ticket);
+    }
+    return { rows: [], rowCount: 1 };
+  }
+
+  if (/SELECT \* FROM latidos_tickets WHERE order_id = \$1 ORDER BY sequence/i.test(query)) {
+    const rows = tickets.filter((ticket) => ticket.order_id === params[0]).sort((a, b) => a.sequence - b.sequence).map((ticket) => ({ ...ticket }));
+    return { rows, rowCount: rows.length };
+  }
+
+  if (/FROM latidos_orders o JOIN latidos_experiences e/i.test(query)) {
+    const order = orders.find((item) => item.id === params[0]);
+    const registration = registrations.find((item) => item.order_id === params[0]);
+    const experience = order ? experiences.get(order.experience_id) : null;
+    if (!order || !registration || !experience) return { rows: [], rowCount: 0 };
+    return {
+      rows: [{
+        ...order,
+        experience_name: experience.name,
+        registration_name: registration.name,
+        registration_email: registration.email,
+        registration_phone: registration.phone
+      }],
+      rowCount: 1
+    };
+  }
+
+  if (/SELECT id FROM latidos_tickets WHERE id = \$1/i.test(query)) {
+    const ticket = tickets.find((item) => item.id === params[0]);
+    return { rows: ticket ? [{ id: ticket.id }] : [], rowCount: ticket ? 1 : 0 };
+  }
+
+  if (/FROM latidos_tickets t JOIN latidos_orders o/i.test(query)) {
+    const ticket = tickets.find((item) => item.id === params[0]);
+    const order = ticket ? orders.find((item) => item.id === ticket.order_id) : null;
+    const experience = order ? experiences.get(order.experience_id) : null;
+    const registration = order ? registrations.find((item) => item.order_id === order.id) : null;
+    if (!ticket || !order || !experience || !registration) return { rows: [], rowCount: 0 };
+    return {
+      rows: [{
+        ...ticket,
+        order_status: order.status,
+        order_quantity: order.quantity,
+        experience_id: experience.id,
+        experience_name: experience.name,
+        registration_name: registration.name
+      }],
+      rowCount: 1
+    };
+  }
+
+  if (/UPDATE latidos_tickets SET status = 'used'/i.test(query)) {
+    const ticket = tickets.find((item) => item.id === params[1] && item.status === "active");
+    if (!ticket) return { rows: [], rowCount: 0 };
+    ticket.status = "used";
+    ticket.used_at = new Date().toISOString();
+    ticket.checked_in_by = params[0];
+    return { rows: [{ ...ticket }], rowCount: 1 };
+  }
+
+  if (/UPDATE latidos_tickets SET status = 'cancelled'/i.test(query)) {
+    let count = 0;
+    tickets.forEach((ticket) => {
+      if (ticket.order_id === params[0] && ticket.status === "active") {
+        ticket.status = "cancelled";
+        count += 1;
+      }
+    });
+    return { rows: [], rowCount: count };
+  }
+
+  if (/SELECT \* FROM users WHERE username = \$1/i.test(query)) {
+    const found = params[0] === testUser.username ? testUser : null;
+    return { rows: found ? [{ ...found }] : [], rowCount: found ? 1 : 0 };
   }
 
   return { rows: [], rowCount: 0 };
@@ -195,7 +318,7 @@ global.fetch = async (url, options = {}) => {
 
 const app = require("../inventario/server");
 
-function request(server, method, requestPath, body) {
+function request(server, method, requestPath, body, options = {}) {
   return new Promise((resolve, reject) => {
     const address = server.address();
     const payload = body ? JSON.stringify(body) : "";
@@ -204,15 +327,18 @@ function request(server, method, requestPath, body) {
       port: address.port,
       path: requestPath,
       method,
-      headers: payload
-        ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) }
-        : {}
+      headers: {
+        ...(payload ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) } : {}),
+        ...(options.headers || {})
+      }
     }, (res) => {
-      let responseBody = "";
-      res.setEncoding("utf8");
-      res.on("data", (chunk) => { responseBody += chunk; });
+      const chunks = [];
+      res.on("data", (chunk) => { chunks.push(Buffer.from(chunk)); });
       res.on("end", () => {
-        resolve({ status: res.statusCode, body: JSON.parse(responseBody) });
+        const buffer = Buffer.concat(chunks);
+        const contentType = String(res.headers["content-type"] || "");
+        const responseBody = contentType.includes("application/json") ? JSON.parse(buffer.toString("utf8")) : buffer;
+        resolve({ status: res.statusCode, body: responseBody, headers: res.headers });
       });
     });
     req.on("error", reject);
@@ -229,8 +355,14 @@ function validateInlineScripts() {
   scripts.forEach((match, index) => new vm.Script(match[1], { filename: `latidos-inline-${index + 1}.js` }));
 }
 
+function validateScannerScript() {
+  const scriptPath = path.resolve(__dirname, "..", "latidos-scanner.js");
+  new vm.Script(fs.readFileSync(scriptPath, "utf8"), { filename: "latidos-scanner.js" });
+}
+
 async function run() {
   validateInlineScripts();
+  validateScannerScript();
   const server = app.listen(0);
 
   try {
@@ -309,6 +441,24 @@ async function run() {
     assert.strictEqual(registration.status, 201);
     assert.strictEqual(registration.body.ok, true);
     assert.strictEqual(registrations.length, 1);
+    assert.strictEqual(registration.body.tickets.length, 3);
+    assert.strictEqual(new Set(registration.body.tickets.map((ticket) => ticket.ticketNumber)).size, 3);
+    assert.ok(registration.body.pdfUrl.startsWith("/api/latidos/tickets/pdf?token="));
+    assert.strictEqual(tickets.length, 3);
+
+    const qr = await request(server, "GET", registration.body.tickets[0].qrUrl);
+    assert.strictEqual(qr.status, 200);
+    assert.strictEqual(qr.headers["content-type"], "image/png");
+    assert.deepStrictEqual([...qr.body.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+
+    const pdf = await request(server, "GET", registration.body.pdfUrl);
+    assert.strictEqual(pdf.status, 200);
+    assert.ok(String(pdf.headers["content-type"]).includes("application/pdf"));
+    assert.strictEqual(pdf.body.subarray(0, 4).toString("ascii"), "%PDF");
+    if (process.env.LATIDOS_TEST_PDF_OUTPUT) {
+      fs.mkdirSync(path.dirname(process.env.LATIDOS_TEST_PDF_OUTPUT), { recursive: true });
+      fs.writeFileSync(process.env.LATIDOS_TEST_PDF_OUTPUT, pdf.body);
+    }
 
     const updatedRegistration = await request(server, "POST", "/api/latidos/registration", {
       ...registrationPayload,
@@ -316,7 +466,42 @@ async function run() {
     });
     assert.strictEqual(updatedRegistration.status, 201);
     assert.strictEqual(registrations.length, 1);
+    assert.strictEqual(tickets.length, 3);
     assert.strictEqual(registrations[0].origin, "Pachuca, Hidalgo");
+
+    const login = await request(server, "POST", "/api/auth/login", {
+      username: "staff-test",
+      password: "entrada-segura"
+    });
+    assert.strictEqual(login.status, 200);
+    assert.ok(login.body.token);
+    const authHeaders = { Authorization: `Bearer ${login.body.token}` };
+
+    const firstCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: registration.body.tickets[0].token
+    }, { headers: authHeaders });
+    assert.strictEqual(firstCheckIn.status, 200);
+    assert.strictEqual(firstCheckIn.body.valid, true);
+    assert.strictEqual(tickets[0].status, "used");
+
+    const duplicateCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: registration.body.tickets[0].token
+    }, { headers: authHeaders });
+    assert.strictEqual(duplicateCheckIn.status, 409);
+    assert.strictEqual(duplicateCheckIn.body.reason, "used");
+
+    const invalidCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: "codigo-alterado"
+    }, { headers: authHeaders });
+    assert.strictEqual(invalidCheckIn.status, 400);
+    assert.strictEqual(invalidCheckIn.body.reason, "invalid");
+
+    const summary = await request(server, "GET", "/api/latidos/check-in/summary", null, { headers: authHeaders });
+    assert.strictEqual(summary.status, 200);
+    const gastronomicaSummary = summary.body.experiences.find((item) => item.id === "gastronomica");
+    assert.strictEqual(gastronomicaSummary.issued, 3);
+    assert.strictEqual(gastronomicaSummary.used, 1);
+    assert.strictEqual(gastronomicaSummary.active, 2);
 
     paymentAmount = 1;
     const mismatchedPayment = await request(server, "GET", "/api/latidos/payment?payment_id=987654321");
@@ -344,6 +529,14 @@ async function run() {
     assert.strictEqual(refundWebhook.status, 200);
     assert.strictEqual(refundWebhook.body.processed, true);
     assert.strictEqual(orders[0].status, "refunded");
+    assert.strictEqual(tickets.filter((ticket) => ticket.status === "cancelled").length, 2);
+    assert.strictEqual(tickets.filter((ticket) => ticket.status === "used").length, 1);
+
+    const cancelledCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: registration.body.tickets[1].token
+    }, { headers: authHeaders });
+    assert.strictEqual(cancelledCheckIn.status, 409);
+    assert.strictEqual(cancelledCheckIn.body.reason, "cancelled");
 
     const availabilityAfterRefund = await request(server, "GET", "/api/latidos/availability");
     assert.strictEqual(availabilityAfterRefund.body.experiences.gastronomica.sold, 0);
@@ -356,7 +549,7 @@ async function run() {
     assert.strictEqual(ignoredWebhook.status, 200);
     assert.strictEqual(ignoredWebhook.body.processed, false);
 
-    console.log("Latidos: checkout, cupos, pagos, webhook y registro verificados con simulaciones");
+    console.log("Latidos: checkout, cupos, pagos simulados, QR, PDF y acceso unico verificados");
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }

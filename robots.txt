@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /latidos-scanner.html
 
 Sitemap: https://www.laquerendonacg.com/sitemap.xml

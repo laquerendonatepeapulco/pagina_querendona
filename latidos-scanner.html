@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#1e3323">
+  <title>Acceso del personal | Latidos de M&eacute;xico</title>
+  <link rel="icon" href="img/latidos-logo.png" type="image/png">
+  <link rel="stylesheet" href="latidos-scanner.css">
+</head>
+<body>
+  <main class="scanner-shell">
+    <header class="scanner-header">
+      <img src="img/latidos-logo.png" alt="Latidos de M&eacute;xico" width="70" height="80">
+      <div>
+        <span>Acceso privado</span>
+        <h1>Control de boletos</h1>
+      </div>
+    </header>
+
+    <section class="scanner-login" id="scanner-login" aria-labelledby="login-title">
+      <div>
+        <p class="scanner-kicker">Personal autorizado</p>
+        <h2 id="login-title">Inicia sesi&oacute;n para escanear.</h2>
+        <p>Usa una cuenta del sistema de inventario. Esta p&aacute;gina no aparece en el men&uacute; p&uacute;blico.</p>
+      </div>
+      <form id="scanner-login-form">
+        <label>Usuario<input name="username" autocomplete="username" required></label>
+        <label>Contrase&ntilde;a<input type="password" name="password" autocomplete="current-password" required></label>
+        <button type="submit">Entrar</button>
+        <p class="scanner-feedback" id="login-feedback" role="status" aria-live="polite" hidden></p>
+      </form>
+    </section>
+
+    <section class="scanner-app" id="scanner-app" hidden>
+      <div class="scanner-toolbar">
+        <div>
+          <p class="scanner-kicker">Sesi&oacute;n activa</p>
+          <strong id="scanner-user"></strong>
+        </div>
+        <button class="scanner-secondary" id="scanner-logout" type="button">Cerrar sesi&oacute;n</button>
+      </div>
+
+      <section class="scanner-summary" aria-labelledby="summary-title">
+        <div class="scanner-summary-heading">
+          <h2 id="summary-title">Resumen de accesos</h2>
+          <button class="scanner-text-button" id="refresh-summary" type="button">Actualizar</button>
+        </div>
+        <div class="scanner-summary-grid" id="scanner-summary-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="scanner-reader" aria-labelledby="reader-title">
+        <p class="scanner-kicker">Validaci&oacute;n en puerta</p>
+        <h2 id="reader-title">Escanea un boleto</h2>
+        <p>La validaci&oacute;n requiere conexi&oacute;n a internet para impedir que un mismo QR se use dos veces.</p>
+
+        <div class="scanner-camera" id="scanner-camera">
+          <video id="scanner-video" playsinline muted></video>
+          <div class="scanner-frame" aria-hidden="true"></div>
+          <p id="camera-placeholder">Presiona el bot&oacute;n para activar la c&aacute;mara.</p>
+        </div>
+
+        <div class="scanner-actions">
+          <button id="start-scanner" type="button">Activar c&aacute;mara</button>
+          <button class="scanner-secondary" id="next-ticket" type="button" hidden>Escanear siguiente</button>
+        </div>
+
+        <details class="scanner-manual">
+          <summary>Ingresar c&oacute;digo manualmente</summary>
+          <form id="manual-ticket-form">
+            <label for="manual-ticket-token">C&oacute;digo del boleto</label>
+            <div>
+              <input id="manual-ticket-token" name="ticketToken" autocomplete="off" spellcheck="false" required>
+              <button type="submit">Validar</button>
+            </div>
+          </form>
+        </details>
+
+        <article class="scanner-result" id="scanner-result" role="status" aria-live="assertive" hidden>
+          <span id="scanner-result-label"></span>
+          <h3 id="scanner-result-title"></h3>
+          <p id="scanner-result-message"></p>
+          <dl id="scanner-result-details"></dl>
+        </article>
+      </section>
+    </section>
+  </main>
+  <script src="latidos-scanner.js" defer></script>
+</body>
+</html>

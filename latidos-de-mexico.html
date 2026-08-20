@@ -277,6 +277,14 @@
         </div>
         <p class="registration-feedback" id="registration-feedback" role="status" aria-live="polite" hidden></p>
       </form>
+
+      <section class="ticket-delivery latidos-reveal" id="ticket-delivery" aria-labelledby="ticket-delivery-title" hidden>
+        <div class="editorial-label">Boletos digitales</div>
+        <h3 id="ticket-delivery-title">Tus accesos est&aacute;n listos.</h3>
+        <p>Guarda un c&oacute;digo QR por cada asistente. Cada boleto permite un solo acceso al evento.</p>
+        <div class="ticket-delivery-list" id="ticket-delivery-list"></div>
+        <a class="ticket-pdf-download" id="ticket-pdf-download" href="#" download="boletos-latidos-de-mexico.pdf">Descargar todos en PDF</a>
+      </section>
     </section>
   </main>
 
@@ -375,6 +383,44 @@
     const registrationExperience = document.querySelector('#registration-experience');
     const registrationExperienceValue = document.querySelector('#registration-experience-value');
     const registrationTicketQuantity = document.querySelector('#registration-ticket-quantity');
+    const ticketDelivery = document.querySelector('#ticket-delivery');
+    const ticketDeliveryList = document.querySelector('#ticket-delivery-list');
+    const ticketPdfDownload = document.querySelector('#ticket-pdf-download');
+
+    function renderDeliveredTickets(tickets, pdfUrl) {
+      if (!ticketDelivery || !ticketDeliveryList || !ticketPdfDownload || !Array.isArray(tickets) || !tickets.length) return;
+
+      ticketDeliveryList.replaceChildren();
+      tickets.forEach((ticket, index) => {
+        const card = document.createElement('article');
+        card.className = 'ticket-delivery-card';
+
+        const heading = document.createElement('h4');
+        heading.textContent = `Boleto ${index + 1} de ${tickets.length}`;
+
+        const image = document.createElement('img');
+        image.src = ticket.qrUrl;
+        image.alt = `Código QR del boleto ${index + 1}`;
+        image.width = 220;
+        image.height = 220;
+
+        const number = document.createElement('strong');
+        number.textContent = ticket.ticketNumber;
+
+        const download = document.createElement('a');
+        download.href = ticket.qrUrl;
+        download.download = `${ticket.ticketNumber}.png`;
+        download.textContent = 'Descargar QR';
+
+        card.append(heading, image, number, download);
+        ticketDeliveryList.append(card);
+      });
+
+      ticketPdfDownload.href = pdfUrl;
+      ticketDelivery.hidden = false;
+      ticketDelivery.classList.add('is-visible');
+      ticketDelivery.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+    }
     let verifiedPayment = null;
     let latidosAvailability = {};
 
@@ -590,8 +636,9 @@
             throw new Error(result.error || 'No fue posible guardar tu registro. Intenta nuevamente.');
           }
 
-          registrationFeedback.textContent = `Solicitud recibida. Tu pago de ${currencyFormatter.format(verifiedPayment.amount)} con la operaci\u00f3n ${verifiedPayment.paymentId} fue validado; el equipo se pondr\u00e1 en contacto contigo para confirmar tu registro.`;
-          registrationSubmit.textContent = 'Solicitud enviada';
+          renderDeliveredTickets(result.tickets, result.pdfUrl);
+          registrationFeedback.textContent = `Registro confirmado. Se generaron ${result.tickets.length} boletos para tu compra de ${currencyFormatter.format(verifiedPayment.amount)}.`;
+          registrationSubmit.textContent = 'Registro confirmado';
         } catch (error) {
           registrationFeedback.textContent = error.message;
           registrationSubmit.disabled = false;

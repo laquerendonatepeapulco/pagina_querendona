@@ -1,0 +1,74 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600;700&display=swap");
+
+:root { --paper: #f5f0e8; --paper-light: #fffdf8; --ink: #1e3323; --ink-soft: #526052; --wine: #a44143; --ochre: #b2905a; --line: rgba(30, 51, 35, 0.22); --success: #24673b; --danger: #a52f35; }
+* { box-sizing: border-box; }
+body { min-height: 100vh; margin: 0; color: var(--ink); background: var(--paper); font-family: "DM Sans", Arial, sans-serif; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+.scanner-shell { width: min(1040px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 60px; }
+.scanner-header { display: flex; align-items: center; gap: 16px; padding: 18px 22px; border: 1px solid var(--ochre); background: rgba(255, 253, 248, 0.8); }
+.scanner-header img { width: 58px; height: 66px; object-fit: contain; mix-blend-mode: multiply; }
+.scanner-header span, .scanner-kicker { margin: 0; color: var(--wine); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+h1, h2, h3 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 600; }
+.scanner-header h1 { margin: 2px 0 0; font-size: clamp(27px, 5vw, 42px); line-height: 1; }
+.scanner-login { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 420px); gap: 48px; align-items: center; margin-top: 28px; padding: clamp(28px, 5vw, 56px); border: 1px solid var(--line); background: var(--paper-light); }
+.scanner-login h2, .scanner-reader h2 { margin: 8px 0 12px; color: var(--wine); font-size: clamp(32px, 5vw, 52px); line-height: 1; }
+.scanner-login p, .scanner-reader > p { color: var(--ink-soft); line-height: 1.6; }
+.scanner-login form { display: grid; gap: 16px; }
+label { display: grid; gap: 7px; color: var(--wine); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+input { width: 100%; min-height: 48px; padding: 11px 13px; color: var(--ink); background: var(--paper-light); border: 1px solid var(--line); border-radius: 0; }
+input:focus { outline: 2px solid var(--ochre); outline-offset: 2px; }
+button { min-height: 46px; padding: 12px 18px; color: var(--paper-light); background: var(--wine); border: 1px solid var(--wine); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+button:hover { color: var(--wine); background: transparent; }
+button:disabled { opacity: 0.58; cursor: wait; }
+.scanner-secondary { color: var(--ink); background: transparent; border-color: var(--line); }
+.scanner-text-button { min-height: auto; padding: 4px 0; color: var(--wine); background: transparent; border: 0; text-decoration: underline; }
+.scanner-feedback { margin: 0; padding: 12px; color: var(--danger); background: rgba(165, 47, 53, 0.08); border-left: 3px solid var(--danger); font-size: 13px; }
+.scanner-app { margin-top: 28px; }
+.scanner-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 22px; border: 1px solid var(--line); background: var(--paper-light); }
+.scanner-toolbar strong { display: block; margin-top: 4px; }
+.scanner-summary { margin-top: 20px; padding: 24px; border: 1px solid var(--line); }
+.scanner-summary-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.scanner-summary-heading h2 { margin: 0; font-size: 29px; }
+.scanner-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.scanner-summary-card { padding: 18px; background: rgba(176, 144, 90, 0.09); border-left: 3px solid var(--ochre); }
+.scanner-summary-card h3 { margin: 0 0 12px; font-size: 22px; }
+.scanner-summary-numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.scanner-summary-numbers span { color: var(--ink-soft); font-size: 10px; text-transform: uppercase; }
+.scanner-summary-numbers strong { display: block; color: var(--wine); font-size: 22px; }
+.scanner-reader { margin-top: 20px; padding: clamp(24px, 5vw, 48px); border: 1px solid var(--ochre); background: rgba(255, 253, 248, 0.62); }
+.scanner-camera { position: relative; display: grid; width: min(100%, 560px); aspect-ratio: 4 / 3; margin: 28px auto 0; place-items: center; overflow: hidden; color: var(--paper-light); background: #142219; }
+.scanner-camera video { width: 100%; height: 100%; object-fit: cover; }
+.scanner-camera p { position: absolute; inset: 0; display: grid; margin: 0; padding: 30px; place-items: center; text-align: center; }
+.scanner-frame { position: absolute; inset: 15%; border: 3px solid rgba(255, 253, 248, 0.92); box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.22); pointer-events: none; }
+.scanner-actions { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+.scanner-manual { width: min(100%, 560px); margin: 24px auto 0; border-top: 1px solid var(--line); }
+.scanner-manual summary { padding: 16px 0; color: var(--wine); font-weight: 700; cursor: pointer; }
+.scanner-manual form > div { display: grid; grid-template-columns: 1fr auto; }
+.scanner-manual form button { min-width: 116px; }
+.scanner-result { width: min(100%, 650px); margin: 28px auto 0; padding: 28px; color: var(--paper-light); text-align: center; }
+.scanner-result.is-valid { background: var(--success); }
+.scanner-result.is-invalid { background: var(--danger); }
+.scanner-result > span { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+.scanner-result h3 { margin: 6px 0; font-size: clamp(34px, 7vw, 58px); }
+.scanner-result p { margin: 0; }
+.scanner-result dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.42); text-align: left; }
+.scanner-result dl div { min-width: 0; }
+.scanner-result dt { font-size: 9px; letter-spacing: 0.12em; opacity: 0.8; text-transform: uppercase; }
+.scanner-result dd { margin: 4px 0 0; overflow-wrap: anywhere; font-weight: 700; }
+
+@media (max-width: 700px) {
+  .scanner-shell { width: min(100% - 20px, 1040px); padding-top: 10px; }
+  .scanner-login { grid-template-columns: 1fr; gap: 28px; }
+  .scanner-summary-grid { grid-template-columns: 1fr; }
+  .scanner-toolbar { align-items: flex-start; flex-direction: column; }
+  .scanner-toolbar button { width: 100%; }
+  .scanner-result dl { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 420px) {
+  .scanner-actions { flex-direction: column; }
+  .scanner-actions button { width: 100%; }
+  .scanner-manual form > div { grid-template-columns: 1fr; }
+}

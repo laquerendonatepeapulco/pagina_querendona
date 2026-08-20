@@ -1,9 +1,12 @@
 require("dotenv").config();
 
 const crypto = require("crypto");
+const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const { Pool } = require("pg");
+const QRCode = require("qrcode");
+const PDFDocument = require("pdfkit");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -412,6 +415,23 @@ async function ensureSchema() {
   `);
 
   await query(`
+    CREATE TABLE IF NOT EXISTS latidos_tickets (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      order_id UUID NOT NULL
+        REFERENCES latidos_orders(id) ON DELETE CASCADE,
+      sequence INTEGER NOT NULL CHECK (sequence > 0),
+      ticket_number TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL DEFAULT 'active'
+        CHECK (status IN ('active', 'used', 'cancelled')),
+      used_at TIMESTAMPTZ,
+      checked_in_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (order_id, sequence)
+    )
+  `);
+
+  await query(`
     CREATE INDEX IF NOT EXISTS idx_latidos_orders_experience_status
     ON latidos_orders(experience_id, status)
   `);
@@ -424,6 +444,16 @@ async function ensureSchema() {
   await query(`
     CREATE INDEX IF NOT EXISTS idx_latidos_registrations_created_at
     ON latidos_registrations(created_at DESC)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_latidos_tickets_status
+    ON latidos_tickets(status, created_at)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_latidos_tickets_order
+    ON latidos_tickets(order_id, sequence)
   `);
 
   await query(`
@@ -667,6 +697,230 @@ function sanitizeLatidosRegistration(input = {}) {
   };
 }
 
+function createLatidosSignedToken(kind, id) {
+  const payload = base64UrlEncode(JSON.stringify({ version: 1, kind, id }));
+  return `lt1.${payload}.${signPayload(`latidos:${payload}`)}`;
+}
+
+function readLatidosSignedToken(token, expectedKind) {
+  const [prefix, payload, signature] = String(token || "").trim().split(".");
+  if (prefix !== "lt1" || !payload || !signature) return null;
+
+  const expected = signPayload(`latidos:${payload}`);
+  const expectedBuffer = Buffer.from(expected);
+  const signatureBuffer = Buffer.from(signature);
+  if (
+    expectedBuffer.length !== signatureBuffer.length ||
+    !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)
+  ) {
+    return null;
+  }
+
+  try {
+    const value = JSON.parse(base64UrlDecode(payload));
+    if (value.version !== 1 || value.kind !== expectedKind || !value.id) return null;
+    return value;
+  } catch (error) {
+    return null;
+  }
+}
+
+function createLatidosTicketNumber(experienceId) {
+  const prefix = experienceId === "gastronomica" ? "G" : "T";
+  return `LDM-${prefix}-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
+}
+
+function latidosTicketDto(ticket) {
+  const token = createLatidosSignedToken("ticket", ticket.id);
+  const encodedToken = encodeURIComponent(token);
+
+  return {
+    ticketNumber: ticket.ticket_number,
+    sequence: Number(ticket.sequence),
+    status: ticket.status,
+    usedAt: ticket.used_at || null,
+    token,
+    qrUrl: `/api/latidos/tickets/${encodedToken}/qr`
+  };
+}
+
+async function ensureLatidosTickets(client, order) {
+  for (let sequence = 1; sequence <= Number(order.quantity); sequence += 1) {
+    await client.query(
+      `
+        INSERT INTO latidos_tickets (
+          order_id,
+          sequence,
+          ticket_number,
+          status
+        )
+        VALUES ($1, $2, $3, 'active')
+        ON CONFLICT (order_id, sequence) DO NOTHING
+      `,
+      [order.id, sequence, createLatidosTicketNumber(order.experience_id)]
+    );
+  }
+
+  const result = await client.query(
+    `
+      SELECT *
+      FROM latidos_tickets
+      WHERE order_id = $1
+      ORDER BY sequence
+    `,
+    [order.id]
+  );
+
+  return result.rows;
+}
+
+async function getLatidosTicketBundle(client, orderId) {
+  const orderResult = await client.query(
+    `
+      SELECT
+        o.*,
+        e.name AS experience_name,
+        r.name AS registration_name,
+        r.email AS registration_email,
+        r.phone AS registration_phone
+      FROM latidos_orders o
+      JOIN latidos_experiences e ON e.id = o.experience_id
+      JOIN latidos_registrations r ON r.order_id = o.id
+      WHERE o.id = $1
+    `,
+    [orderId]
+  );
+  const order = orderResult.rows[0];
+  if (!order) return null;
+
+  const ticketResult = await client.query(
+    `
+      SELECT *
+      FROM latidos_tickets
+      WHERE order_id = $1
+      ORDER BY sequence
+    `,
+    [orderId]
+  );
+
+  return { order, tickets: ticketResult.rows };
+}
+
+async function renderLatidosTicketsPdf(res, bundle) {
+  const { order, tickets } = bundle;
+  const qrBuffers = await Promise.all(
+    tickets.map((ticket) => QRCode.toBuffer(createLatidosSignedToken("ticket", ticket.id), {
+      type: "png",
+      width: 720,
+      margin: 2,
+      errorCorrectionLevel: "H",
+      color: { dark: "#1e3323", light: "#fffdf8" }
+    }))
+  );
+  const document = new PDFDocument({
+    size: "A4",
+    margin: 0,
+    autoFirstPage: false,
+    info: {
+      Title: "Boletos Latidos de Mexico",
+      Author: "La Querendona",
+      Subject: "Acceso al evento Latidos de Mexico"
+    }
+  });
+  const logoPath = path.join(__dirname, "..", "img", "latidos-logo.png");
+  const paper = "#f5f0e8";
+  const ink = "#1e3323";
+  const wine = "#a44143";
+  const ochre = "#b2905a";
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", 'attachment; filename="boletos-latidos-de-mexico.pdf"');
+  res.setHeader("Cache-Control", "private, no-store");
+  document.pipe(res);
+
+  tickets.forEach((ticket, index) => {
+    document.addPage();
+    const pageWidth = document.page.width;
+    const pageHeight = document.page.height;
+
+    document.rect(0, 0, pageWidth, pageHeight).fill(paper);
+    document.lineWidth(1.5).strokeColor(ochre).roundedRect(34, 34, pageWidth - 68, pageHeight - 68, 18).stroke();
+    document.fillColor(wine).font("Helvetica-Bold").fontSize(10).text(
+      "BOLETO DIGITAL - LATIDOS DE MEXICO",
+      62,
+      62,
+      { width: pageWidth - 124, align: "center", characterSpacing: 1.5 }
+    );
+
+    if (fs.existsSync(logoPath)) {
+      document.image(logoPath, pageWidth / 2 - 54, 92, { fit: [108, 125], align: "center" });
+    }
+
+    document.fillColor(ink).font("Times-Roman").fontSize(28).text(
+      order.experience_name,
+      62,
+      222,
+      { width: pageWidth - 124, align: "center" }
+    );
+    document.fillColor(wine).font("Helvetica-Bold").fontSize(12).text(
+      `Boleto ${Number(ticket.sequence)} de ${Number(order.quantity)}`,
+      62,
+      266,
+      { width: pageWidth - 124, align: "center" }
+    );
+
+    document.image(qrBuffers[index], pageWidth / 2 - 112, 304, { width: 224, height: 224 });
+    document.fillColor(ink).font("Helvetica-Bold").fontSize(13).text(
+      ticket.ticket_number,
+      62,
+      538,
+      { width: pageWidth - 124, align: "center", characterSpacing: 1 }
+    );
+    document.fillColor(ink).font("Helvetica").fontSize(11).text(
+      "12 de septiembre de 2026 | Restaurante La Querendona, Tepeapulco",
+      62,
+      574,
+      { width: pageWidth - 124, align: "center" }
+    );
+    document.font("Helvetica").fontSize(10).text(
+      `Titular de la compra: ${order.registration_name}`,
+      62,
+      606,
+      { width: pageWidth - 124, align: "center" }
+    );
+
+    document.moveTo(78, 650).lineTo(pageWidth - 78, 650).strokeColor(ochre).lineWidth(0.8).stroke();
+    document.fillColor("#526052").font("Helvetica").fontSize(9).text(
+      "Presenta este codigo QR al ingresar. Cada boleto permite un solo acceso y quedara invalidado despues de su primer escaneo.",
+      82,
+      670,
+      { width: pageWidth - 164, align: "center", lineGap: 3 }
+    );
+
+    if (ticket.status === "cancelled") {
+      document.save();
+      document.rotate(-24, { origin: [pageWidth / 2, pageHeight / 2] });
+      document.fillColor(wine).opacity(0.28).font("Helvetica-Bold").fontSize(64).text(
+        "CANCELADO",
+        72,
+        pageHeight / 2 - 34,
+        { width: pageWidth - 144, align: "center" }
+      );
+      document.restore();
+      document.opacity(1);
+    }
+
+    document.fillColor(wine).font("Helvetica-Bold").fontSize(9).text(
+      "LA QUERENDONA - 2026",
+      62,
+      pageHeight - 74,
+      { width: pageWidth - 124, align: "center", characterSpacing: 1 }
+    );
+  });
+
+  document.end();
+}
+
 async function mercadoPagoRequest(pathname, options = {}) {
   const response = await fetch(`https://api.mercadopago.com${pathname}`, {
     ...options,
@@ -772,6 +1026,17 @@ async function syncLatidosPayment(paymentIdInput) {
       [String(payment.id), orderStatus, paidAt, order.id]
     );
     const updatedOrder = updatedResult.rows[0] || { ...order, status: orderStatus };
+
+    if (["cancelled", "refunded"].includes(orderStatus)) {
+      await client.query(
+        `
+          UPDATE latidos_tickets
+          SET status = 'cancelled', updated_at = now()
+          WHERE order_id = $1 AND status = 'active'
+        `,
+        [order.id]
+      );
+    }
 
     await client.query("COMMIT");
 
@@ -1091,6 +1356,8 @@ app.post("/api/latidos/webhook", async (req, res, next) => {
 });
 
 app.post("/api/latidos/registration", async (req, res, next) => {
+  let client;
+
   try {
     const registration = sanitizeLatidosRegistration(req.body);
     const payment = await syncLatidosPayment(req.body.paymentId);
@@ -1101,7 +1368,22 @@ app.post("/api/latidos/registration", async (req, res, next) => {
       throw error;
     }
 
-    const result = await query(
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const orderResult = await client.query(
+      `SELECT * FROM latidos_orders WHERE id = $1 FOR UPDATE`,
+      [payment.orderId]
+    );
+    const order = orderResult.rows[0];
+
+    if (!order || order.status !== "approved") {
+      const error = new Error("No encontramos una orden aprobada para generar los boletos");
+      error.status = 409;
+      throw error;
+    }
+
+    const registrationResult = await client.query(
       `
         INSERT INTO latidos_registrations (
           order_id,
@@ -1138,7 +1420,213 @@ app.post("/api/latidos/registration", async (req, res, next) => {
       ]
     );
 
-    res.status(201).json({ ok: true, registrationId: result.rows[0].id });
+    const tickets = await ensureLatidosTickets(client, order);
+    await client.query("COMMIT");
+
+    const orderToken = createLatidosSignedToken("order", order.id);
+    const ticketDtos = tickets.map(latidosTicketDto);
+
+    res.setHeader("Cache-Control", "private, no-store");
+    res.status(201).json({
+      ok: true,
+      registrationId: registrationResult.rows[0].id,
+      tickets: ticketDtos,
+      pdfUrl: `/api/latidos/tickets/pdf?token=${encodeURIComponent(orderToken)}`
+    });
+  } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.get("/api/latidos/tickets/:token/qr", async (req, res, next) => {
+  try {
+    await getInitPromise();
+    const ticketToken = readLatidosSignedToken(req.params.token, "ticket");
+
+    if (!ticketToken) {
+      const error = new Error("El boleto no es valido");
+      error.status = 400;
+      throw error;
+    }
+
+    const ticketResult = await query(
+      `SELECT id FROM latidos_tickets WHERE id = $1`,
+      [ticketToken.id]
+    );
+    if (!ticketResult.rows[0]) {
+      const error = new Error("Boleto no encontrado");
+      error.status = 404;
+      throw error;
+    }
+
+    const image = await QRCode.toBuffer(req.params.token, {
+      type: "png",
+      width: 720,
+      margin: 2,
+      errorCorrectionLevel: "H",
+      color: { dark: "#1e3323", light: "#fffdf8" }
+    });
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Content-Length", image.length);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.send(image);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/latidos/tickets/pdf", async (req, res, next) => {
+  try {
+    await getInitPromise();
+    const orderToken = readLatidosSignedToken(req.query.token, "order");
+
+    if (!orderToken) {
+      const error = new Error("El enlace de descarga no es valido");
+      error.status = 400;
+      throw error;
+    }
+
+    const bundle = await getLatidosTicketBundle(pool, orderToken.id);
+    if (!bundle || !bundle.tickets.length) {
+      const error = new Error("No encontramos boletos para esta compra");
+      error.status = 404;
+      throw error;
+    }
+
+    await renderLatidosTicketsPdf(res, bundle);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/latidos/check-in", authRequired, async (req, res, next) => {
+  const ticketToken = readLatidosSignedToken(req.body.ticketToken, "ticket");
+  if (!ticketToken) {
+    res.status(400).json({ valid: false, reason: "invalid", error: "El codigo QR no es valido" });
+    return;
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    const result = await client.query(
+      `
+        SELECT
+          t.*,
+          o.status AS order_status,
+          o.quantity AS order_quantity,
+          o.experience_id,
+          e.name AS experience_name,
+          r.name AS registration_name
+        FROM latidos_tickets t
+        JOIN latidos_orders o ON o.id = t.order_id
+        JOIN latidos_experiences e ON e.id = o.experience_id
+        JOIN latidos_registrations r ON r.order_id = o.id
+        WHERE t.id = $1
+        FOR UPDATE OF t
+      `,
+      [ticketToken.id]
+    );
+    const ticket = result.rows[0];
+
+    if (!ticket) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ valid: false, reason: "not_found", error: "Boleto no encontrado" });
+      return;
+    }
+
+    const publicTicket = {
+      ticketNumber: ticket.ticket_number,
+      sequence: Number(ticket.sequence),
+      quantity: Number(ticket.order_quantity),
+      experience: ticket.experience_id,
+      experienceName: ticket.experience_name,
+      customerName: ticket.registration_name,
+      status: ticket.status,
+      usedAt: ticket.used_at || null
+    };
+
+    if (ticket.order_status !== "approved" || ticket.status === "cancelled") {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        valid: false,
+        reason: "cancelled",
+        error: "Este boleto fue cancelado o reembolsado",
+        ticket: publicTicket
+      });
+      return;
+    }
+
+    if (ticket.status === "used") {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        valid: false,
+        reason: "used",
+        error: "Este boleto ya fue utilizado",
+        ticket: publicTicket
+      });
+      return;
+    }
+
+    const updated = await client.query(
+      `
+        UPDATE latidos_tickets
+        SET
+          status = 'used',
+          used_at = now(),
+          checked_in_by = $1,
+          updated_at = now()
+        WHERE id = $2 AND status = 'active'
+        RETURNING *
+      `,
+      [req.user.id, ticket.id]
+    );
+
+    if (!updated.rows[0]) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ valid: false, reason: "used", error: "Este boleto ya fue utilizado" });
+      return;
+    }
+
+    await client.query("COMMIT");
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({
+      valid: true,
+      reason: "admitted",
+      message: "Acceso autorizado",
+      ticket: { ...publicTicket, status: "used", usedAt: updated.rows[0].used_at }
+    });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    client.release();
+  }
+});
+
+app.get("/api/latidos/check-in/summary", authRequired, async (req, res, next) => {
+  try {
+    const result = await query(`
+      SELECT
+        e.id,
+        e.name,
+        COUNT(t.id)::INTEGER AS issued,
+        COUNT(t.id) FILTER (WHERE t.status = 'active')::INTEGER AS active,
+        COUNT(t.id) FILTER (WHERE t.status = 'used')::INTEGER AS used,
+        COUNT(t.id) FILTER (WHERE t.status = 'cancelled')::INTEGER AS cancelled
+      FROM latidos_experiences e
+      LEFT JOIN latidos_orders o ON o.experience_id = e.id
+      LEFT JOIN latidos_tickets t ON t.order_id = o.id
+      GROUP BY e.id, e.name
+      ORDER BY e.id
+    `);
+
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ experiences: result.rows });
   } catch (error) {
     next(error);
   }

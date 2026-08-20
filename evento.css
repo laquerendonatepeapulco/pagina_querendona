@@ -303,6 +303,20 @@ body.latidos-page a { color: inherit; }
 .registration-submit:hover { color: var(--wine); background: transparent; transform: translateY(-2px); }
 .registration-submit:disabled { color: rgba(255, 253, 248, 0.76); background: rgba(174, 61, 62, 0.56); border-color: transparent; cursor: not-allowed; transform: none; }
 .registration-feedback { margin: 22px 0 0; padding: 14px 16px; color: var(--ink); background: rgba(176, 144, 90, 0.13); border-left: 3px solid var(--ochre); font-size: 13px; }
+.ticket-delivery { margin-top: 42px; padding: 34px; border: 1px solid var(--ochre); background: rgba(176, 144, 90, 0.08); scroll-margin-top: 110px; }
+.ticket-delivery[hidden] { display: none; }
+.ticket-delivery h3 { margin: 12px 0 8px; color: var(--wine); font-size: clamp(28px, 4vw, 42px); }
+.ticket-delivery > p { max-width: 680px; margin: 0; color: var(--ink-soft); line-height: 1.6; }
+.ticket-delivery-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-top: 28px; }
+.ticket-delivery-card { display: flex; align-items: center; flex-direction: column; padding: 22px; border: 1px solid var(--line); background: rgba(255, 253, 248, 0.8); text-align: center; }
+.ticket-delivery-card h4 { margin: 0 0 14px; color: var(--wine); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+.ticket-delivery-card img { width: min(100%, 220px); height: auto; border: 8px solid #fffdf8; }
+.ticket-delivery-card strong { margin-top: 14px; color: var(--ink); font-size: 13px; letter-spacing: 0.08em; }
+.ticket-delivery-card a,
+.ticket-pdf-download { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; margin-top: 16px; padding: 12px 18px; color: var(--paper) !important; background: var(--wine); border: 1px solid var(--wine); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.ticket-delivery-card a:hover,
+.ticket-pdf-download:hover { color: var(--wine) !important; background: transparent; }
+.ticket-pdf-download { margin-top: 24px; }
 
 .latidos-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding: 34px 5vw 22px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 12px; }
 .latidos-footer img { width: 70px; height: 80px; object-fit: contain; mix-blend-mode: multiply; }
@@ -400,6 +414,7 @@ body.latidos-page a { color: inherit; }
   .registration-actions { display: block; }
   .registration-note { margin-bottom: 24px; }
   .registration-submit { width: 100%; }
+  .ticket-delivery { padding: 24px 18px; }
   .latidos-footer { flex-direction: column; text-align: center; }
   .latidos-motion-ready .latidos-reveal { --latidos-reveal-y: 38px; }
   .latidos-motion-ready .latidos-reveal-left { --latidos-reveal-x: -26px; --latidos-reveal-y: 12px; }
