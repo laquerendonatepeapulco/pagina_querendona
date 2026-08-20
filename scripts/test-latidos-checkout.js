@@ -391,7 +391,9 @@ function validateInlineScripts() {
 
 function validateScannerScript() {
   const scriptPath = path.resolve(__dirname, "..", "latidos-scanner.js");
+  const htmlPath = path.resolve(__dirname, "..", "latidos-scanner.html");
   new vm.Script(fs.readFileSync(scriptPath, "utf8"), { filename: "latidos-scanner.js" });
+  assert.ok(fs.readFileSync(htmlPath, "utf8").includes('id="photo-scanner"'), "El escaner debe ofrecer captura por fotografia");
 }
 
 async function run() {

@@ -10,6 +10,8 @@
   const summaryGrid = document.querySelector("#scanner-summary-grid");
   const refreshButton = document.querySelector("#refresh-summary");
   const startButton = document.querySelector("#start-scanner");
+  const photoButton = document.querySelector("#photo-scanner");
+  const photoInput = document.querySelector("#photo-scanner-input");
   const nextButton = document.querySelector("#next-ticket");
   const camera = document.querySelector("#scanner-camera");
   const video = document.querySelector("#scanner-video");
@@ -148,18 +150,25 @@
 
   refreshButton.addEventListener("click", loadSummary);
 
+  async function getQrDetector() {
+    if (!("BarcodeDetector" in window)) {
+      throw new Error("Este navegador no permite analizar códigos QR");
+    }
+    if (detector) return detector;
+
+    const supported = await BarcodeDetector.getSupportedFormats();
+    if (!supported.includes("qr_code")) {
+      throw new Error("Este dispositivo no permite leer códigos QR");
+    }
+    detector = new BarcodeDetector({ formats: ["qr_code"] });
+    return detector;
+  }
+
   async function startCamera() {
     clearResult();
-    if (!("BarcodeDetector" in window)) {
-      cameraPlaceholder.textContent = "Este navegador no permite escanear directamente. Usa Chrome o ingresa el código manualmente.";
-      cameraPlaceholder.hidden = false;
-      return;
-    }
 
     try {
-      const supported = await BarcodeDetector.getSupportedFormats();
-      if (!supported.includes("qr_code")) throw new Error("Este dispositivo no permite leer códigos QR");
-      detector = new BarcodeDetector({ formats: ["qr_code"] });
+      await getQrDetector();
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
       video.srcObject = stream;
       await video.play();
@@ -169,8 +178,54 @@
       nextButton.hidden = true;
       scanFrame = requestAnimationFrame(scanLoop);
     } catch (error) {
-      cameraPlaceholder.textContent = `No se pudo activar la cámara: ${error.message}. Puedes ingresar el código manualmente.`;
+      cameraPlaceholder.textContent = `No se pudo activar la cámara: ${error.message}. Usa el botón Tomar foto del QR.`;
       cameraPlaceholder.hidden = false;
+    }
+  }
+
+  async function loadPhotoSource(file) {
+    if ("createImageBitmap" in window) return createImageBitmap(file);
+
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      image.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(image);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("No fue posible abrir la fotografía"));
+      };
+      image.src = objectUrl;
+    });
+  }
+
+  async function scanPhoto(file) {
+    clearResult();
+    stopCamera();
+    photoButton.disabled = true;
+    cameraPlaceholder.textContent = "Analizando la fotografía...";
+    cameraPlaceholder.hidden = false;
+
+    try {
+      const qrDetector = await getQrDetector();
+      const source = await loadPhotoSource(file);
+      const codes = await qrDetector.detect(source);
+      if (typeof source.close === "function") source.close();
+
+      if (!codes[0]?.rawValue) {
+        throw new Error("No encontramos un QR. Acerca la cámara, enfoca el código completo y vuelve a intentarlo");
+      }
+
+      cameraPlaceholder.textContent = "QR encontrado. Validando boleto...";
+      await validateTicket(codes[0].rawValue);
+    } catch (error) {
+      cameraPlaceholder.textContent = error.message;
+      cameraPlaceholder.hidden = false;
+    } finally {
+      photoButton.disabled = false;
+      photoInput.value = "";
     }
   }
 
@@ -255,6 +310,11 @@
   }
 
   startButton.addEventListener("click", startCamera);
+  photoButton.addEventListener("click", () => photoInput.click());
+  photoInput.addEventListener("change", () => {
+    const file = photoInput.files?.[0];
+    if (file) scanPhoto(file);
+  });
   nextButton.addEventListener("click", () => {
     clearResult();
     manualInput.value = "";
