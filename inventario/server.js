@@ -431,6 +431,20 @@ async function ensureSchema() {
     )
   `);
 
+  await query(`
+    CREATE TABLE IF NOT EXISTS latidos_test_tickets (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      ticket_number TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL DEFAULT 'active'
+        CHECK (status IN ('active', 'used')),
+      used_at TIMESTAMPTZ,
+      checked_in_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+
   // Compatibilidad con instalaciones que ya tenian una primera version de la tabla.
   await query(`
     ALTER TABLE latidos_tickets
@@ -499,6 +513,11 @@ async function ensureSchema() {
   await query(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_latidos_tickets_number
     ON latidos_tickets(ticket_number)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_latidos_test_tickets_status
+    ON latidos_test_tickets(status, created_at DESC)
   `);
 
   await query(`
@@ -786,6 +805,20 @@ function latidosTicketDto(ticket) {
     usedAt: ticket.used_at || null,
     token,
     qrUrl: `/api/latidos/tickets/${encodedToken}/qr`
+  };
+}
+
+function latidosTestTicketDto(ticket) {
+  const token = createLatidosSignedToken("test-ticket", ticket.id);
+  const encodedToken = encodeURIComponent(token);
+
+  return {
+    ticketNumber: ticket.ticket_number,
+    status: ticket.status,
+    usedAt: ticket.used_at || null,
+    token,
+    qrUrl: `/api/latidos/test-tickets/${encodedToken}/qr`,
+    isTest: true
   };
 }
 
@@ -1486,6 +1519,67 @@ app.post("/api/latidos/registration", async (req, res, next) => {
   }
 });
 
+app.post("/api/latidos/test-ticket", authRequired, adminRequired, async (req, res, next) => {
+  try {
+    await getInitPromise();
+    const result = await query(
+      `
+        INSERT INTO latidos_test_tickets (ticket_number, created_by)
+        VALUES ($1, $2)
+        RETURNING *
+      `,
+      [`LDM-PRUEBA-${crypto.randomBytes(5).toString("hex").toUpperCase()}`, req.user.id]
+    );
+    const ticket = latidosTestTicketDto(result.rows[0]);
+
+    res.setHeader("Cache-Control", "private, no-store");
+    res.status(201).json({
+      ok: true,
+      message: "Boleto de prueba creado. No autoriza el ingreso al evento.",
+      ticket
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/latidos/test-tickets/:token/qr", async (req, res, next) => {
+  try {
+    await getInitPromise();
+    const testTicketToken = readLatidosSignedToken(req.params.token, "test-ticket");
+
+    if (!testTicketToken) {
+      const error = new Error("El boleto de prueba no es valido");
+      error.status = 400;
+      throw error;
+    }
+
+    const ticketResult = await query(
+      `SELECT id FROM latidos_test_tickets WHERE id = $1`,
+      [testTicketToken.id]
+    );
+    if (!ticketResult.rows[0]) {
+      const error = new Error("Boleto de prueba no encontrado");
+      error.status = 404;
+      throw error;
+    }
+
+    const image = await QRCode.toBuffer(req.params.token, {
+      type: "png",
+      width: 720,
+      margin: 2,
+      errorCorrectionLevel: "H",
+      color: { dark: "#1e3323", light: "#fffdf8" }
+    });
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Content-Length", image.length);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.send(image);
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get("/api/latidos/tickets/:token/qr", async (req, res, next) => {
   try {
     await getInitPromise();
@@ -1548,6 +1642,83 @@ app.get("/api/latidos/tickets/pdf", async (req, res, next) => {
 });
 
 app.post("/api/latidos/check-in", authRequired, async (req, res, next) => {
+  const testTicketToken = readLatidosSignedToken(req.body.ticketToken, "test-ticket");
+
+  if (testTicketToken) {
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+      const result = await client.query(
+        `SELECT * FROM latidos_test_tickets WHERE id = $1 FOR UPDATE`,
+        [testTicketToken.id]
+      );
+      const ticket = result.rows[0];
+
+      if (!ticket) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ valid: false, reason: "not_found", error: "Boleto de prueba no encontrado" });
+        return;
+      }
+
+      const publicTicket = {
+        ticketNumber: ticket.ticket_number,
+        customerName: "Prueba del sistema",
+        experienceName: "Validacion del escaner",
+        status: ticket.status,
+        usedAt: ticket.used_at || null,
+        isTest: true
+      };
+
+      if (ticket.status === "used") {
+        await client.query("ROLLBACK");
+        res.status(409).json({
+          valid: false,
+          reason: "used",
+          error: "Esta prueba ya fue utilizada",
+          ticket: publicTicket
+        });
+        return;
+      }
+
+      const updated = await client.query(
+        `
+          UPDATE latidos_test_tickets
+          SET
+            status = 'used',
+            used_at = now(),
+            checked_in_by = $1,
+            updated_at = now()
+          WHERE id = $2 AND status = 'active'
+          RETURNING *
+        `,
+        [req.user.id, ticket.id]
+      );
+
+      if (!updated.rows[0]) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ valid: false, reason: "used", error: "Esta prueba ya fue utilizada" });
+        return;
+      }
+
+      await client.query("COMMIT");
+      res.setHeader("Cache-Control", "private, no-store");
+      res.json({
+        valid: true,
+        reason: "test",
+        message: "Prueba completada. El QR y el escaner funcionan; este codigo no autoriza el ingreso.",
+        ticket: { ...publicTicket, status: "used", usedAt: updated.rows[0].used_at }
+      });
+      return;
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      next(error);
+      return;
+    } finally {
+      client.release();
+    }
+  }
+
   const ticketToken = readLatidosSignedToken(req.body.ticketToken, "ticket");
   if (!ticketToken) {
     res.status(400).json({ valid: false, reason: "invalid", error: "El codigo QR no es valido" });

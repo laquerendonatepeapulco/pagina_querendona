@@ -49,11 +49,13 @@ button:disabled { opacity: 0.58; cursor: wait; }
 .scanner-manual form button { min-width: 116px; }
 .scanner-result { width: min(100%, 650px); margin: 28px auto 0; padding: 28px; color: var(--paper-light); text-align: center; }
 .scanner-result.is-valid { background: var(--success); }
+.scanner-result.is-test { color: var(--ink); background: var(--ochre); }
 .scanner-result.is-invalid { background: var(--danger); }
 .scanner-result > span { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
 .scanner-result h3 { margin: 6px 0; font-size: clamp(34px, 7vw, 58px); }
 .scanner-result p { margin: 0; }
 .scanner-result dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.42); text-align: left; }
+.scanner-result.is-test dl { border-top-color: rgba(30, 51, 35, 0.35); }
 .scanner-result dl div { min-width: 0; }
 .scanner-result dt { font-size: 9px; letter-spacing: 0.12em; opacity: 0.8; text-transform: uppercase; }
 .scanner-result dd { margin: 4px 0 0; overflow-wrap: anywhere; font-weight: 700; }

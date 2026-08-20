@@ -18,9 +18,11 @@ const experiences = new Map([
 const orders = [];
 const registrations = [];
 const tickets = [];
+const testTickets = [];
 let nextOrderId = 1;
 let nextRegistrationId = 1;
 let nextTicketId = 1;
+let nextTestTicketId = 1;
 const testUserSalt = "salt-de-prueba";
 const testUser = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -28,7 +30,7 @@ const testUser = {
   password_hash: crypto.createHash("sha256").update(`${testUserSalt}:entrada-segura`).digest("hex"),
   salt: testUserSalt,
   name: "Personal de acceso",
-  role: "staff",
+  role: "admin",
   label: "Control de boletos"
 };
 
@@ -179,6 +181,38 @@ function databaseQuery(sql, params = []) {
       tickets.push(ticket);
     }
     return { rows: [], rowCount: 1 };
+  }
+
+  if (/INSERT INTO latidos_test_tickets/i.test(query)) {
+    const ticket = {
+      id: `10000000-0000-4000-8000-${String(nextTestTicketId++).padStart(12, "0")}`,
+      ticket_number: params[0],
+      status: "active",
+      used_at: null,
+      checked_in_by: null,
+      created_by: params[1]
+    };
+    testTickets.push(ticket);
+    return { rows: [{ ...ticket }], rowCount: 1 };
+  }
+
+  if (/SELECT id FROM latidos_test_tickets WHERE id = \$1/i.test(query)) {
+    const ticket = testTickets.find((item) => item.id === params[0]);
+    return { rows: ticket ? [{ id: ticket.id }] : [], rowCount: ticket ? 1 : 0 };
+  }
+
+  if (/SELECT \* FROM latidos_test_tickets WHERE id = \$1 FOR UPDATE/i.test(query)) {
+    const ticket = testTickets.find((item) => item.id === params[0]);
+    return { rows: ticket ? [{ ...ticket }] : [], rowCount: ticket ? 1 : 0 };
+  }
+
+  if (/UPDATE latidos_test_tickets SET status = 'used'/i.test(query)) {
+    const ticket = testTickets.find((item) => item.id === params[1] && item.status === "active");
+    if (!ticket) return { rows: [], rowCount: 0 };
+    ticket.status = "used";
+    ticket.used_at = new Date().toISOString();
+    ticket.checked_in_by = params[0];
+    return { rows: [{ ...ticket }], rowCount: 1 };
   }
 
   if (/SELECT \* FROM latidos_tickets WHERE order_id = \$1 ORDER BY sequence/i.test(query)) {
@@ -476,6 +510,33 @@ async function run() {
     assert.strictEqual(login.status, 200);
     assert.ok(login.body.token);
     const authHeaders = { Authorization: `Bearer ${login.body.token}` };
+
+    const mercadoPagoCallsBeforeTestTicket = mercadoPagoCalls.length;
+    const testTicket = await request(server, "POST", "/api/latidos/test-ticket", {}, { headers: authHeaders });
+    assert.strictEqual(testTicket.status, 201);
+    assert.strictEqual(testTicket.body.ticket.isTest, true);
+    assert.strictEqual(testTicket.body.ticket.status, "active");
+    assert.strictEqual(testTickets.length, 1);
+    assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeTestTicket);
+
+    const testQr = await request(server, "GET", testTicket.body.ticket.qrUrl);
+    assert.strictEqual(testQr.status, 200);
+    assert.strictEqual(testQr.headers["content-type"], "image/png");
+    assert.deepStrictEqual([...testQr.body.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+
+    const testCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: testTicket.body.ticket.token
+    }, { headers: authHeaders });
+    assert.strictEqual(testCheckIn.status, 200);
+    assert.strictEqual(testCheckIn.body.reason, "test");
+    assert.strictEqual(testCheckIn.body.ticket.isTest, true);
+    assert.strictEqual(testTickets[0].status, "used");
+
+    const duplicateTestCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: testTicket.body.ticket.token
+    }, { headers: authHeaders });
+    assert.strictEqual(duplicateTestCheckIn.status, 409);
+    assert.strictEqual(duplicateTestCheckIn.body.reason, "used");
 
     const firstCheckIn = await request(server, "POST", "/api/latidos/check-in", {
       ticketToken: registration.body.tickets[0].token

@@ -217,15 +217,17 @@
   function showResult(payload) {
     const valid = Boolean(payload.valid);
     const ticket = payload.ticket || {};
+    const isTest = Boolean(ticket.isTest || payload.reason === "test");
     resultPanel.hidden = false;
-    resultPanel.className = `scanner-result ${valid ? "is-valid" : "is-invalid"}`;
-    resultLabel.textContent = valid ? "Boleto válido" : "Acceso rechazado";
-    resultTitle.textContent = valid ? "Acceso autorizado" : payload.reason === "used" ? "Ya utilizado" : "No válido";
+    resultPanel.className = `scanner-result ${valid ? (isTest ? "is-test" : "is-valid") : "is-invalid"}`;
+    resultLabel.textContent = valid ? (isTest ? "Prueba del sistema" : "Boleto válido") : (isTest ? "Prueba rechazada" : "Acceso rechazado");
+    resultTitle.textContent = valid ? (isTest ? "QR verificado" : "Acceso autorizado") : payload.reason === "used" ? "Ya utilizado" : "No válido";
     resultMessage.textContent = payload.message || payload.error || "No fue posible validar este boleto";
     resultDetails.replaceChildren();
     appendDetail("Boleto", ticket.ticketNumber);
     appendDetail("Titular", ticket.customerName);
     appendDetail("Experiencia", ticket.experienceName);
+    if (isTest) appendDetail("Tipo", "PRUEBA - NO AUTORIZA INGRESO");
     appendDetail("Acceso", ticket.sequence && ticket.quantity ? `${ticket.sequence} de ${ticket.quantity}` : "");
     if (!valid && ticket.usedAt) appendDetail("Utilizado", new Date(ticket.usedAt).toLocaleString("es-MX"));
     nextButton.hidden = false;

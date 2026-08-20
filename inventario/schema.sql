@@ -194,6 +194,28 @@ CREATE TABLE IF NOT EXISTS latidos_tickets (
 );
 
 
+CREATE TABLE IF NOT EXISTS latidos_test_tickets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  ticket_number TEXT NOT NULL UNIQUE,
+
+  status TEXT NOT NULL DEFAULT 'active'
+    CHECK (status IN ('active', 'used')),
+
+  used_at TIMESTAMPTZ,
+
+  checked_in_by UUID
+    REFERENCES users(id) ON DELETE SET NULL,
+
+  created_by UUID
+    REFERENCES users(id) ON DELETE SET NULL,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
 ALTER TABLE latidos_tickets
   ADD COLUMN IF NOT EXISTS order_id UUID
     REFERENCES latidos_orders(id) ON DELETE CASCADE,
@@ -274,6 +296,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS
   idx_latidos_tickets_number
 ON latidos_tickets (
   ticket_number
+);
+
+
+CREATE INDEX IF NOT EXISTS
+  idx_latidos_test_tickets_status
+ON latidos_test_tickets (
+  status,
+  created_at DESC
 );
 
 
