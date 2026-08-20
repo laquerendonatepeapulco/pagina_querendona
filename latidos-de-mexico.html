@@ -423,6 +423,75 @@
     }
     let verifiedPayment = null;
     let latidosAvailability = {};
+    const paymentRecoveryKey = 'latidosPaymentRecovery';
+    const paymentRecoveryMaxAge = 7 * 24 * 60 * 60 * 1000;
+
+    function clearPaymentRecovery() {
+      try {
+        window.localStorage.removeItem(paymentRecoveryKey);
+      } catch (error) {
+        // El flujo sigue funcionando con los parametros de regreso de Mercado Pago.
+      }
+    }
+
+    function readPaymentRecovery() {
+      try {
+        const recovery = JSON.parse(window.localStorage.getItem(paymentRecoveryKey) || 'null');
+        const isExpired = !recovery?.savedAt || Date.now() - Number(recovery.savedAt) > paymentRecoveryMaxAge;
+        const hasIdentifier = recovery?.paymentId || recovery?.orderToken;
+        if (isExpired || !hasIdentifier) {
+          clearPaymentRecovery();
+          return null;
+        }
+        return recovery;
+      } catch (error) {
+        clearPaymentRecovery();
+        return null;
+      }
+    }
+
+    function savePaymentRecovery(values) {
+      try {
+        const current = readPaymentRecovery() || {};
+        window.localStorage.setItem(paymentRecoveryKey, JSON.stringify({
+          ...current,
+          ...values,
+          savedAt: Date.now()
+        }));
+      } catch (error) {
+        // El servidor siempre vuelve a validar el pago; el almacenamiento es solo respaldo.
+      }
+    }
+
+    function applyApprovedPayment(payment) {
+      verifiedPayment = payment;
+
+      const matchingRadio = ticketRadios.find((radio) => radio.value === payment.experience);
+      if (matchingRadio) matchingRadio.checked = true;
+      if (ticketQuantity) ticketQuantity.value = String(payment.quantity);
+      updateTicketSummary();
+
+      if (paymentAmount) paymentAmount.value = currencyFormatter.format(payment.amount);
+      if (paymentOperation) paymentOperation.value = payment.paymentId;
+      if (registrationExperience) registrationExperience.value = payment.experienceTitle;
+      if (registrationExperienceValue) registrationExperienceValue.value = payment.experience;
+      if (registrationTicketQuantity) registrationTicketQuantity.value = String(payment.quantity);
+      if (registrationSubmit) registrationSubmit.disabled = false;
+      if (checkoutButton) {
+        checkoutButton.disabled = true;
+        checkoutButton.removeAttribute('aria-busy');
+        checkoutButton.textContent = 'Pago confirmado';
+      }
+
+      savePaymentRecovery({ paymentId: payment.paymentId });
+      try {
+        window.localStorage.removeItem('latidosCheckoutSelection');
+      } catch (error) {
+        // No afecta la confirmacion: el pago ya fue validado por el servidor.
+      }
+      checkoutFeedback.className = 'checkout-feedback is-success';
+      checkoutFeedback.textContent = `Pago aprobado por ${currencyFormatter.format(payment.amount)}. Completa tus datos para finalizar el registro.`;
+    }
 
     function getTicketSelection() {
       const selected = ticketRadios.find((radio) => radio.checked);
@@ -481,6 +550,7 @@
       checkoutFeedback.textContent = 'Estamos preparando tu pago seguro.';
 
       try {
+        clearPaymentRecovery();
         window.localStorage.setItem('latidosCheckoutSelection', JSON.stringify(selection));
         
         await loadLatidosAvailability({ throwOnError: true });
@@ -511,6 +581,9 @@
         if (!response.ok || !result.checkoutUrl) {
           throw new Error(result.error || 'No fue posible iniciar el pago. Intenta nuevamente.');
         }
+        if (result.returnToken) {
+          savePaymentRecovery({ orderToken: result.returnToken });
+        }
         window.location.assign(result.checkoutUrl);
       } catch (error) {
         checkoutFeedback.classList.add('is-error');
@@ -523,20 +596,33 @@
     async function verifyReturnedPayment() {
       if (!checkoutFeedback) return;
       const params = new URLSearchParams(window.location.search);
-      const returnStatus = params.get('payment');
-      const paymentId = params.get('payment_id') || params.get('collection_id');
+      const returnStatus = params.get('payment') || params.get('status') || params.get('collection_status');
+      const returnedPaymentId = params.get('payment_id') || params.get('collection_id');
+      const returnedOrderToken = params.get('order_token');
+      const recovery = readPaymentRecovery();
+      const paymentId = returnedPaymentId || recovery?.paymentId;
+      const orderToken = returnedOrderToken || recovery?.orderToken;
+      const isPaymentReturn = Boolean(returnStatus || returnedPaymentId || returnedOrderToken);
 
-      if (!returnStatus && !paymentId) return;
-      registrationSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!isPaymentReturn && !paymentId && !orderToken) return;
+      if (returnedPaymentId || returnedOrderToken) {
+        savePaymentRecovery({
+          ...(returnedPaymentId ? { paymentId: returnedPaymentId } : {}),
+          ...(returnedOrderToken ? { orderToken: returnedOrderToken } : {})
+        });
+      }
+      if (isPaymentReturn) {
+        registrationSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
 
-      if (returnStatus === 'failure' && !paymentId) {
+      if (returnStatus === 'failure' && !paymentId && !orderToken) {
         checkoutFeedback.hidden = false;
         checkoutFeedback.className = 'checkout-feedback is-error';
         checkoutFeedback.textContent = 'El pago no se complet\u00f3. Puedes revisar tus datos e intentarlo nuevamente.';
         return;
       }
 
-      if (!paymentId) {
+      if (!paymentId && !orderToken) {
         checkoutFeedback.hidden = false;
         checkoutFeedback.className = 'checkout-feedback is-pending';
         checkoutFeedback.textContent = 'El pago est\u00e1 pendiente. Cuando Mercado Pago genere la operaci\u00f3n podr\u00e1s continuar.';
@@ -548,14 +634,12 @@
       checkoutFeedback.textContent = 'Verificando tu pago con Mercado Pago...';
 
       try {
-        const response = await fetch(`/api/latidos/payment?payment_id=${encodeURIComponent(paymentId)}`);
+        const verificationUrl = paymentId
+          ? `/api/latidos/payment?payment_id=${encodeURIComponent(paymentId)}`
+          : `/api/latidos/payment-return?order_token=${encodeURIComponent(orderToken)}`;
+        const response = await fetch(verificationUrl, { cache: 'no-store' });
         const payment = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payment.error || 'No pudimos verificar el pago.');
-
-        const matchingRadio = ticketRadios.find((radio) => radio.value === payment.experience);
-        if (matchingRadio) matchingRadio.checked = true;
-        if (ticketQuantity) ticketQuantity.value = String(payment.quantity);
-        updateTicketSummary();
 
         if (!payment.approved) {
           const pendingStatuses = ['pending', 'in_process', 'in_mediation'];
@@ -573,19 +657,7 @@
           return;
         }
 
-        verifiedPayment = payment;
-        paymentAmount.value = currencyFormatter.format(payment.amount);
-        paymentOperation.value = payment.paymentId;
-        registrationExperience.value = payment.experienceTitle;
-        registrationExperienceValue.value = payment.experience;
-        registrationTicketQuantity.value = String(payment.quantity);
-        registrationSubmit.disabled = false;
-        checkoutButton.disabled = true;
-        checkoutButton.removeAttribute('aria-busy');
-        checkoutButton.textContent = 'Pago confirmado';
-        window.localStorage.removeItem('latidosCheckoutSelection');
-        checkoutFeedback.className = 'checkout-feedback is-success';
-        checkoutFeedback.textContent = `Pago aprobado por ${currencyFormatter.format(payment.amount)}. Completa tus datos para finalizar el registro.`;
+        applyApprovedPayment(payment);
         await loadLatidosAvailability();
       } catch (error) {
         checkoutFeedback.className = 'checkout-feedback is-error';
@@ -639,6 +711,13 @@
           renderDeliveredTickets(result.tickets, result.pdfUrl);
           registrationFeedback.textContent = `Registro confirmado. Se generaron ${result.tickets.length} boletos para tu compra de ${currencyFormatter.format(verifiedPayment.amount)}.`;
           registrationSubmit.textContent = 'Registro confirmado';
+          clearPaymentRecovery();
+
+          const cleanUrl = new URL(window.location.href);
+          ['payment', 'payment_id', 'collection_id', 'status', 'collection_status', 'order_token'].forEach((name) => {
+            cleanUrl.searchParams.delete(name);
+          });
+          window.history.replaceState(null, '', `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
         } catch (error) {
           registrationFeedback.textContent = error.message;
           registrationSubmit.disabled = false;

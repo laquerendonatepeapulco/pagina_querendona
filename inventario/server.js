@@ -614,6 +614,7 @@ function isLatidosPaymentRequest(req) {
   return (
     (req.method === "POST" && requestPath === "/api/latidos/checkout") ||
     (req.method === "GET" && requestPath === "/api/latidos/payment") ||
+    (req.method === "GET" && requestPath === "/api/latidos/payment-return") ||
     (req.method === "POST" && requestPath === "/api/latidos/webhook") ||
     (req.method === "POST" && requestPath === "/api/latidos/registration")
   );
@@ -1282,6 +1283,14 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
       client.release();
     }
 
+    const returnToken = createLatidosSignedToken("payment-return", orderId);
+    const createReturnUrl = (status) => {
+      const url = new URL(returnPage);
+      url.searchParams.set("payment", status);
+      url.searchParams.set("order_token", returnToken);
+      return url.toString();
+    };
+
     // 2. Crear preferencia en Mercado Pago
     const preference = await mercadoPagoRequest(
       "/checkout/preferences",
@@ -1320,12 +1329,9 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
           expiration_date_to: reservationExpiresAt,
 
           back_urls: {
-            success:
-              `${returnPage}?payment=success#registro`,
-            pending:
-              `${returnPage}?payment=pending#registro`,
-            failure:
-              `${returnPage}?payment=failure#registro`
+            success: createReturnUrl("success"),
+            pending: createReturnUrl("pending"),
+            failure: createReturnUrl("failure")
           },
 
           auto_return: "approved",
@@ -1361,6 +1367,7 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
     res.status(201).json({
       checkoutUrl: preference.init_point,
       preferenceId: preference.id,
+      returnToken,
       total
     });
 
@@ -1396,6 +1403,49 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
 app.get("/api/latidos/payment", async (req, res, next) => {
   try {
     const payment = await syncLatidosPayment(req.query.payment_id);
+    const { orderId, ...publicPayment } = payment;
+    res.json(publicPayment);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/latidos/payment-return", async (req, res, next) => {
+  try {
+    const token = readLatidosSignedToken(req.query.order_token, "payment-return");
+
+    if (!token) {
+      const error = new Error("El enlace de regreso del pago no es valido");
+      error.status = 400;
+      throw error;
+    }
+
+    await getInitPromise();
+    const result = await query(
+      `
+        SELECT mercadopago_payment_id, status
+        FROM latidos_orders
+        WHERE id = $1
+      `,
+      [token.id]
+    );
+    const order = result.rows[0];
+
+    if (!order) {
+      const error = new Error("No encontramos el apartado relacionado con este regreso");
+      error.status = 404;
+      throw error;
+    }
+
+    if (!order.mercadopago_payment_id) {
+      res.json({
+        approved: false,
+        status: order.status === "reserved" ? "pending" : order.status
+      });
+      return;
+    }
+
+    const payment = await syncLatidosPayment(order.mercadopago_payment_id);
     const { orderId, ...publicPayment } = payment;
     res.json(publicPayment);
   } catch (error) {

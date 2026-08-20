@@ -128,6 +128,14 @@ function databaseQuery(sql, params = []) {
     return { rows: [], rowCount: order ? 1 : 0 };
   }
 
+  if (/SELECT mercadopago_payment_id, status FROM latidos_orders WHERE id = \$1/i.test(query)) {
+    const order = orders.find((item) => item.id === params[0]);
+    return {
+      rows: order ? [{ mercadopago_payment_id: order.mercadopago_payment_id, status: order.status }] : [],
+      rowCount: order ? 1 : 0
+    };
+  }
+
   if (/SELECT \* FROM latidos_orders WHERE id = \$1 FOR UPDATE/i.test(query)) {
     const order = orders.find((item) => item.id === params[0]);
     return { rows: order ? [{ ...order }] : [], rowCount: order ? 1 : 0 };
@@ -387,6 +395,9 @@ function validateInlineScripts() {
   const scripts = [...html.matchAll(/<script(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/gi)];
   assert.ok(scripts.length >= 2, "Deben existir los scripts de animacion y checkout");
   scripts.forEach((match, index) => new vm.Script(match[1], { filename: `latidos-inline-${index + 1}.js` }));
+  assert.ok(html.includes("latidosPaymentRecovery"), "El pago aprobado debe poder recuperarse despues de recargar");
+  assert.ok(html.includes("collection_status"), "El regreso debe reconocer el estado oficial de Mercado Pago");
+  assert.ok(html.includes("/api/latidos/payment-return"), "El regreso debe tener recuperacion por orden firmada");
 }
 
 function validateScannerScript() {
@@ -414,6 +425,7 @@ async function run() {
     assert.strictEqual(checkout.status, 201);
     assert.strictEqual(checkout.body.total, 1797);
     assert.strictEqual(checkout.body.checkoutUrl, "https://example.invalid/checkout-simulado");
+    assert.ok(checkout.body.returnToken.startsWith("lt1."));
 
     const preferenceCall = mercadoPagoCalls.find((call) => call.url.endsWith("/checkout/preferences"));
     const preferenceBody = JSON.parse(preferenceCall.options.body);
@@ -424,6 +436,20 @@ async function run() {
     assert.ok(preferenceBody.expiration_date_to);
     assert.strictEqual(preferenceBody.notification_url, "https://laquerendonacg.com/api/latidos/webhook");
     assert.ok(preferenceBody.back_urls.success.includes("payment=success"));
+    assert.ok(preferenceBody.back_urls.success.includes("order_token="));
+    assert.ok(!preferenceBody.back_urls.success.includes("#"));
+
+    const pendingReturn = await request(
+      server,
+      "GET",
+      `/api/latidos/payment-return?order_token=${encodeURIComponent(checkout.body.returnToken)}`
+    );
+    assert.strictEqual(pendingReturn.status, 200);
+    assert.strictEqual(pendingReturn.body.approved, false);
+    assert.strictEqual(pendingReturn.body.status, "pending");
+
+    const invalidReturn = await request(server, "GET", "/api/latidos/payment-return?order_token=lt1.alterado.falso");
+    assert.strictEqual(invalidReturn.status, 400);
 
     const reservedAvailability = await request(server, "GET", "/api/latidos/availability");
     assert.strictEqual(reservedAvailability.body.experiences.gastronomica.reserved, 3);
@@ -449,6 +475,16 @@ async function run() {
     assert.strictEqual(payment.body.amount, 1797);
     assert.strictEqual(orders[0].status, "approved");
     assert.strictEqual(orders[0].reserved_until, null);
+
+    const recoveredPayment = await request(
+      server,
+      "GET",
+      `/api/latidos/payment-return?order_token=${encodeURIComponent(checkout.body.returnToken)}`
+    );
+    assert.strictEqual(recoveredPayment.status, 200);
+    assert.strictEqual(recoveredPayment.body.approved, true);
+    assert.strictEqual(recoveredPayment.body.paymentId, "123456789");
+    assert.strictEqual(recoveredPayment.body.quantity, 3);
 
     const soldAvailability = await request(server, "GET", "/api/latidos/availability");
     assert.strictEqual(soldAvailability.body.experiences.gastronomica.sold, 3);
