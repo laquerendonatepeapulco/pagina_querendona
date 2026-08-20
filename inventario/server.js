@@ -395,6 +395,23 @@ async function ensureSchema() {
 `);
 
   await query(`
+    CREATE TABLE IF NOT EXISTS latidos_registrations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      order_id UUID NOT NULL UNIQUE
+        REFERENCES latidos_orders(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      origin TEXT NOT NULL,
+      contact_name TEXT NOT NULL,
+      age INTEGER NOT NULL CHECK (age BETWEEN 0 AND 120),
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      business_type TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+
+  await query(`
     CREATE INDEX IF NOT EXISTS idx_latidos_orders_experience_status
     ON latidos_orders(experience_id, status)
   `);
@@ -402,6 +419,11 @@ async function ensureSchema() {
   await query(`
     CREATE INDEX IF NOT EXISTS idx_latidos_orders_reserved_until
     ON latidos_orders(reserved_until)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_latidos_registrations_created_at
+    ON latidos_registrations(created_at DESC)
   `);
 
   await query(`
@@ -497,7 +519,9 @@ function isLatidosPaymentRequest(req) {
 
   return (
     (req.method === "POST" && requestPath === "/api/latidos/checkout") ||
-    (req.method === "GET" && requestPath === "/api/latidos/payment")
+    (req.method === "GET" && requestPath === "/api/latidos/payment") ||
+    (req.method === "POST" && requestPath === "/api/latidos/webhook") ||
+    (req.method === "POST" && requestPath === "/api/latidos/registration")
   );
 }
 
@@ -576,6 +600,73 @@ function parseLatidosReference(reference) {
   }
 }
 
+function sanitizeLatidosPaymentId(value) {
+  const paymentId = String(value || "").trim();
+
+  if (!/^\d{6,30}$/.test(paymentId)) {
+    const error = new Error("Identificador de pago invalido");
+    error.status = 400;
+    throw error;
+  }
+
+  return paymentId;
+}
+
+function sanitizeLatidosRegistration(input = {}) {
+  function requiredText(value, label, maxLength = 180) {
+    const result = String(value || "").trim();
+    if (!result || result.length > maxLength) {
+      const error = new Error(`${label} es obligatorio y debe tener maximo ${maxLength} caracteres`);
+      error.status = 400;
+      throw error;
+    }
+    return result;
+  }
+
+  const name = requiredText(input.name, "El nombre", 180);
+  const origin = requiredText(input.origin, "El lugar de procedencia", 180);
+  const contactName = requiredText(input.contactName, "El nombre del contacto", 180);
+  const age = Number.parseInt(String(input.age ?? ""), 10);
+  const email = requiredText(input.email, "El correo electronico", 254).toLowerCase();
+  const phone = requiredText(input.phone, "El numero de celular", 30);
+  const phoneDigits = phone.replace(/\D/g, "");
+  const businessType = String(input.businessType || "").trim().toLowerCase();
+
+  if (!Number.isInteger(age) || age < 0 || age > 120) {
+    const error = new Error("La edad debe ser un numero entre 0 y 120");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const error = new Error("Ingresa un correo electronico valido");
+    error.status = 400;
+    throw error;
+  }
+
+  if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+    const error = new Error("Ingresa un numero de celular valido");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!["", "industria", "comercio", "servicio"].includes(businessType)) {
+    const error = new Error("Selecciona un giro de empresa valido");
+    error.status = 400;
+    throw error;
+  }
+
+  return {
+    name,
+    origin,
+    contactName,
+    age,
+    email,
+    phone,
+    businessType
+  };
+}
+
 async function mercadoPagoRequest(pathname, options = {}) {
   const response = await fetch(`https://api.mercadopago.com${pathname}`, {
     ...options,
@@ -595,6 +686,114 @@ async function mercadoPagoRequest(pathname, options = {}) {
   }
 
   return payload;
+}
+
+async function syncLatidosPayment(paymentIdInput) {
+  const paymentId = sanitizeLatidosPaymentId(paymentIdInput);
+
+  await getInitPromise();
+
+  const payment = await mercadoPagoRequest(`/v1/payments/${paymentId}`);
+  const selection = parseLatidosReference(payment.external_reference);
+
+  if (!selection) {
+    const error = new Error("Este pago no corresponde a Latidos de Mexico");
+    error.status = 400;
+    throw error;
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const orderResult = await client.query(
+      `
+        SELECT *
+        FROM latidos_orders
+        WHERE external_reference = $1
+        FOR UPDATE
+      `,
+      [payment.external_reference]
+    );
+    const order = orderResult.rows[0];
+
+    if (!order) {
+      const error = new Error("No encontramos el apartado relacionado con este pago");
+      error.status = 404;
+      throw error;
+    }
+
+    const amount = Number(payment.transaction_amount);
+    const orderTotal = Number(order.total);
+    const amountMatches = Number.isFinite(amount) && Math.abs(amount - orderTotal) < 0.01;
+    const currencyMatches = String(payment.currency_id || "").toUpperCase() === "MXN";
+    const referenceMatches =
+      order.experience_id === selection.experience.id &&
+      Number(order.quantity) === selection.quantity &&
+      Math.abs(Number(order.unit_price) - selection.experience.unitPrice) < 0.01;
+
+    if (!amountMatches || !currencyMatches || !referenceMatches) {
+      const error = new Error("Los datos del pago no coinciden con el apartado de Latidos de Mexico");
+      error.status = 400;
+      throw error;
+    }
+
+    const mercadoPagoStatus = String(payment.status || "unknown").toLowerCase();
+    let orderStatus = String(order.status || "reserved");
+
+    if (mercadoPagoStatus === "approved") {
+      orderStatus = "approved";
+    } else if (["refunded", "charged_back"].includes(mercadoPagoStatus)) {
+      orderStatus = "refunded";
+    } else if (["rejected", "cancelled"].includes(mercadoPagoStatus) && orderStatus !== "approved") {
+      orderStatus = "cancelled";
+    }
+
+    const paidAt = mercadoPagoStatus === "approved" ? payment.date_approved || null : null;
+    const updatedResult = await client.query(
+      `
+        UPDATE latidos_orders
+        SET
+          mercadopago_payment_id = $1,
+          status = $2,
+          paid_at = CASE
+            WHEN $2 = 'approved' THEN COALESCE($3::timestamptz, paid_at, now())
+            ELSE paid_at
+          END,
+          reserved_until = CASE
+            WHEN $2 IN ('approved', 'cancelled', 'refunded') THEN NULL
+            ELSE reserved_until
+          END,
+          updated_at = now()
+        WHERE id = $4
+        RETURNING *
+      `,
+      [String(payment.id), orderStatus, paidAt, order.id]
+    );
+    const updatedOrder = updatedResult.rows[0] || { ...order, status: orderStatus };
+
+    await client.query("COMMIT");
+
+    return {
+      approved: updatedOrder.status === "approved" && mercadoPagoStatus === "approved",
+      status: mercadoPagoStatus,
+      paymentId: String(payment.id),
+      experience: updatedOrder.experience_id,
+      experienceTitle: selection.experience.title,
+      quantity: Number(updatedOrder.quantity),
+      unitPrice: Number(updatedOrder.unit_price),
+      amount,
+      currency: String(payment.currency_id || ""),
+      paidAt: payment.date_approved || updatedOrder.paid_at || null,
+      orderId: updatedOrder.id
+    };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 
@@ -633,6 +832,9 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
       selectedExperience.id,
       quantity
     );
+    const reservationExpiresAt = new Date(
+      Date.now() + LATIDOS_RESERVATION_MINUTES * 60 * 1000
+    ).toISOString();
 
     // 1. Crear el apartado en PostgreSQL
     const client = await pool.connect();
@@ -713,7 +915,7 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
             $4,
             $5,
             'reserved',
-            now() + ($6 * interval '1 minute')
+            $6::timestamptz
           )
           RETURNING id
         `,
@@ -723,7 +925,7 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
           quantity,
           unitPrice,
           total,
-          LATIDOS_RESERVATION_MINUTES
+          reservationExpiresAt
         ]
       );
 
@@ -768,6 +970,11 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
             experience: selectedExperience.id,
             quantity
           },
+
+          notification_url: `${siteUrl}/api/latidos/webhook`,
+
+          expires: true,
+          expiration_date_to: reservationExpiresAt,
 
           back_urls: {
             success:
@@ -845,40 +1052,93 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
 
 app.get("/api/latidos/payment", async (req, res, next) => {
   try {
-    const paymentId = String(req.query.payment_id || "").trim();
+    const payment = await syncLatidosPayment(req.query.payment_id);
+    const { orderId, ...publicPayment } = payment;
+    res.json(publicPayment);
+  } catch (error) {
+    next(error);
+  }
+});
 
-    if (!/^\d{6,30}$/.test(paymentId)) {
-      const error = new Error("Identificador de pago invalido");
-      error.status = 400;
+app.post("/api/latidos/webhook", async (req, res, next) => {
+  const notificationType = String(
+    req.body?.type || req.query.type || req.query.topic || ""
+  ).toLowerCase();
+  const paymentId = req.body?.data?.id || req.query["data.id"] || req.query.id;
+
+  if (notificationType && notificationType !== "payment") {
+    res.json({ received: true, processed: false });
+    return;
+  }
+
+  if (!paymentId) {
+    res.json({ received: true, processed: false });
+    return;
+  }
+
+  try {
+    const payment = await syncLatidosPayment(paymentId);
+    res.json({ received: true, processed: true, approved: payment.approved });
+  } catch (error) {
+    if ([400, 404].includes(error.status)) {
+      console.warn("Notificacion de Latidos ignorada:", error.message);
+      res.json({ received: true, processed: false });
+      return;
+    }
+
+    next(error);
+  }
+});
+
+app.post("/api/latidos/registration", async (req, res, next) => {
+  try {
+    const registration = sanitizeLatidosRegistration(req.body);
+    const payment = await syncLatidosPayment(req.body.paymentId);
+
+    if (!payment.approved) {
+      const error = new Error("El pago todavia no esta aprobado");
+      error.status = 409;
       throw error;
     }
 
-    const payment = await mercadoPagoRequest(`/v1/payments/${paymentId}`);
-    const selection = parseLatidosReference(payment.external_reference);
+    const result = await query(
+      `
+        INSERT INTO latidos_registrations (
+          order_id,
+          name,
+          origin,
+          contact_name,
+          age,
+          email,
+          phone,
+          business_type
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (order_id)
+        DO UPDATE SET
+          name = EXCLUDED.name,
+          origin = EXCLUDED.origin,
+          contact_name = EXCLUDED.contact_name,
+          age = EXCLUDED.age,
+          email = EXCLUDED.email,
+          phone = EXCLUDED.phone,
+          business_type = EXCLUDED.business_type,
+          updated_at = now()
+        RETURNING id
+      `,
+      [
+        payment.orderId,
+        registration.name,
+        registration.origin,
+        registration.contactName,
+        registration.age,
+        registration.email,
+        registration.phone,
+        registration.businessType
+      ]
+    );
 
-    if (!selection) {
-      const error = new Error("Este pago no corresponde a Latidos de Mexico");
-      error.status = 400;
-      throw error;
-    }
-
-    const amount = Number(payment.transaction_amount);
-    const amountMatches = Number.isFinite(amount) && Math.abs(amount - selection.total) < 0.01;
-    const currencyMatches = payment.currency_id === "MXN";
-    const approved = payment.status === "approved" && amountMatches && currencyMatches;
-
-    res.json({
-      approved,
-      status: String(payment.status || "unknown"),
-      paymentId: String(payment.id),
-      experience: selection.experience.id,
-      experienceTitle: selection.experience.title,
-      quantity: selection.quantity,
-      unitPrice: selection.experience.unitPrice,
-      amount,
-      currency: String(payment.currency_id || ""),
-      paidAt: payment.date_approved || null
-    });
+    res.status(201).json({ ok: true, registrationId: result.rows[0].id });
   } catch (error) {
     next(error);
   }

@@ -376,6 +376,7 @@
     const registrationExperienceValue = document.querySelector('#registration-experience-value');
     const registrationTicketQuantity = document.querySelector('#registration-ticket-quantity');
     let verifiedPayment = null;
+    let latidosAvailability = {};
 
     function getTicketSelection() {
       const selected = ticketRadios.find((radio) => radio.checked);
@@ -436,24 +437,20 @@
       try {
         window.localStorage.setItem('latidosCheckoutSelection', JSON.stringify(selection));
         
-      const availability =
-  latidosAvailability[selection.experience];
+        await loadLatidosAvailability({ throwOnError: true });
+        const availability = latidosAvailability[selection.experience];
 
-if (availability) {
-  if (availability.available <= 0) {
-    throw new Error(
-      'Esta experiencia está agotada.'
-    );
-  }
+        if (!availability) {
+          throw new Error('No fue posible confirmar la disponibilidad. Intenta nuevamente.');
+        }
 
-  if (selection.quantity > availability.available) {
-    await loadLatidosAvailability();
+        if (availability.available <= 0) {
+          throw new Error('Esta experiencia est\u00e1 agotada.');
+        }
 
-    throw new Error(
-      `Solo quedan ${availability.available} lugares disponibles.`
-    );
-  }
-}
+        if (selection.quantity > availability.available) {
+          throw new Error(`Solo quedan ${availability.available} lugares disponibles.`);
+        }
 
 
 
@@ -515,10 +512,18 @@ if (availability) {
         updateTicketSummary();
 
         if (!payment.approved) {
+          const pendingStatuses = ['pending', 'in_process', 'in_mediation'];
+          const isPending = pendingStatuses.includes(payment.status);
           checkoutFeedback.className = 'checkout-feedback is-pending';
-          checkoutFeedback.textContent = payment.status === 'pending'
+          checkoutFeedback.textContent = isPending
             ? 'Tu pago est\u00e1 pendiente. Actualiza esta p\u00e1gina cuando Mercado Pago lo apruebe.'
             : 'El pago no fue aprobado. Puedes intentarlo nuevamente.';
+          if (isPending) {
+            checkoutButton.disabled = true;
+            checkoutButton.textContent = 'Pago pendiente';
+          } else {
+            updateTicketSummary();
+          }
           return;
         }
 
@@ -535,15 +540,17 @@ if (availability) {
         window.localStorage.removeItem('latidosCheckoutSelection');
         checkoutFeedback.className = 'checkout-feedback is-success';
         checkoutFeedback.textContent = `Pago aprobado por ${currencyFormatter.format(payment.amount)}. Completa tus datos para finalizar el registro.`;
+        await loadLatidosAvailability();
       } catch (error) {
         checkoutFeedback.className = 'checkout-feedback is-error';
         checkoutFeedback.textContent = error.message;
+        updateTicketSummary();
       }
     }
     verifyReturnedPayment();
 
-    if (registrationForm && registrationFeedback && paymentAmount && paymentOperation) {
-      registrationForm.addEventListener('submit', (event) => {
+    if (registrationForm && registrationFeedback && registrationSubmit && paymentAmount && paymentOperation) {
+      registrationForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (!verifiedPayment?.approved) {
           registrationFeedback.hidden = false;
@@ -555,110 +562,104 @@ if (availability) {
           return;
         }
 
+        const formData = new FormData(registrationForm);
+        registrationSubmit.disabled = true;
+        registrationSubmit.setAttribute('aria-busy', 'true');
+        registrationSubmit.textContent = 'Enviando solicitud...';
         registrationFeedback.hidden = false;
-        registrationFeedback.textContent = `Solicitud recibida. Tu pago de ${currencyFormatter.format(verifiedPayment.amount)} con la operaci\u00f3n ${verifiedPayment.paymentId} fue validado; el equipo se pondr\u00e1 en contacto contigo para confirmar tu registro.`;
+        registrationFeedback.textContent = 'Guardando tu registro...';
+
+        try {
+          const response = await fetch('/api/latidos/registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              paymentId: verifiedPayment.paymentId,
+              name: formData.get('nombre'),
+              origin: formData.get('procedencia'),
+              contactName: formData.get('representante'),
+              age: formData.get('edad'),
+              email: formData.get('correo'),
+              phone: formData.get('celular'),
+              businessType: formData.get('giro')
+            })
+          });
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok || !result.ok) {
+            throw new Error(result.error || 'No fue posible guardar tu registro. Intenta nuevamente.');
+          }
+
+          registrationFeedback.textContent = `Solicitud recibida. Tu pago de ${currencyFormatter.format(verifiedPayment.amount)} con la operaci\u00f3n ${verifiedPayment.paymentId} fue validado; el equipo se pondr\u00e1 en contacto contigo para confirmar tu registro.`;
+          registrationSubmit.textContent = 'Solicitud enviada';
+        } catch (error) {
+          registrationFeedback.textContent = error.message;
+          registrationSubmit.disabled = false;
+          registrationSubmit.textContent = 'Enviar solicitud';
+        } finally {
+          registrationSubmit.removeAttribute('aria-busy');
+        }
       });
     }
 
-    let latidosAvailability = {};
-    
-    async function loadLatidosAvailability() {
-    try {
-      const response = await fetch(
-        "/api/latidos/availability",
-        {
-          cache: "no-store"
-        }
-      );
+    async function loadLatidosAvailability({ throwOnError = false } = {}) {
+      try {
+        const response = await fetch('/api/latidos/availability', {
+          cache: 'no-store'
+        });
 
-      if (!response.ok) {
-        throw new Error(
-          "No fue posible consultar disponibilidad."
-        );
+        if (!response.ok) {
+          throw new Error('No fue posible consultar disponibilidad.');
+        }
+
+        const data = await response.json();
+        latidosAvailability = data.experiences || {};
+        renderLatidosAvailability();
+        return latidosAvailability;
+      } catch (error) {
+        console.error('Error cargando disponibilidad:', error);
+
+        document.querySelectorAll('.latidos-availability').forEach((element) => {
+          element.textContent = 'Disponibilidad no disponible';
+        });
+
+        if (throwOnError) throw error;
+        return null;
+      }
+    }
+
+    function renderLatidosAvailability() {
+      for (const experienceId of ['tradicional', 'gastronomica']) {
+        const availability = latidosAvailability[experienceId];
+        const element = document.getElementById(`availability-${experienceId}`);
+        const radio = ticketRadios.find((item) => item.value === experienceId);
+
+        if (!element || !availability) continue;
+
+        const soldOut = availability.available <= 0;
+        element.classList.remove('is-low', 'is-sold-out');
+
+        if (radio) {
+          radio.disabled = soldOut;
+          if (soldOut && radio.checked) radio.checked = false;
+        }
+
+        if (soldOut) {
+          element.textContent = 'Agotado';
+          element.classList.add('is-sold-out');
+        } else if (availability.available <= 5) {
+          element.textContent = `\u00a1\u00daltimos ${availability.available} lugares!`;
+          element.classList.add('is-low');
+        } else {
+          element.textContent = `${availability.available} de ${availability.capacity} lugares disponibles`;
+        }
       }
 
-      const data = await response.json();
-
-      latidosAvailability =
-        data.experiences || {};
-
-      renderLatidosAvailability();
-
-    } catch (error) {
-
-      console.error(
-        "Error cargando disponibilidad:",
-        error
-      );
-
-      document
-        .querySelectorAll(".latidos-availability")
-        .forEach((element) => {
-
-          element.textContent =
-            "Disponibilidad no disponible";
-      });
-    }
-  }
-
-  function renderLatidosAvailability() {
-
-  for (
-    const experienceId
-    of ["tradicional", "gastronomica"]
-  ) {
-
-    const availability =
-      latidosAvailability[experienceId];
-
-    const element =
-      document.getElementById(
-        `availability-${experienceId}`
-      );
-
-    if (!element || !availability) {
-      continue;
+      updateTicketSummary();
     }
 
-    element.classList.remove(
-      "is-low",
-      "is-sold-out"
-    );
-
-    if (availability.available <= 0) {
-
-      element.textContent =
-        "Agotado";
-
-      element.classList.add(
-        "is-sold-out"
-      );
-
-      continue;
-    }
-
-    if (availability.available <= 5) {
-
-      element.textContent =
-        `¡Últimos ${availability.available} lugares!`;
-
-      element.classList.add(
-        "is-low"
-      );
-
-      continue;
-    }
-
-    element.textContent =
-      `${availability.available} de ${availability.capacity} lugares disponibles`;
-  }
-}
-
-loadLatidosAvailability();
-setInterval(
-  loadLatidosAvailability,
-  30000
-);
+    loadLatidosAvailability();
+    setInterval(loadLatidosAvailability, 30000);
   </script>
 </body>
 </html>

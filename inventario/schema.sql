@@ -140,6 +140,33 @@ CREATE TABLE IF NOT EXISTS latidos_orders (
 );
 
 
+CREATE TABLE IF NOT EXISTS latidos_registrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  order_id UUID NOT NULL UNIQUE
+    REFERENCES latidos_orders(id) ON DELETE CASCADE,
+
+  name TEXT NOT NULL,
+
+  origin TEXT NOT NULL,
+
+  contact_name TEXT NOT NULL,
+
+  age INTEGER NOT NULL
+    CHECK (age BETWEEN 0 AND 120),
+
+  email TEXT NOT NULL,
+
+  phone TEXT NOT NULL,
+
+  business_type TEXT NOT NULL DEFAULT '',
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
 CREATE INDEX IF NOT EXISTS
   idx_latidos_orders_experience_status
 ON latidos_orders (
@@ -152,6 +179,13 @@ CREATE INDEX IF NOT EXISTS
   idx_latidos_orders_reserved_until
 ON latidos_orders (
   reserved_until
+);
+
+
+CREATE INDEX IF NOT EXISTS
+  idx_latidos_registrations_created_at
+ON latidos_registrations (
+  created_at DESC
 );
 
 
