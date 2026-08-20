@@ -10,6 +10,14 @@ process.env.DATABASE_URL = "postgres://database-simulada/sin-red";
 process.env.MERCADO_PAGO_ACCESS_TOKEN = "TEST-token-simulado";
 process.env.PUBLIC_SITE_URL = "https://laquerendonacg.com";
 process.env.SESSION_SECRET = "secreto-seguro-para-pruebas-automatizadas-latidos";
+const googleWalletKeys = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+const googleWalletPrivateKey = googleWalletKeys.privateKey.export({ type: "pkcs8", format: "pem" });
+process.env.GOOGLE_WALLET_ISSUER_ID = "1234567890123456789";
+process.env.GOOGLE_WALLET_CLASS_ID = "1234567890123456789.latidos_mexico_2026";
+process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_JSON = JSON.stringify({
+  client_email: "wallet-test@latidos.invalid",
+  private_key: googleWalletPrivateKey
+});
 
 const experiences = new Map([
   ["tradicional", { id: "tradicional", name: "Buffet de antojitos mexicanos", capacity: 60, price: 349 }],
@@ -399,6 +407,8 @@ function validateInlineScripts() {
   assert.ok(html.includes("collection_status"), "El regreso debe reconocer el estado oficial de Mercado Pago");
   assert.ok(html.includes("/api/latidos/payment-return"), "El regreso debe tener recuperacion por orden firmada");
   assert.ok(html.includes("fragmentParams"), "Los regresos antiguos deben recuperar parametros ubicados despues del fragmento");
+  assert.ok(html.includes("google-wallet-button"), "Cada boleto debe mostrar la opcion de Google Wallet cuando esta configurada");
+  assert.ok(fs.existsSync(path.resolve(__dirname, "..", "img", "google-wallet-es419.svg")), "Debe usarse el boton oficial de Google Wallet");
 }
 
 function validateScannerScript() {
@@ -523,6 +533,30 @@ async function run() {
     assert.strictEqual(qr.status, 200);
     assert.strictEqual(qr.headers["content-type"], "image/png");
     assert.deepStrictEqual([...qr.body.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+
+    assert.ok(registration.body.tickets[0].walletUrl.endsWith("/wallet"));
+    const wallet = await request(server, "GET", registration.body.tickets[0].walletUrl);
+    assert.strictEqual(wallet.status, 302);
+    assert.ok(wallet.headers.location.startsWith("https://pay.google.com/gp/v/save/"));
+    assert.ok(wallet.headers.location.length < 1800, "El enlace de Google Wallet debe mantenerse dentro del largo seguro");
+
+    const walletToken = wallet.headers.location.split("/").at(-1);
+    const [walletHeader, walletPayload, walletSignature] = walletToken.split(".");
+    const walletClaims = JSON.parse(Buffer.from(walletPayload, "base64url").toString("utf8"));
+    assert.ok(crypto.verify(
+      "RSA-SHA256",
+      Buffer.from(`${walletHeader}.${walletPayload}`),
+      googleWalletKeys.publicKey,
+      Buffer.from(walletSignature, "base64url")
+    ));
+    assert.strictEqual(walletClaims.iss, "wallet-test@latidos.invalid");
+    assert.strictEqual(walletClaims.aud, "google");
+    assert.strictEqual(walletClaims.typ, "savetowallet");
+    assert.deepStrictEqual(walletClaims.origins, ["laquerendonacg.com"]);
+    assert.strictEqual(walletClaims.payload.eventTicketObjects.length, 1);
+    assert.strictEqual(walletClaims.payload.eventTicketObjects[0].ticketNumber, registration.body.tickets[0].ticketNumber);
+    assert.strictEqual(walletClaims.payload.eventTicketObjects[0].barcode.value, registration.body.tickets[0].token);
+    assert.strictEqual(walletClaims.payload.eventTicketObjects[0].ticketHolderName, "Cliente de prueba");
 
     const pdf = await request(server, "GET", registration.body.pdfUrl);
     assert.strictEqual(pdf.status, 200);
@@ -649,7 +683,7 @@ async function run() {
     assert.strictEqual(ignoredWebhook.status, 200);
     assert.strictEqual(ignoredWebhook.body.processed, false);
 
-    console.log("Latidos: checkout, cupos, pagos simulados, QR, PDF y acceso unico verificados");
+    console.log("Latidos: checkout, pagos simulados, Google Wallet, QR, PDF y acceso unico verificados");
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }

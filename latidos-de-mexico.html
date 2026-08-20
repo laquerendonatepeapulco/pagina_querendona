@@ -413,6 +413,23 @@
         download.textContent = 'Descargar QR';
 
         card.append(heading, image, number, download);
+        if (ticket.walletUrl) {
+          const walletLink = document.createElement('a');
+          walletLink.className = 'google-wallet-button';
+          walletLink.href = ticket.walletUrl;
+          walletLink.target = '_blank';
+          walletLink.rel = 'noopener';
+          walletLink.setAttribute('aria-label', `Agregar el boleto ${ticket.ticketNumber} a Google Wallet`);
+
+          const walletBadge = document.createElement('img');
+          walletBadge.src = 'img/google-wallet-es419.svg';
+          walletBadge.alt = 'Agregar a Google Wallet';
+          walletBadge.width = 239;
+          walletBadge.height = 55;
+
+          walletLink.append(walletBadge);
+          card.append(walletLink);
+        }
         ticketDeliveryList.append(card);
       });
 

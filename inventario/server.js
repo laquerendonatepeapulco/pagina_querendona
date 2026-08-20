@@ -795,6 +795,110 @@ function createLatidosTicketNumber(experienceId) {
   return `LDM-${prefix}-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
 }
 
+function isGoogleWalletConfigured() {
+  return Boolean(
+    String(process.env.GOOGLE_WALLET_ISSUER_ID || "").trim() &&
+    String(process.env.GOOGLE_WALLET_CLASS_ID || "").trim() &&
+    String(process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_JSON || "").trim()
+  );
+}
+
+function getGoogleWalletConfig() {
+  if (!isGoogleWalletConfigured()) {
+    const error = new Error("Google Wallet todavia no esta configurado para este evento");
+    error.status = 503;
+    throw error;
+  }
+
+  const issuerId = String(process.env.GOOGLE_WALLET_ISSUER_ID).trim();
+  const classId = String(process.env.GOOGLE_WALLET_CLASS_ID).trim();
+  let credentials;
+
+  try {
+    credentials = JSON.parse(process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_JSON);
+  } catch (cause) {
+    const error = new Error("Las credenciales de Google Wallet no tienen un formato valido");
+    error.status = 500;
+    throw error;
+  }
+
+  const clientEmail = String(credentials.client_email || "").trim();
+  const privateKey = String(credentials.private_key || "").replace(/\\n/g, "\n").trim();
+
+  if (!/^\d{6,30}$/.test(issuerId) || !classId.startsWith(`${issuerId}.`) || !clientEmail || !privateKey) {
+    const error = new Error("La configuracion de Google Wallet esta incompleta o no es valida");
+    error.status = 500;
+    throw error;
+  }
+
+  try {
+    crypto.createPrivateKey(privateKey);
+  } catch (cause) {
+    const error = new Error("La llave privada de Google Wallet no es valida");
+    error.status = 500;
+    throw error;
+  }
+
+  return { issuerId, classId, clientEmail, privateKey };
+}
+
+function createGoogleWalletJwt(claims, privateKey) {
+  const header = base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+  const payload = base64UrlEncode(JSON.stringify(claims));
+  const unsignedToken = `${header}.${payload}`;
+  const signature = crypto.sign("RSA-SHA256", Buffer.from(unsignedToken), privateKey);
+  return `${unsignedToken}.${base64UrlEncode(signature)}`;
+}
+
+function createLatidosGoogleWalletUrl(ticket) {
+  const config = getGoogleWalletConfig();
+  const siteUrl = getPublicSiteUrl();
+  const ticketToken = createLatidosSignedToken("ticket", ticket.id);
+  const objectId = `${config.issuerId}.latidos_${String(ticket.id).replace(/[^A-Za-z0-9._-]/g, "_")}`;
+  const issuedAt = Math.floor(Date.now() / 1000);
+  const eventTicketObject = {
+    id: objectId,
+    classId: config.classId,
+    state: "ACTIVE",
+    ticketHolderName: ticket.registration_name,
+    ticketNumber: ticket.ticket_number,
+    ticketType: {
+      defaultValue: {
+        language: "es-MX",
+        value: ticket.experience_name
+      }
+    },
+    reservationInfo: {
+      confirmationCode: ticket.ticket_number
+    },
+    seatInfo: {
+      section: ticket.experience_name,
+      row: "General",
+      seat: String(ticket.sequence)
+    },
+    barcode: {
+      type: "QR_CODE",
+      value: ticketToken,
+      alternateText: ticket.ticket_number
+    },
+    hexBackgroundColor: "#1e3323"
+  };
+  const claims = {
+    iss: config.clientEmail,
+    aud: "google",
+    typ: "savetowallet",
+    iat: issuedAt,
+    exp: issuedAt + 60 * 60,
+    origins: [new URL(siteUrl).hostname],
+    payload: {
+      eventTicketObjects: [eventTicketObject]
+    }
+  };
+  const token = createGoogleWalletJwt(claims, config.privateKey);
+
+  return `https://pay.google.com/gp/v/save/${token}`;
+}
+
 function latidosTicketDto(ticket) {
   const token = createLatidosSignedToken("ticket", ticket.id);
   const encodedToken = encodeURIComponent(token);
@@ -805,7 +909,10 @@ function latidosTicketDto(ticket) {
     status: ticket.status,
     usedAt: ticket.used_at || null,
     token,
-    qrUrl: `/api/latidos/tickets/${encodedToken}/qr`
+    qrUrl: `/api/latidos/tickets/${encodedToken}/qr`,
+    walletUrl: isGoogleWalletConfigured()
+      ? `/api/latidos/tickets/${encodedToken}/wallet`
+      : null
   };
 }
 
@@ -1662,6 +1769,53 @@ app.get("/api/latidos/tickets/:token/qr", async (req, res, next) => {
     res.setHeader("Content-Length", image.length);
     res.setHeader("Cache-Control", "private, no-store");
     res.send(image);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/latidos/tickets/:token/wallet", async (req, res, next) => {
+  try {
+    await getInitPromise();
+    const ticketToken = readLatidosSignedToken(req.params.token, "ticket");
+
+    if (!ticketToken) {
+      const error = new Error("El enlace de Google Wallet no es valido");
+      error.status = 400;
+      throw error;
+    }
+
+    const result = await query(
+      `
+        SELECT
+          t.*,
+          o.status AS order_status,
+          e.name AS experience_name,
+          r.name AS registration_name
+        FROM latidos_tickets t
+        JOIN latidos_orders o ON o.id = t.order_id
+        JOIN latidos_experiences e ON e.id = o.experience_id
+        JOIN latidos_registrations r ON r.order_id = o.id
+        WHERE t.id = $1
+      `,
+      [ticketToken.id]
+    );
+    const ticket = result.rows[0];
+
+    if (!ticket || ticket.order_status !== "approved") {
+      const error = new Error("No encontramos un boleto aprobado para agregar a Google Wallet");
+      error.status = 404;
+      throw error;
+    }
+
+    if (ticket.status !== "active") {
+      const error = new Error("Este boleto ya no esta activo");
+      error.status = 409;
+      throw error;
+    }
+
+    res.setHeader("Cache-Control", "private, no-store");
+    res.redirect(302, createLatidosGoogleWalletUrl(ticket));
   } catch (error) {
     next(error);
   }

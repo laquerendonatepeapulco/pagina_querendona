@@ -307,7 +307,7 @@ body.latidos-page a { color: inherit; }
 .ticket-delivery[hidden] { display: none; }
 .ticket-delivery h3 { margin: 12px 0 8px; color: var(--wine); font-size: clamp(28px, 4vw, 42px); }
 .ticket-delivery > p { max-width: 680px; margin: 0; color: var(--ink-soft); line-height: 1.6; }
-.ticket-delivery-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-top: 28px; }
+.ticket-delivery-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 28px; }
 .ticket-delivery-card { display: flex; align-items: center; flex-direction: column; padding: 22px; border: 1px solid var(--line); background: rgba(255, 253, 248, 0.8); text-align: center; }
 .ticket-delivery-card h4 { margin: 0 0 14px; color: var(--wine); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
 .ticket-delivery-card img { width: min(100%, 220px); height: auto; border: 8px solid #fffdf8; }
@@ -317,6 +317,9 @@ body.latidos-page a { color: inherit; }
 .ticket-delivery-card a:hover,
 .ticket-pdf-download:hover { color: var(--wine) !important; background: transparent; }
 .ticket-pdf-download { margin-top: 24px; }
+.ticket-delivery-card .google-wallet-button,
+.ticket-delivery-card .google-wallet-button:hover { min-height: 55px; margin-top: 12px; padding: 8px; background: transparent; border: 0; transform: none; }
+.ticket-delivery-card .google-wallet-button img { width: 239px; max-width: 100%; height: auto; border: 0; }
 
 .latidos-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding: 34px 5vw 22px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 12px; }
 .latidos-footer img { width: 70px; height: 80px; object-fit: contain; mix-blend-mode: multiply; }
