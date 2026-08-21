@@ -637,6 +637,7 @@ async function run() {
     const wallet = await request(server, "GET", registration.body.tickets[0].walletUrl);
     assert.strictEqual(wallet.status, 302);
     assert.ok(wallet.headers.location.startsWith("https://pay.google.com/gp/v/save/"));
+    assert.ok(wallet.headers.location.length < 1800);
     assert.ok(wallet.headers.location.length < 1800, "El enlace de Google Wallet debe mantenerse dentro del largo seguro");
 
     const walletToken = wallet.headers.location.split("/").at(-1);
@@ -695,6 +696,7 @@ async function run() {
     const testWallet = await request(server, "GET", testTicket.body.ticket.walletUrl);
     assert.strictEqual(testWallet.status, 302);
     assert.ok(testWallet.headers.location.startsWith("https://pay.google.com/gp/v/save/"));
+    assert.ok(testWallet.headers.location.length < 1800);
     const testWalletToken = testWallet.headers.location.split("/").at(-1);
     const testWalletPayload = testWalletToken.split(".")[1];
     const testWalletClaims = JSON.parse(Buffer.from(testWalletPayload, "base64url").toString("utf8"));

@@ -862,15 +862,6 @@ function createLatidosGoogleWalletUrl(ticket) {
     state: "ACTIVE",
     ticketHolderName: ticket.registration_name,
     ticketNumber: ticket.ticket_number,
-    ticketType: {
-      defaultValue: {
-        language: "es-MX",
-        value: ticket.experience_name
-      }
-    },
-    reservationInfo: {
-      confirmationCode: ticket.ticket_number
-    },
     seatInfo: {
       section: {
         defaultValue: {
@@ -903,7 +894,6 @@ function createLatidosGoogleWalletUrl(ticket) {
     aud: "google",
     typ: "savetowallet",
     iat: issuedAt,
-    exp: issuedAt + 60 * 60,
     origins: [new URL(siteUrl).hostname],
     payload: {
       eventTicketObjects: [eventTicketObject]
