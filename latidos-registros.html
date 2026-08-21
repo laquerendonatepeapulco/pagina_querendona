@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#1e3323">
+  <title>Registros privados | Latidos de M&eacute;xico</title>
+  <link rel="icon" href="img/latidos-logo.png" type="image/png">
+  <link rel="stylesheet" href="latidos-registros.css">
+</head>
+<body>
+  <main class="records-shell">
+    <header class="records-header">
+      <img src="img/latidos-logo.png" alt="Latidos de M&eacute;xico" width="70" height="80">
+      <div>
+        <span>Administraci&oacute;n privada</span>
+        <h1>Registros de asistentes</h1>
+      </div>
+    </header>
+
+    <section class="records-login" id="records-login" aria-labelledby="login-title">
+      <div>
+        <p class="records-kicker">Informaci&oacute;n protegida</p>
+        <h2 id="login-title">Consulta las compras y registros.</h2>
+        <p>Esta secci&oacute;n contiene datos personales y solo est&aacute; disponible para administradores autorizados.</p>
+      </div>
+      <form id="records-login-form">
+        <label>Usuario<input name="username" autocomplete="username" required></label>
+        <label>Contrase&ntilde;a<input type="password" name="password" autocomplete="current-password" required></label>
+        <button type="submit">Entrar</button>
+        <p class="records-feedback" id="login-feedback" role="status" aria-live="polite" hidden></p>
+      </form>
+    </section>
+
+    <section class="records-app" id="records-app" hidden>
+      <div class="records-toolbar">
+        <div>
+          <p class="records-kicker">Sesi&oacute;n administrativa</p>
+          <strong id="records-user"></strong>
+        </div>
+        <div class="records-toolbar-actions">
+          <a class="records-secondary" href="latidos-scanner.html">Ir al esc&aacute;ner</a>
+          <button class="records-secondary" id="records-logout" type="button">Cerrar sesi&oacute;n</button>
+        </div>
+      </div>
+
+      <section class="records-intro" aria-labelledby="records-title">
+        <div>
+          <p class="records-kicker">Latidos de M&eacute;xico</p>
+          <h2 id="records-title">Compradores y boletos</h2>
+          <p>Los datos provienen directamente del pago y del formulario del sitio; WhatsApp no es necesario para conservarlos.</p>
+        </div>
+        <button id="refresh-records" type="button">Actualizar datos</button>
+      </section>
+
+      <section class="records-summary" aria-label="Resumen de registros">
+        <article>
+          <span>Registros completos</span>
+          <strong id="summary-completed">0</strong>
+        </article>
+        <article>
+          <span>Pagos sin registro</span>
+          <strong id="summary-pending">0</strong>
+        </article>
+        <article>
+          <span>Boletos emitidos</span>
+          <strong id="summary-tickets">0</strong>
+        </article>
+        <article>
+          <span>Ingresos aprobados</span>
+          <strong id="summary-revenue">$0</strong>
+        </article>
+      </section>
+
+      <section class="records-panel" aria-labelledby="list-title">
+        <div class="records-panel-heading">
+          <div>
+            <p class="records-kicker">Directorio privado</p>
+            <h2 id="list-title">Listado de compras</h2>
+          </div>
+          <button class="records-secondary" id="export-records" type="button">Descargar CSV</button>
+        </div>
+
+        <form class="records-filters" id="records-filters">
+          <label class="records-search">Buscar
+            <input id="records-search" type="search" placeholder="Nombre, correo, tel&eacute;fono o pago" autocomplete="off">
+          </label>
+          <label>Experiencia
+            <select id="experience-filter">
+              <option value="">Todas</option>
+              <option value="tradicional">Buffet de antojitos</option>
+              <option value="gastronomica">Cena mexicana de gala</option>
+            </select>
+          </label>
+          <label>Registro
+            <select id="registration-filter">
+              <option value="">Todos</option>
+              <option value="completed">Completo</option>
+              <option value="pending">Pendiente</option>
+            </select>
+          </label>
+          <label>Pago
+            <select id="payment-filter">
+              <option value="">Todos</option>
+              <option value="approved">Aprobado</option>
+              <option value="refunded">Reembolsado</option>
+              <option value="cancelled">Cancelado</option>
+            </select>
+          </label>
+        </form>
+
+        <p class="records-status" id="records-status" role="status" aria-live="polite">Cargando registros...</p>
+        <div class="records-table-wrap" id="records-table-wrap" hidden>
+          <table>
+            <thead>
+              <tr>
+                <th>Registro</th>
+                <th>Comprador</th>
+                <th>Contacto</th>
+                <th>Experiencia</th>
+                <th>Boletos</th>
+                <th>Pago</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody id="records-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="records-privacy">Datos de uso interno. No compartas ni descargues esta informaci&oacute;n en dispositivos p&uacute;blicos.</p>
+    </section>
+  </main>
+  <script src="latidos-registros.js" defer></script>
+</body>
+</html>

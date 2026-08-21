@@ -118,7 +118,8 @@ function databaseQuery(sql, params = []) {
       reserved_until: params[5],
       mercadopago_preference_id: null,
       mercadopago_payment_id: null,
-      paid_at: null
+      paid_at: null,
+      created_at: new Date().toISOString()
     };
     orders.push(order);
     return { rows: [{ id: order.id }], rowCount: 1 };
@@ -167,7 +168,7 @@ function databaseQuery(sql, params = []) {
   if (/INSERT INTO latidos_registrations/i.test(query)) {
     let registration = registrations.find((item) => item.order_id === params[0]);
     if (!registration) {
-      registration = { id: `registration-${nextRegistrationId++}`, order_id: params[0] };
+      registration = { id: `registration-${nextRegistrationId++}`, order_id: params[0], created_at: new Date().toISOString() };
       registrations.push(registration);
     }
     Object.assign(registration, {
@@ -233,6 +234,43 @@ function databaseQuery(sql, params = []) {
 
   if (/SELECT \* FROM latidos_tickets WHERE order_id = \$1 ORDER BY sequence/i.test(query)) {
     const rows = tickets.filter((ticket) => ticket.order_id === params[0]).sort((a, b) => a.sequence - b.sequence).map((ticket) => ({ ...ticket }));
+    return { rows, rowCount: rows.length };
+  }
+
+  if (/FROM latidos_orders o JOIN latidos_experiences e ON e\.id = o\.experience_id LEFT JOIN latidos_registrations r/i.test(query)) {
+    const rows = orders
+      .filter((order) => order.paid_at)
+      .sort((a, b) => new Date(b.paid_at) - new Date(a.paid_at))
+      .map((order) => {
+        const experience = experiences.get(order.experience_id);
+        const registration = registrations.find((item) => item.order_id === order.id);
+        const relatedTickets = tickets.filter((ticket) => ticket.order_id === order.id);
+        return {
+          order_id: order.id,
+          mercadopago_payment_id: order.mercadopago_payment_id,
+          experience_id: order.experience_id,
+          experience_name: experience.name,
+          quantity: order.quantity,
+          unit_price: order.unit_price,
+          total: order.total,
+          payment_status: order.status,
+          paid_at: order.paid_at,
+          order_created_at: order.created_at,
+          registration_id: registration?.id || null,
+          registration_name: registration?.name || null,
+          registration_origin: registration?.origin || null,
+          registration_contact_name: registration?.contact_name || null,
+          registration_age: registration?.age ?? null,
+          registration_email: registration?.email || null,
+          registration_phone: registration?.phone || null,
+          registration_business_type: registration?.business_type || null,
+          registration_created_at: registration?.created_at || null,
+          tickets_issued: relatedTickets.length,
+          tickets_active: relatedTickets.filter((ticket) => ticket.status === "active").length,
+          tickets_used: relatedTickets.filter((ticket) => ticket.status === "used").length,
+          tickets_cancelled: relatedTickets.filter((ticket) => ticket.status === "cancelled").length
+        };
+      });
     return { rows, rowCount: rows.length };
   }
 
@@ -416,12 +454,28 @@ function validateScannerScript() {
   const htmlPath = path.resolve(__dirname, "..", "latidos-scanner.html");
   new vm.Script(fs.readFileSync(scriptPath, "utf8"), { filename: "latidos-scanner.js" });
   assert.ok(fs.readFileSync(htmlPath, "utf8").includes('id="photo-scanner"'), "El escaner debe ofrecer captura por fotografia");
+  assert.ok(fs.readFileSync(htmlPath, "utf8").includes("latidos-registros.html"), "El administrador debe poder abrir los registros desde el escaner");
+
+  const recordsScriptPath = path.resolve(__dirname, "..", "latidos-registros.js");
+  const recordsHtmlPath = path.resolve(__dirname, "..", "latidos-registros.html");
+  const recordsHtml = fs.readFileSync(recordsHtmlPath, "utf8");
+  new vm.Script(fs.readFileSync(recordsScriptPath, "utf8"), { filename: "latidos-registros.js" });
+  assert.ok(recordsHtml.includes('name="robots" content="noindex,nofollow,noarchive"'), "La pagina de registros no debe indexarse");
+  assert.ok(recordsHtml.includes('id="export-records"'), "La pagina de registros debe permitir exportar CSV");
+  const recordsScript = fs.readFileSync(recordsScriptPath, "utf8");
+  assert.ok(recordsScript.includes("/api/latidos/registrations"), "La pagina debe consultar la API privada de registros");
+  assert.ok(recordsScript.includes("URL.createObjectURL"), "La pagina debe generar el archivo CSV localmente");
+  assert.ok(recordsScript.includes("if (/^[=+\\-@]/.test(text))"), "La exportacion CSV debe neutralizar formulas peligrosas");
 }
 
 async function run() {
   validateInlineScripts();
   validateScannerScript();
-  const server = app.listen(0);
+  const previewPort = Number.parseInt(process.env.LATIDOS_TEST_PREVIEW_PORT || "0", 10);
+  if (process.env.LATIDOS_TEST_KEEP_OPEN === "1") {
+    app.use(require("express").static(path.resolve(__dirname, "..")));
+  }
+  const server = app.listen(Number.isInteger(previewPort) ? previewPort : 0);
 
   try {
     const initialAvailability = await request(server, "GET", "/api/latidos/availability");
@@ -510,6 +564,35 @@ async function run() {
     assert.strictEqual(webhook.body.processed, true);
     assert.strictEqual(orders.length, 1);
 
+    const unauthorizedRegistrations = await request(server, "GET", "/api/latidos/registrations");
+    assert.strictEqual(unauthorizedRegistrations.status, 401);
+
+    testUser.role = "staff";
+    const staffLogin = await request(server, "POST", "/api/auth/login", {
+      username: "staff-test",
+      password: "entrada-segura"
+    });
+    testUser.role = "admin";
+    const staffRegistrations = await request(server, "GET", "/api/latidos/registrations", null, {
+      headers: { Authorization: `Bearer ${staffLogin.body.token}` }
+    });
+    assert.strictEqual(staffRegistrations.status, 403);
+
+    const login = await request(server, "POST", "/api/auth/login", {
+      username: "staff-test",
+      password: "entrada-segura"
+    });
+    assert.strictEqual(login.status, 200);
+    assert.ok(login.body.token);
+    const authHeaders = { Authorization: `Bearer ${login.body.token}` };
+
+    const pendingRegistrationList = await request(server, "GET", "/api/latidos/registrations", null, { headers: authHeaders });
+    assert.strictEqual(pendingRegistrationList.status, 200);
+    assert.strictEqual(pendingRegistrationList.body.orders.length, 1);
+    assert.strictEqual(pendingRegistrationList.body.orders[0].paymentStatus, "approved");
+    assert.strictEqual(pendingRegistrationList.body.orders[0].registration, null);
+    assert.strictEqual(pendingRegistrationList.body.orders[0].tickets.issued, 0);
+
     const registrationPayload = {
       paymentId: "123456789",
       name: "Cliente de prueba",
@@ -528,6 +611,13 @@ async function run() {
     assert.strictEqual(new Set(registration.body.tickets.map((ticket) => ticket.ticketNumber)).size, 3);
     assert.ok(registration.body.pdfUrl.startsWith("/api/latidos/tickets/pdf?token="));
     assert.strictEqual(tickets.length, 3);
+
+    const completedRegistrationList = await request(server, "GET", "/api/latidos/registrations", null, { headers: authHeaders });
+    assert.strictEqual(completedRegistrationList.status, 200);
+    assert.ok(String(completedRegistrationList.headers["cache-control"]).includes("no-store"));
+    assert.strictEqual(completedRegistrationList.body.orders[0].registration.name, "Cliente de prueba");
+    assert.strictEqual(completedRegistrationList.body.orders[0].registration.phone, "7711234567");
+    assert.strictEqual(completedRegistrationList.body.orders[0].tickets.issued, 3);
 
     const qr = await request(server, "GET", registration.body.tickets[0].qrUrl);
     assert.strictEqual(qr.status, 200);
@@ -575,14 +665,6 @@ async function run() {
     assert.strictEqual(registrations.length, 1);
     assert.strictEqual(tickets.length, 3);
     assert.strictEqual(registrations[0].origin, "Pachuca, Hidalgo");
-
-    const login = await request(server, "POST", "/api/auth/login", {
-      username: "staff-test",
-      password: "entrada-segura"
-    });
-    assert.strictEqual(login.status, 200);
-    assert.ok(login.body.token);
-    const authHeaders = { Authorization: `Bearer ${login.body.token}` };
 
     const mercadoPagoCallsBeforeTestTicket = mercadoPagoCalls.length;
     const testTicket = await request(server, "POST", "/api/latidos/test-ticket", {}, { headers: authHeaders });
@@ -683,9 +765,13 @@ async function run() {
     assert.strictEqual(ignoredWebhook.status, 200);
     assert.strictEqual(ignoredWebhook.body.processed, false);
 
-    console.log("Latidos: checkout, pagos simulados, Google Wallet, QR, PDF y acceso unico verificados");
+    console.log("Latidos: checkout, registros privados, pagos simulados, Google Wallet, QR, PDF y acceso unico verificados");
   } finally {
-    await new Promise((resolve) => server.close(resolve));
+    if (process.env.LATIDOS_TEST_KEEP_OPEN === "1") {
+      console.log(`Vista local disponible en http://localhost:${server.address().port}/latidos-registros.html`);
+    } else {
+      await new Promise((resolve) => server.close(resolve));
+    }
   }
 }
 

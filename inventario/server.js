@@ -2052,6 +2052,98 @@ app.get("/api/latidos/check-in/summary", authRequired, async (req, res, next) =>
   }
 });
 
+app.get("/api/latidos/registrations", authRequired, adminRequired, async (req, res, next) => {
+  try {
+    const result = await query(`
+      SELECT
+        o.id AS order_id,
+        o.mercadopago_payment_id,
+        o.experience_id,
+        e.name AS experience_name,
+        o.quantity,
+        o.unit_price,
+        o.total,
+        o.status AS payment_status,
+        o.paid_at,
+        o.created_at AS order_created_at,
+        r.id AS registration_id,
+        r.name AS registration_name,
+        r.origin AS registration_origin,
+        r.contact_name AS registration_contact_name,
+        r.age AS registration_age,
+        r.email AS registration_email,
+        r.phone AS registration_phone,
+        r.business_type AS registration_business_type,
+        r.created_at AS registration_created_at,
+        COUNT(t.id)::INTEGER AS tickets_issued,
+        COUNT(t.id) FILTER (WHERE t.status = 'active')::INTEGER AS tickets_active,
+        COUNT(t.id) FILTER (WHERE t.status = 'used')::INTEGER AS tickets_used,
+        COUNT(t.id) FILTER (WHERE t.status = 'cancelled')::INTEGER AS tickets_cancelled
+      FROM latidos_orders o
+      JOIN latidos_experiences e ON e.id = o.experience_id
+      LEFT JOIN latidos_registrations r ON r.order_id = o.id
+      LEFT JOIN latidos_tickets t ON t.order_id = o.id
+      WHERE o.paid_at IS NOT NULL
+      GROUP BY
+        o.id,
+        o.mercadopago_payment_id,
+        o.experience_id,
+        e.name,
+        o.quantity,
+        o.unit_price,
+        o.total,
+        o.status,
+        o.paid_at,
+        o.created_at,
+        r.id,
+        r.name,
+        r.origin,
+        r.contact_name,
+        r.age,
+        r.email,
+        r.phone,
+        r.business_type,
+        r.created_at
+      ORDER BY o.paid_at DESC, o.created_at DESC
+    `);
+
+    const orders = result.rows.map((row) => ({
+      orderId: row.order_id,
+      paymentId: row.mercadopago_payment_id || null,
+      experience: row.experience_id,
+      experienceName: row.experience_name,
+      quantity: Number(row.quantity),
+      unitPrice: Number(row.unit_price),
+      total: Number(row.total),
+      paymentStatus: row.payment_status,
+      paidAt: row.paid_at,
+      createdAt: row.order_created_at,
+      registration: row.registration_id ? {
+        id: row.registration_id,
+        name: row.registration_name,
+        origin: row.registration_origin,
+        contactName: row.registration_contact_name,
+        age: Number(row.registration_age),
+        email: row.registration_email,
+        phone: row.registration_phone,
+        businessType: row.registration_business_type || "",
+        createdAt: row.registration_created_at
+      } : null,
+      tickets: {
+        issued: Number(row.tickets_issued),
+        active: Number(row.tickets_active),
+        used: Number(row.tickets_used),
+        cancelled: Number(row.tickets_cancelled)
+      }
+    }));
+
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ orders });
+  } catch (error) {
+    next(error);
+  }
+});
+
 async function recordMovement(client, product, quantity, note, userId) {
   await client.query(
     `INSERT INTO movements (product_id, product_name, sku, quantity, note, created_by)

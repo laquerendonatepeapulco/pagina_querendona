@@ -7,6 +7,7 @@
   const appSection = document.querySelector("#scanner-app");
   const userLabel = document.querySelector("#scanner-user");
   const logoutButton = document.querySelector("#scanner-logout");
+  const recordsLink = document.querySelector("#records-link");
   const summaryGrid = document.querySelector("#scanner-summary-grid");
   const refreshButton = document.querySelector("#refresh-summary");
   const startButton = document.querySelector("#start-scanner");
@@ -75,6 +76,7 @@
     loginSection.hidden = true;
     appSection.hidden = false;
     userLabel.textContent = `${user.name} (${user.role === "admin" ? "Administrador" : "Personal"})`;
+    recordsLink.hidden = user.role !== "admin";
     await loadSummary();
   }
 

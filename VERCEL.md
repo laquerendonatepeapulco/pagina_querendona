@@ -30,3 +30,5 @@ Rutas principales:
 - Checkout de Latidos de Mexico: `/api/latidos/checkout`
 - Verificacion de pagos de Latidos de Mexico: `/api/latidos/payment`
 - Pase de Google Wallet por boleto: `/api/latidos/tickets/:token/wallet`
+- Registros privados de Latidos (solo administradores): `/latidos-registros.html`
+- API privada de registros y pagos confirmados: `/api/latidos/registrations`
