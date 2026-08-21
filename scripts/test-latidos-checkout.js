@@ -218,6 +218,11 @@ function databaseQuery(sql, params = []) {
     return { rows: ticket ? [{ id: ticket.id }] : [], rowCount: ticket ? 1 : 0 };
   }
 
+  if (/SELECT \* FROM latidos_test_tickets WHERE id = \$1\s*$/i.test(query.trim())) {
+    const ticket = testTickets.find((item) => item.id === params[0]);
+    return { rows: ticket ? [{ ...ticket }] : [], rowCount: ticket ? 1 : 0 };
+  }
+
   if (/SELECT \* FROM latidos_test_tickets WHERE id = \$1 FOR UPDATE/i.test(query)) {
     const ticket = testTickets.find((item) => item.id === params[0]);
     return { rows: ticket ? [{ ...ticket }] : [], rowCount: ticket ? 1 : 0 };
@@ -675,6 +680,7 @@ async function run() {
     assert.strictEqual(testTicket.status, 201);
     assert.strictEqual(testTicket.body.ticket.isTest, true);
     assert.strictEqual(testTicket.body.ticket.status, "active");
+    assert.ok(testTicket.body.ticket.walletUrl.endsWith("/wallet"));
     assert.strictEqual(testTickets.length, 1);
     assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeTestTicket);
 
@@ -682,6 +688,16 @@ async function run() {
     assert.strictEqual(testQr.status, 200);
     assert.strictEqual(testQr.headers["content-type"], "image/png");
     assert.deepStrictEqual([...testQr.body.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+
+    const testWallet = await request(server, "GET", testTicket.body.ticket.walletUrl);
+    assert.strictEqual(testWallet.status, 302);
+    assert.ok(testWallet.headers.location.startsWith("https://pay.google.com/gp/v/save/"));
+    const testWalletToken = testWallet.headers.location.split("/").at(-1);
+    const testWalletPayload = testWalletToken.split(".")[1];
+    const testWalletClaims = JSON.parse(Buffer.from(testWalletPayload, "base64url").toString("utf8"));
+    assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].ticketNumber, testTicket.body.ticket.ticketNumber);
+    assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].ticketHolderName, "Boleto de prueba");
+    assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeTestTicket);
 
     const testCheckIn = await request(server, "POST", "/api/latidos/check-in", {
       ticketToken: testTicket.body.ticket.token

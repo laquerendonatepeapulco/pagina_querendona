@@ -926,6 +926,9 @@ function latidosTestTicketDto(ticket) {
     usedAt: ticket.used_at || null,
     token,
     qrUrl: `/api/latidos/test-tickets/${encodedToken}/qr`,
+    walletUrl: isGoogleWalletConfigured()
+      ? `/api/latidos/test-tickets/${encodedToken}/wallet`
+      : null,
     isTest: true
   };
 }
@@ -1732,6 +1735,47 @@ app.get("/api/latidos/test-tickets/:token/qr", async (req, res, next) => {
     res.setHeader("Content-Length", image.length);
     res.setHeader("Cache-Control", "private, no-store");
     res.send(image);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/latidos/test-tickets/:token/wallet", async (req, res, next) => {
+  try {
+    await getInitPromise();
+    const testTicketToken = readLatidosSignedToken(req.params.token, "test-ticket");
+
+    if (!testTicketToken) {
+      const error = new Error("El pase de prueba de Google Wallet no es valido");
+      error.status = 400;
+      throw error;
+    }
+
+    const ticketResult = await query(
+      `SELECT * FROM latidos_test_tickets WHERE id = $1`,
+      [testTicketToken.id]
+    );
+    const ticket = ticketResult.rows[0];
+
+    if (!ticket) {
+      const error = new Error("Boleto de prueba no encontrado");
+      error.status = 404;
+      throw error;
+    }
+
+    if (ticket.status !== "active") {
+      const error = new Error("Este boleto de prueba ya no esta activo");
+      error.status = 409;
+      throw error;
+    }
+
+    res.setHeader("Cache-Control", "private, no-store");
+    res.redirect(302, createLatidosGoogleWalletUrl({
+      ...ticket,
+      registration_name: "Boleto de prueba",
+      experience_name: "Acceso de demostracion",
+      sequence: 1
+    }));
   } catch (error) {
     next(error);
   }
