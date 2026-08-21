@@ -15,7 +15,7 @@
     document.documentElement.classList.add('latidos-motion-ready');
     window.latidosMotionFallback = window.setTimeout(() => document.documentElement.classList.add('latidos-motion-timeout'), 2500);
   </script>
-  <link rel="stylesheet" href="evento.css?v=20260812-7">
+  <link rel="stylesheet" href="evento.css?v=20260821-1">
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
@@ -157,13 +157,13 @@
     </section>
 
     <section class="latidos-section registration-section" id="registro" aria-labelledby="registration-title">
-      <div class="registration-heading latidos-reveal">
+      <div class="registration-heading latidos-reveal" id="registration-heading">
         <div class="editorial-label">Registro de reserva</div>
         <h2 id="registration-title">Forma parte de esta experiencia.</h2>
         <p>Elige la experiencia y la cantidad de boletos. Al completar el pago en Mercado Pago regresar&aacute;s autom&aacute;ticamente para terminar tu registro.</p>
       </div>
 
-      <div class="payment-panel latidos-reveal latidos-delay-1" aria-labelledby="payment-title">
+      <div class="payment-panel latidos-reveal latidos-delay-1" id="payment-panel" aria-labelledby="payment-title">
         <div class="payment-panel-copy">
           <div class="editorial-label">Paso 1: Pago</div>
           <h3 id="payment-title">Selecciona tus boletos</h3>
@@ -216,6 +216,12 @@
           <span class="payment-panel-note">Regresar&aacute;s a esta p&aacute;gina despu&eacute;s de pagar.</span>
           <p class="checkout-feedback" id="checkout-feedback" role="status" aria-live="polite" hidden></p>
         </div>
+      </div>
+
+      <div class="payment-success-heading" id="payment-success-heading" role="status" aria-live="polite" tabindex="-1" hidden>
+        <div class="editorial-label">Pago confirmado</div>
+        <h2 id="payment-success-title">PAGO EXITOSO</h2>
+        <p>LLENA EL FORMULARIO PARA QUE SE OTORGUE SU BOLETO DE ACCESO (QR)</p>
       </div>
 
       <form class="registration-form latidos-reveal latidos-delay-2" id="latidos-registration-form">
@@ -375,6 +381,9 @@
     const checkoutButton = document.querySelector('#mercado-pago-button');
     const checkoutFeedback = document.querySelector('#checkout-feedback');
     const quantityButtons = document.querySelectorAll('[data-quantity-action]');
+    const registrationHeading = document.querySelector('#registration-heading');
+    const paymentPanel = document.querySelector('#payment-panel');
+    const paymentSuccessHeading = document.querySelector('#payment-success-heading');
     const registrationForm = document.querySelector('#latidos-registration-form');
     const registrationFeedback = document.querySelector('#registration-feedback');
     const registrationSubmit = registrationForm?.querySelector('.registration-submit');
@@ -508,6 +517,17 @@
       }
       checkoutFeedback.className = 'checkout-feedback is-success';
       checkoutFeedback.textContent = `Pago aprobado por ${currencyFormatter.format(payment.amount)}. Completa tus datos para finalizar el registro.`;
+
+      if (registrationHeading) registrationHeading.hidden = true;
+      if (paymentPanel) paymentPanel.hidden = true;
+      if (paymentSuccessHeading) {
+        registrationSection?.setAttribute('aria-labelledby', 'payment-success-title');
+        paymentSuccessHeading.hidden = false;
+        window.requestAnimationFrame(() => {
+          paymentSuccessHeading.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+          paymentSuccessHeading.focus({ preventScroll: true });
+        });
+      }
     }
 
     function getTicketSelection() {

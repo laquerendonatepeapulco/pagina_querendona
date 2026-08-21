@@ -444,6 +444,10 @@ function validateInlineScripts() {
   assert.ok(html.includes("latidosPaymentRecovery"), "El pago aprobado debe poder recuperarse despues de recargar");
   assert.ok(html.includes("collection_status"), "El regreso debe reconocer el estado oficial de Mercado Pago");
   assert.ok(html.includes("/api/latidos/payment-return"), "El regreso debe tener recuperacion por orden firmada");
+  assert.ok(html.includes('id="payment-success-heading"'), "El regreso aprobado debe mostrar un encabezado de confirmacion");
+  assert.ok(html.includes("PAGO EXITOSO"), "El regreso aprobado debe confirmar el pago de forma visible");
+  assert.ok(html.includes("LLENA EL FORMULARIO PARA QUE SE OTORGUE SU BOLETO DE ACCESO (QR)"), "La confirmacion debe indicar que el formulario genera los boletos QR");
+  assert.ok(html.includes("paymentSuccessHeading.scrollIntoView"), "El regreso aprobado debe llevar directamente al formulario");
   assert.ok(html.includes("fragmentParams"), "Los regresos antiguos deben recuperar parametros ubicados despues del fragmento");
   assert.ok(html.includes("google-wallet-button"), "Cada boleto debe mostrar la opcion de Google Wallet cuando esta configurada");
   assert.ok(fs.existsSync(path.resolve(__dirname, "..", "img", "google-wallet-es419.svg")), "Debe usarse el boton oficial de Google Wallet");
@@ -768,7 +772,11 @@ async function run() {
     console.log("Latidos: checkout, registros privados, pagos simulados, Google Wallet, QR, PDF y acceso unico verificados");
   } finally {
     if (process.env.LATIDOS_TEST_KEEP_OPEN === "1") {
+      paymentStatus = "approved";
+      paymentAmount = orders[0]?.expected_amount || 1797;
+      if (orders[0]) orders[0].status = "approved";
       console.log(`Vista local disponible en http://localhost:${server.address().port}/latidos-registros.html`);
+      console.log(`Regreso aprobado simulado en http://localhost:${server.address().port}/latidos-de-mexico.html?payment=success&payment_id=123456789`);
     } else {
       await new Promise((resolve) => server.close(resolve));
     }

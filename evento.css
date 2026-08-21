@@ -286,6 +286,11 @@ body.latidos-page a { color: inherit; }
 .payment-panel .checkout-feedback.is-success { background: rgba(30, 96, 56, 0.1); border-left-color: #356c48; }
 .payment-panel .checkout-feedback.is-error { background: rgba(174, 61, 62, 0.1); border-left-color: var(--wine); }
 .payment-panel .checkout-feedback.is-pending { background: rgba(176, 144, 90, 0.13); border-left-color: var(--ochre); }
+.payment-panel[hidden], .payment-success-heading[hidden] { display: none; }
+.payment-success-heading { margin: 0 0 34px; padding: clamp(28px, 5vw, 50px); scroll-margin-top: 104px; border: 1px solid var(--ochre); background: rgba(176, 144, 90, 0.08); }
+.payment-success-heading:focus { outline: none; }
+.payment-success-heading h2 { margin: 14px 0 10px; color: var(--wine); font-size: clamp(42px, 7vw, 72px); line-height: 0.95; }
+.payment-success-heading p { max-width: 780px; margin: 0; color: var(--ink); font-size: clamp(15px, 2vw, 19px); font-weight: 600; letter-spacing: 0.06em; line-height: 1.6; }
 .registration-form { padding: 34px 0 0; border-top: 1px solid var(--ink); }
 .registration-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px; }
 .registration-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -412,6 +417,7 @@ body.latidos-page a { color: inherit; }
   .payment-panel-action { flex: 0 0 auto; width: 100%; }
   .payment-link { width: 100%; }
   .payment-panel-note { max-width: none; }
+  .payment-success-heading { scroll-margin-top: 156px; }
   .registration-grid { grid-template-columns: 1fr; gap: 20px; }
   .registration-field-wide { grid-column: auto; }
   .registration-actions { display: block; }
