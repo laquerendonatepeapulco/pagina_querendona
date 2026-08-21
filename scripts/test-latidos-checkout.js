@@ -702,6 +702,7 @@ async function run() {
     const testWalletClaims = JSON.parse(Buffer.from(testWalletPayload, "base64url").toString("utf8"));
     assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].ticketNumber, testTicket.body.ticket.ticketNumber);
     assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].ticketHolderName, "Boleto de prueba");
+    assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].barcode.value, testTicket.body.ticket.token);
     assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].seatInfo.section.defaultValue.value, "Acceso de demostracion");
     assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].seatInfo.row.defaultValue.value, "General");
     assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].seatInfo.seat.defaultValue.value, "1");

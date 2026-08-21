@@ -850,10 +850,10 @@ function createGoogleWalletJwt(claims, privateKey) {
   return `${unsignedToken}.${base64UrlEncode(signature)}`;
 }
 
-function createLatidosGoogleWalletUrl(ticket) {
+function createLatidosGoogleWalletUrl(ticket, tokenKind = "ticket") {
   const config = getGoogleWalletConfig();
   const siteUrl = getPublicSiteUrl();
-  const ticketToken = createLatidosSignedToken("ticket", ticket.id);
+  const ticketToken = createLatidosSignedToken(tokenKind, ticket.id);
   const objectId = `${config.issuerId}.latidos_${String(ticket.id).replace(/[^A-Za-z0-9._-]/g, "_")}`;
   const issuedAt = Math.floor(Date.now() / 1000);
   const eventTicketObject = {
@@ -1780,7 +1780,7 @@ app.get("/api/latidos/test-tickets/:token/wallet", async (req, res, next) => {
       registration_name: "Boleto de prueba",
       experience_name: "Acceso de demostracion",
       sequence: 1
-    }));
+    }, "test-ticket"));
   } catch (error) {
     next(error);
   }
