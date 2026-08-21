@@ -656,6 +656,9 @@ async function run() {
     assert.strictEqual(walletClaims.payload.eventTicketObjects[0].ticketNumber, registration.body.tickets[0].ticketNumber);
     assert.strictEqual(walletClaims.payload.eventTicketObjects[0].barcode.value, registration.body.tickets[0].token);
     assert.strictEqual(walletClaims.payload.eventTicketObjects[0].ticketHolderName, "Cliente de prueba");
+    assert.strictEqual(walletClaims.payload.eventTicketObjects[0].seatInfo.section.defaultValue.value, "Cena mexicana de gala");
+    assert.strictEqual(walletClaims.payload.eventTicketObjects[0].seatInfo.row.defaultValue.value, "General");
+    assert.strictEqual(walletClaims.payload.eventTicketObjects[0].seatInfo.seat.defaultValue.value, "1");
 
     const pdf = await request(server, "GET", registration.body.pdfUrl);
     assert.strictEqual(pdf.status, 200);
@@ -697,6 +700,9 @@ async function run() {
     const testWalletClaims = JSON.parse(Buffer.from(testWalletPayload, "base64url").toString("utf8"));
     assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].ticketNumber, testTicket.body.ticket.ticketNumber);
     assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].ticketHolderName, "Boleto de prueba");
+    assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].seatInfo.section.defaultValue.value, "Acceso de demostracion");
+    assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].seatInfo.row.defaultValue.value, "General");
+    assert.strictEqual(testWalletClaims.payload.eventTicketObjects[0].seatInfo.seat.defaultValue.value, "1");
     assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeTestTicket);
 
     const testCheckIn = await request(server, "POST", "/api/latidos/check-in", {

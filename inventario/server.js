@@ -872,9 +872,24 @@ function createLatidosGoogleWalletUrl(ticket) {
       confirmationCode: ticket.ticket_number
     },
     seatInfo: {
-      section: ticket.experience_name,
-      row: "General",
-      seat: String(ticket.sequence)
+      section: {
+        defaultValue: {
+          language: "es-MX",
+          value: ticket.experience_name
+        }
+      },
+      row: {
+        defaultValue: {
+          language: "es-MX",
+          value: "General"
+        }
+      },
+      seat: {
+        defaultValue: {
+          language: "es-MX",
+          value: String(ticket.sequence)
+        }
+      }
     },
     barcode: {
       type: "QR_CODE",
