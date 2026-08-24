@@ -811,11 +811,29 @@ async function run() {
     console.log("Latidos: checkout, registros privados, pagos simulados, Google Wallet, QR, PDF y acceso unico verificados");
   } finally {
     if (process.env.LATIDOS_TEST_KEEP_OPEN === "1") {
+      orders.length = 0;
+      registrations.length = 0;
+      tickets.length = 0;
+      testTickets.length = 0;
+      latestReference = `latidos:tradicional:2:${crypto.randomUUID()}`;
       paymentStatus = "approved";
-      paymentAmount = orders[0]?.expected_amount || 1797;
-      if (orders[0]) orders[0].status = "approved";
+      paymentAmount = 698;
+      orders.push({
+        id: "20000000-0000-4000-8000-000000000001",
+        external_reference: latestReference,
+        experience_id: "tradicional",
+        quantity: 2,
+        unit_price: 349,
+        total: 698,
+        status: "approved",
+        reserved_until: null,
+        mercadopago_preference_id: "pref-demo-visible",
+        mercadopago_payment_id: "175180982204",
+        paid_at: "2026-08-24T10:48:00.000-06:00",
+        created_at: "2026-08-24T10:45:00.000-06:00"
+      });
       console.log(`Vista local disponible en http://localhost:${server.address().port}/latidos-registros.html`);
-      console.log(`Regreso aprobado simulado en http://localhost:${server.address().port}/latidos-de-mexico.html?payment=success&payment_id=123456789`);
+      console.log(`Regreso aprobado simulado en http://localhost:${server.address().port}/latidos-de-mexico.html?payment=success&payment_id=175180982204`);
     } else {
       await new Promise((resolve) => server.close(resolve));
     }
