@@ -241,6 +241,25 @@ WHERE ticket.order_id = orders.id
   AND ticket.experience_id IS NULL;
 
 
+DO $$
+BEGIN
+  ALTER TABLE latidos_tickets
+    DROP CONSTRAINT IF EXISTS latidos_tickets_status_check;
+
+  UPDATE latidos_tickets
+  SET status = CASE
+    WHEN LOWER(status) IN ('used', 'redeemed') THEN 'used'
+    WHEN LOWER(status) IN ('cancelled', 'canceled', 'refunded') THEN 'cancelled'
+    ELSE 'active'
+  END;
+
+  ALTER TABLE latidos_tickets
+    ADD CONSTRAINT latidos_tickets_status_check
+    CHECK (status IN ('active', 'used', 'cancelled'));
+END
+$$;
+
+
 WITH ranked AS (
   SELECT
     ctid,

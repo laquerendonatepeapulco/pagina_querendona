@@ -469,6 +469,28 @@ async function ensureSchema() {
       AND ticket.experience_id IS NULL
   `);
 
+  // La primera tabla de boletos usada en produccion tenia otros estados.
+  // Normalizarlos evita que su restriccion historica rechace boletos nuevos.
+  await query(`
+    DO $$
+    BEGIN
+      ALTER TABLE latidos_tickets
+        DROP CONSTRAINT IF EXISTS latidos_tickets_status_check;
+
+      UPDATE latidos_tickets
+      SET status = CASE
+        WHEN LOWER(status) IN ('used', 'redeemed') THEN 'used'
+        WHEN LOWER(status) IN ('cancelled', 'canceled', 'refunded') THEN 'cancelled'
+        ELSE 'active'
+      END;
+
+      ALTER TABLE latidos_tickets
+        ADD CONSTRAINT latidos_tickets_status_check
+        CHECK (status IN ('active', 'used', 'cancelled'));
+    END
+    $$
+  `);
+
   await query(`
     WITH ranked AS (
       SELECT

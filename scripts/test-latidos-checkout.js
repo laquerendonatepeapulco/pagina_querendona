@@ -496,6 +496,7 @@ function validateLegacyDatabaseCompatibility() {
   assert.ok(!serverSource.includes("ON CONFLICT (order_id, sequence)"), "La emision debe funcionar aunque la tabla antigua no tenga UNIQUE(order_id, sequence)");
   assert.ok(!serverSource.includes("ON CONFLICT (order_id)"), "El registro debe funcionar aunque la tabla antigua no tenga UNIQUE(order_id)");
   assert.ok(/INSERT INTO latidos_tickets[\s\S]*?experience_id[\s\S]*?SELECT \$1, \$2, \$3, 'active', \$4/.test(serverSource), "La emision debe completar experience_id requerido por la tabla antigua");
+  assert.ok(serverSource.includes("DROP CONSTRAINT IF EXISTS latidos_tickets_status_check"), "La migracion debe reemplazar la restriccion historica de estados");
 }
 
 async function run() {
