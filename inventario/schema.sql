@@ -173,6 +173,9 @@ CREATE TABLE IF NOT EXISTS latidos_tickets (
   order_id UUID NOT NULL
     REFERENCES latidos_orders(id) ON DELETE CASCADE,
 
+  experience_id TEXT NOT NULL
+    REFERENCES latidos_experiences(id),
+
   sequence INTEGER NOT NULL
     CHECK (sequence > 0),
 
@@ -219,6 +222,8 @@ CREATE TABLE IF NOT EXISTS latidos_test_tickets (
 ALTER TABLE latidos_tickets
   ADD COLUMN IF NOT EXISTS order_id UUID
     REFERENCES latidos_orders(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS experience_id TEXT
+    REFERENCES latidos_experiences(id),
   ADD COLUMN IF NOT EXISTS sequence INTEGER,
   ADD COLUMN IF NOT EXISTS ticket_number TEXT,
   ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active',
@@ -227,6 +232,13 @@ ALTER TABLE latidos_tickets
     REFERENCES users(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+
+
+UPDATE latidos_tickets AS ticket
+SET experience_id = orders.experience_id
+FROM latidos_orders AS orders
+WHERE ticket.order_id = orders.id
+  AND ticket.experience_id IS NULL;
 
 
 WITH ranked AS (

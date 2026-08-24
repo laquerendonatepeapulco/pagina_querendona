@@ -419,6 +419,8 @@ async function ensureSchema() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       order_id UUID NOT NULL
         REFERENCES latidos_orders(id) ON DELETE CASCADE,
+      experience_id TEXT NOT NULL
+        REFERENCES latidos_experiences(id),
       sequence INTEGER NOT NULL CHECK (sequence > 0),
       ticket_number TEXT NOT NULL UNIQUE,
       status TEXT NOT NULL DEFAULT 'active'
@@ -449,6 +451,7 @@ async function ensureSchema() {
   await query(`
     ALTER TABLE latidos_tickets
       ADD COLUMN IF NOT EXISTS order_id UUID REFERENCES latidos_orders(id) ON DELETE CASCADE,
+      ADD COLUMN IF NOT EXISTS experience_id TEXT REFERENCES latidos_experiences(id),
       ADD COLUMN IF NOT EXISTS sequence INTEGER,
       ADD COLUMN IF NOT EXISTS ticket_number TEXT,
       ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active',
@@ -456,6 +459,14 @@ async function ensureSchema() {
       ADD COLUMN IF NOT EXISTS checked_in_by UUID REFERENCES users(id) ON DELETE SET NULL,
       ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now()
+  `);
+
+  await query(`
+    UPDATE latidos_tickets AS ticket
+    SET experience_id = orders.experience_id
+    FROM latidos_orders AS orders
+    WHERE ticket.order_id = orders.id
+      AND ticket.experience_id IS NULL
   `);
 
   await query(`
@@ -946,16 +957,17 @@ async function ensureLatidosTickets(client, order) {
           order_id,
           sequence,
           ticket_number,
-          status
+          status,
+          experience_id
         )
-        SELECT $1, $2, $3, 'active'
+        SELECT $1, $2, $3, 'active', $4
         WHERE NOT EXISTS (
           SELECT 1
           FROM latidos_tickets
           WHERE order_id = $1 AND sequence = $2
         )
       `,
-      [order.id, sequence, createLatidosTicketNumber(order.experience_id)]
+      [order.id, sequence, createLatidosTicketNumber(order.experience_id), order.experience_id]
     );
   }
 
