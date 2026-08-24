@@ -1626,29 +1626,22 @@ app.post("/api/latidos/registration", async (req, res, next) => {
       throw error;
     }
 
-    const registrationResult = await client.query(
+    // Algunas instalaciones anteriores crearon esta tabla sin la restriccion
+    // UNIQUE(order_id). La orden ya esta bloqueada, por lo que actualizar y
+    // despues insertar conserva un solo registro sin depender de ON CONFLICT.
+    let registrationResult = await client.query(
       `
-        INSERT INTO latidos_registrations (
-          order_id,
-          name,
-          origin,
-          contact_name,
-          age,
-          email,
-          phone,
-          business_type
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        ON CONFLICT (order_id)
-        DO UPDATE SET
-          name = EXCLUDED.name,
-          origin = EXCLUDED.origin,
-          contact_name = EXCLUDED.contact_name,
-          age = EXCLUDED.age,
-          email = EXCLUDED.email,
-          phone = EXCLUDED.phone,
-          business_type = EXCLUDED.business_type,
+        UPDATE latidos_registrations
+        SET
+          name = $2,
+          origin = $3,
+          contact_name = $4,
+          age = $5,
+          email = $6,
+          phone = $7,
+          business_type = $8,
           updated_at = now()
+        WHERE order_id = $1
         RETURNING id
       `,
       [
@@ -1662,6 +1655,35 @@ app.post("/api/latidos/registration", async (req, res, next) => {
         registration.businessType
       ]
     );
+
+    if (registrationResult.rowCount === 0) {
+      registrationResult = await client.query(
+        `
+          INSERT INTO latidos_registrations (
+            order_id,
+            name,
+            origin,
+            contact_name,
+            age,
+            email,
+            phone,
+            business_type
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING id
+        `,
+        [
+          payment.orderId,
+          registration.name,
+          registration.origin,
+          registration.contactName,
+          registration.age,
+          registration.email,
+          registration.phone,
+          registration.businessType
+        ]
+      );
+    }
 
     const tickets = await ensureLatidosTickets(client, order);
     await client.query("COMMIT");

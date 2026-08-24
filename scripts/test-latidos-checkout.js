@@ -165,12 +165,9 @@ function databaseQuery(sql, params = []) {
     return { rows: [{ ...order }], rowCount: 1 };
   }
 
-  if (/INSERT INTO latidos_registrations/i.test(query)) {
-    let registration = registrations.find((item) => item.order_id === params[0]);
-    if (!registration) {
-      registration = { id: `registration-${nextRegistrationId++}`, order_id: params[0], created_at: new Date().toISOString() };
-      registrations.push(registration);
-    }
+  if (/UPDATE latidos_registrations SET/i.test(query)) {
+    const registration = registrations.find((item) => item.order_id === params[0]);
+    if (!registration) return { rows: [], rowCount: 0 };
     Object.assign(registration, {
       name: params[1],
       origin: params[2],
@@ -180,6 +177,23 @@ function databaseQuery(sql, params = []) {
       phone: params[6],
       business_type: params[7]
     });
+    return { rows: [{ id: registration.id }], rowCount: 1 };
+  }
+
+  if (/INSERT INTO latidos_registrations/i.test(query)) {
+    const registration = {
+      id: `registration-${nextRegistrationId++}`,
+      order_id: params[0],
+      created_at: new Date().toISOString(),
+      name: params[1],
+      origin: params[2],
+      contact_name: params[3],
+      age: Number(params[4]),
+      email: params[5],
+      phone: params[6],
+      business_type: params[7]
+    };
+    registrations.push(registration);
     return { rows: [{ id: registration.id }], rowCount: 1 };
   }
 
