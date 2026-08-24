@@ -948,8 +948,12 @@ async function ensureLatidosTickets(client, order) {
           ticket_number,
           status
         )
-        VALUES ($1, $2, $3, 'active')
-        ON CONFLICT (order_id, sequence) DO NOTHING
+        SELECT $1, $2, $3, 'active'
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM latidos_tickets
+          WHERE order_id = $1 AND sequence = $2
+        )
       `,
       [order.id, sequence, createLatidosTicketNumber(order.experience_id)]
     );

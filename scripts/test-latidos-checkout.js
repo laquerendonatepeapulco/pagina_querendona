@@ -491,9 +491,16 @@ function validateScannerScript() {
   assert.ok(recordsScript.includes("if (/^[=+\\-@]/.test(text))"), "La exportacion CSV debe neutralizar formulas peligrosas");
 }
 
+function validateLegacyDatabaseCompatibility() {
+  const serverSource = fs.readFileSync(path.resolve(__dirname, "..", "inventario", "server.js"), "utf8");
+  assert.ok(!serverSource.includes("ON CONFLICT (order_id, sequence)"), "La emision debe funcionar aunque la tabla antigua no tenga UNIQUE(order_id, sequence)");
+  assert.ok(!serverSource.includes("ON CONFLICT (order_id)"), "El registro debe funcionar aunque la tabla antigua no tenga UNIQUE(order_id)");
+}
+
 async function run() {
   validateInlineScripts();
   validateScannerScript();
+  validateLegacyDatabaseCompatibility();
   const previewPort = Number.parseInt(process.env.LATIDOS_TEST_PREVIEW_PORT || "0", 10);
   if (process.env.LATIDOS_TEST_KEEP_OPEN === "1") {
     app.use(require("express").static(path.resolve(__dirname, "..")));
