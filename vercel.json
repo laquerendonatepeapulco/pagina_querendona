@@ -28,6 +28,10 @@
   ],
   "rewrites": [
     {
+      "source": "/latidos-de-mexico.html/googleea7d02d04b945bef.html",
+      "destination": "/googleea7d02d04b945bef.html"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/[...]"
     },
