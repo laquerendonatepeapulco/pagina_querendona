@@ -22,7 +22,8 @@ process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_JSON = JSON.stringify({
 const experiences = new Map([
   ["tradicional", { id: "tradicional", name: "Buffet de antojitos mexicanos", capacity: 60, price: 349 }],
   ["gastronomica", { id: "gastronomica", name: "Cena mexicana de gala", capacity: 40, price: 599 }],
-  ["cortesia", { id: "cortesia", name: "Acceso especial de cortesia", capacity: 0, price: 0 }]
+  ["cortesia", { id: "cortesia", name: "Acceso especial de cortesia", capacity: 0, price: 0 }],
+  ["expositor", { id: "expositor", name: "Acceso especial de expositor", capacity: 0, price: 0 }]
 ]);
 const orders = [];
 const registrations = [];
@@ -623,6 +624,11 @@ async function run() {
       quantity: 20
     }, { headers: { Authorization: `Bearer ${staffLogin.body.token}` } });
     assert.strictEqual(staffCourtesy.status, 403);
+    const staffExhibitor = await request(server, "POST", "/api/latidos/exhibitor-batches", {
+      batchKey: "expositores-premium-2026",
+      quantity: 20
+    }, { headers: { Authorization: `Bearer ${staffLogin.body.token}` } });
+    assert.strictEqual(staffExhibitor.status, 403);
 
     const login = await request(server, "POST", "/api/auth/login", {
       username: "staff-test",
@@ -778,6 +784,68 @@ async function run() {
     assert.strictEqual(duplicateCourtesyCheckIn.status, 409);
     assert.strictEqual(duplicateCourtesyCheckIn.body.reason, "used");
 
+    const mercadoPagoCallsBeforeExhibitors = mercadoPagoCalls.length;
+    const exhibitors = await request(server, "POST", "/api/latidos/exhibitor-batches", {
+      batchKey: "expositores-premium-2026",
+      quantity: 20
+    }, { headers: authHeaders });
+    assert.strictEqual(exhibitors.status, 201);
+    assert.strictEqual(exhibitors.body.created, true);
+    assert.strictEqual(exhibitors.body.quantity, 20);
+    assert.strictEqual(exhibitors.body.tickets.length, 20);
+    assert.strictEqual(new Set(exhibitors.body.tickets.map((ticket) => ticket.ticketNumber)).size, 20);
+    assert.ok(exhibitors.body.tickets.every((ticket) => ticket.ticketNumber.startsWith("LDM-E-")));
+    assert.strictEqual(orders.length, 3);
+    assert.strictEqual(registrations.length, 3);
+    assert.strictEqual(tickets.length, 43);
+    assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeExhibitors);
+
+    const repeatedExhibitors = await request(server, "POST", "/api/latidos/exhibitor-batches", {
+      batchKey: "expositores-premium-2026",
+      quantity: 20
+    }, { headers: authHeaders });
+    assert.strictEqual(repeatedExhibitors.status, 200);
+    assert.strictEqual(repeatedExhibitors.body.created, false);
+    assert.deepStrictEqual(
+      repeatedExhibitors.body.tickets.map((ticket) => ticket.ticketNumber),
+      exhibitors.body.tickets.map((ticket) => ticket.ticketNumber)
+    );
+    assert.strictEqual(tickets.length, 43);
+
+    const availabilityAfterExhibitors = await request(server, "GET", "/api/latidos/availability");
+    assert.deepStrictEqual(Object.keys(availabilityAfterExhibitors.body.experiences).sort(), ["gastronomica", "tradicional"]);
+    assert.strictEqual(availabilityAfterExhibitors.body.experiences.tradicional.available, 60);
+    assert.strictEqual(availabilityAfterExhibitors.body.experiences.gastronomica.available, 37);
+
+    const exhibitorQr = await request(server, "GET", exhibitors.body.tickets[0].qrUrl);
+    assert.strictEqual(exhibitorQr.status, 200);
+    assert.strictEqual(exhibitorQr.headers["content-type"], "image/png");
+    assert.deepStrictEqual([...exhibitorQr.body.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+
+    const exhibitorPdf = await request(server, "GET", exhibitors.body.pdfUrl);
+    assert.strictEqual(exhibitorPdf.status, 200);
+    assert.ok(String(exhibitorPdf.headers["content-type"]).includes("application/pdf"));
+    assert.ok(String(exhibitorPdf.headers["content-disposition"]).includes("expositores-premium"));
+    assert.strictEqual(exhibitorPdf.body.subarray(0, 4).toString("ascii"), "%PDF");
+    if (process.env.LATIDOS_TEST_EXHIBITOR_PDF_OUTPUT) {
+      fs.mkdirSync(path.dirname(process.env.LATIDOS_TEST_EXHIBITOR_PDF_OUTPUT), { recursive: true });
+      fs.writeFileSync(process.env.LATIDOS_TEST_EXHIBITOR_PDF_OUTPUT, exhibitorPdf.body);
+    }
+
+    const exhibitorCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: exhibitors.body.tickets[0].token
+    }, { headers: authHeaders });
+    assert.strictEqual(exhibitorCheckIn.status, 200);
+    assert.strictEqual(exhibitorCheckIn.body.valid, true);
+    assert.strictEqual(exhibitorCheckIn.body.ticket.experience, "expositor");
+    assert.strictEqual(exhibitorCheckIn.body.ticket.customerName, "Expositor");
+
+    const duplicateExhibitorCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: exhibitors.body.tickets[0].token
+    }, { headers: authHeaders });
+    assert.strictEqual(duplicateExhibitorCheckIn.status, 409);
+    assert.strictEqual(duplicateExhibitorCheckIn.body.reason, "used");
+
     const mercadoPagoCallsBeforeTestTicket = mercadoPagoCalls.length;
     const testTicket = await request(server, "POST", "/api/latidos/test-ticket", {}, { headers: authHeaders });
     assert.strictEqual(testTicket.status, 201);
@@ -850,6 +918,10 @@ async function run() {
     assert.strictEqual(courtesySummary.issued, 20);
     assert.strictEqual(courtesySummary.used, 1);
     assert.strictEqual(courtesySummary.active, 19);
+    const exhibitorSummary = summary.body.experiences.find((item) => item.id === "expositor");
+    assert.strictEqual(exhibitorSummary.issued, 20);
+    assert.strictEqual(exhibitorSummary.used, 1);
+    assert.strictEqual(exhibitorSummary.active, 19);
 
     paymentAmount = 1;
     const mismatchedPayment = await request(server, "GET", "/api/latidos/payment?payment_id=987654321");
@@ -878,7 +950,7 @@ async function run() {
     assert.strictEqual(refundWebhook.body.processed, true);
     assert.strictEqual(orders[0].status, "refunded");
     assert.strictEqual(tickets.filter((ticket) => ticket.status === "cancelled").length, 2);
-    assert.strictEqual(tickets.filter((ticket) => ticket.status === "used").length, 2);
+    assert.strictEqual(tickets.filter((ticket) => ticket.status === "used").length, 3);
 
     const cancelledCheckIn = await request(server, "POST", "/api/latidos/check-in", {
       ticketToken: registration.body.tickets[1].token

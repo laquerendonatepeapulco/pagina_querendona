@@ -362,6 +362,12 @@ VALUES
     'Acceso especial de cortesia',
     0,
     0
+  ),
+  (
+    'expositor',
+    'Acceso especial de expositor',
+    0,
+    0
   )
 
 ON CONFLICT (id)
