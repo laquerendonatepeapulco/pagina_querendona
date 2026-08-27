@@ -1252,11 +1252,11 @@ function renderLatidosCourtesyTicketPage(document, order, ticket, qrBuffer, logo
 function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, logoPath) {
   const pageWidth = document.page.width;
   const pageHeight = document.page.height;
-  const night = "#101827";
-  const navy = "#182b4f";
-  const gold = "#d6b35f";
-  const sky = "#8dd7f7";
-  const ice = "#f4f7f5";
+  const goldBackground = "#b88934";
+  const navy = "#10213b";
+  const gold = "#e0c06c";
+  const sky = "#a9e2fa";
+  const ice = "#fffaf0";
   const displayName = String(ticket.display_name || order.registration_name || "Expositor").trim();
   const displayNameFontSize = displayName.length > 48
     ? 19
@@ -1268,25 +1268,25 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
           ? 34
           : 40;
 
-  document.rect(0, 0, pageWidth, pageHeight).fill(night);
+  document.rect(0, 0, pageWidth, pageHeight).fill(goldBackground);
   document.rect(22, 22, pageWidth - 44, pageHeight - 44).lineWidth(2.2).strokeColor(sky).stroke();
   document.rect(30, 30, pageWidth - 60, pageHeight - 60).lineWidth(0.75).strokeColor("#d8effa").stroke();
 
   document.save();
-  document.opacity(0.18).fillColor(sky);
+  document.opacity(0.22).fillColor(navy);
   document.polygon([0, 0], [125, 0], [0, 250]).fill();
   document.polygon([pageWidth, pageHeight], [pageWidth - 125, pageHeight], [pageWidth, pageHeight - 250]).fill();
   document.restore();
 
   document.save();
-  document.opacity(0.16).fillColor(gold);
+  document.opacity(0.28).fillColor(navy);
   for (let x = 52; x < pageWidth - 30; x += 52) {
     document.circle(x, 52, 2.5).fill();
     document.circle(x, pageHeight - 52, 2.5).fill();
   }
   document.restore();
 
-  document.fillColor(sky).font("Helvetica-Bold").fontSize(9).text(
+  document.fillColor(navy).font("Helvetica-Bold").fontSize(9).text(
     "CREDENCIAL OFICIAL - EXPOSITOR",
     62,
     56,
@@ -1298,20 +1298,20 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
     document.image(logoPath, pageWidth / 2 - 44, 82, { fit: [88, 102], align: "center" });
   }
 
-  document.fillColor(ice).font("Times-Roman").fontSize(30).text(
+  document.fillColor(navy).font("Times-Roman").fontSize(30).text(
     "LATIDOS DE MEXICO",
     60,
     194,
     { width: pageWidth - 120, align: "center", characterSpacing: 1.2 }
   );
-  document.fillColor(gold).font("Helvetica-Bold").fontSize(11).text(
+  document.fillColor(navy).font("Helvetica-Bold").fontSize(11).text(
     "ACCESO PROFESIONAL",
     62,
     238,
     { width: pageWidth - 124, align: "center", characterSpacing: 3 }
   );
   document.moveTo(150, 270).lineTo(pageWidth - 150, 270).lineWidth(0.9).strokeColor(sky).stroke();
-  document.fillColor(gold).font("Times-BoldItalic").fontSize(displayNameFontSize).text(
+  document.fillColor(navy).font("Times-BoldItalic").fontSize(displayNameFontSize).text(
     displayName,
     62,
     280,
@@ -1324,19 +1324,19 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
   document.roundedRect(qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 10).fillAndStroke(ice, sky);
   document.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
 
-  document.fillColor(sky).font("Helvetica-Bold").fontSize(13).text(
+  document.fillColor(navy).font("Helvetica-Bold").fontSize(13).text(
     ticket.ticket_number,
     62,
     598,
     { width: pageWidth - 124, align: "center", characterSpacing: 1.5 }
   );
-  document.fillColor(ice).font("Helvetica").fontSize(11).text(
+  document.fillColor(navy).font("Helvetica").fontSize(11).text(
     "12 DE SEPTIEMBRE DE 2026",
     62,
     636,
     { width: pageWidth - 124, align: "center", characterSpacing: 1 }
   );
-  document.fillColor(ice).font("Helvetica").fontSize(10).text(
+  document.fillColor(navy).font("Helvetica").fontSize(10).text(
     "Restaurante La Querendona - Tepeapulco, Hidalgo",
     62,
     658,
@@ -1370,7 +1370,7 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
     document.opacity(1);
   }
 
-  document.fillColor(sky).font("Helvetica-Bold").fontSize(8).text(
+  document.fillColor(navy).font("Helvetica-Bold").fontSize(8).text(
     "LATIDOS DE MEXICO - EDICION 2026",
     62,
     pageHeight - 58,
