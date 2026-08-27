@@ -1294,7 +1294,7 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
   );
 
   if (fs.existsSync(logoPath)) {
-    document.image(logoPath, pageWidth / 2 - 44, 82, { fit: [88, 102], align: "center" });
+    document.image(logoPath, pageWidth / 2 - 36, 79, { fit: [72, 110], align: "center" });
   }
 
   document.fillColor(black).font("Times-Roman").fontSize(30).text(
@@ -1407,6 +1407,7 @@ async function renderLatidosTicketsPdf(res, bundle) {
     }
   });
   const logoPath = path.join(__dirname, "..", "img", "latidos-logo.png");
+  const exhibitorLogoPath = path.join(__dirname, "..", "img", "latidos-isotipo-expositores.png");
   const paper = "#f5f0e8";
   const ink = "#1e3323";
   const wine = "#a44143";
@@ -1431,7 +1432,7 @@ async function renderLatidosTicketsPdf(res, bundle) {
       return;
     }
     if (isExhibitor) {
-      renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffers[index], logoPath);
+      renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffers[index], exhibitorLogoPath);
       return;
     }
     const pageWidth = document.page.width;
