@@ -1254,7 +1254,8 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
   const pageHeight = document.page.height;
   const goldBackground = "#f4eddf";
   const navy = "#10213b";
-  const sky = "#a9e2fa";
+  const goldOutline = "#b58a45";
+  const paleGoldOutline = "#d8c199";
   const ice = "#fffaf0";
   const black = "#000000";
   const displayName = String(ticket.display_name || order.registration_name || "Expositor").trim();
@@ -1269,8 +1270,8 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
           : 40;
 
   document.rect(0, 0, pageWidth, pageHeight).fill(goldBackground);
-  document.rect(22, 22, pageWidth - 44, pageHeight - 44).lineWidth(2.2).strokeColor(sky).stroke();
-  document.rect(30, 30, pageWidth - 60, pageHeight - 60).lineWidth(0.75).strokeColor("#d8effa").stroke();
+  document.rect(22, 22, pageWidth - 44, pageHeight - 44).lineWidth(2.2).strokeColor(goldOutline).stroke();
+  document.rect(30, 30, pageWidth - 60, pageHeight - 60).lineWidth(0.75).strokeColor(paleGoldOutline).stroke();
 
   document.save();
   document.opacity(0.22).fillColor(navy);
@@ -1309,7 +1310,7 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
     238,
     { width: pageWidth - 124, align: "center", characterSpacing: 3 }
   );
-  document.moveTo(150, 270).lineTo(pageWidth - 150, 270).lineWidth(0.9).strokeColor(sky).stroke();
+  document.moveTo(150, 270).lineTo(pageWidth - 150, 270).lineWidth(0.9).strokeColor(goldOutline).stroke();
   document.fillColor(black).font("Times-BoldItalic").fontSize(displayNameFontSize).text(
     displayName,
     62,
@@ -1320,7 +1321,7 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
   const qrSize = 220;
   const qrX = pageWidth / 2 - qrSize / 2;
   const qrY = 354;
-  document.roundedRect(qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 10).fillAndStroke(ice, sky);
+  document.roundedRect(qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 10).fillAndStroke(ice, goldOutline);
   document.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
 
   document.fillColor(black).font("Helvetica-Bold").fontSize(13).text(
