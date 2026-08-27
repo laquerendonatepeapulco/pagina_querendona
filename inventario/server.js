@@ -1293,7 +1293,6 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
     { width: pageWidth - 124, align: "center", characterSpacing: 2.3 }
   );
 
-  document.roundedRect(pageWidth / 2 - 64, 76, 128, 114, 11).fillAndStroke(gold, sky);
   if (fs.existsSync(logoPath)) {
     document.image(logoPath, pageWidth / 2 - 44, 82, { fit: [88, 102], align: "center" });
   }
