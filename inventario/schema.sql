@@ -181,6 +181,8 @@ CREATE TABLE IF NOT EXISTS latidos_tickets (
 
   ticket_number TEXT NOT NULL UNIQUE,
 
+  display_name TEXT,
+
   status TEXT NOT NULL DEFAULT 'active'
     CHECK (status IN ('active', 'used', 'cancelled')),
 

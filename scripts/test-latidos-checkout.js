@@ -212,6 +212,7 @@ function databaseQuery(sql, params = []) {
         sequence: Number(params[1]),
         ticket_number: params[2],
         experience_id: params[3],
+        display_name: null,
         status: "active",
         used_at: null,
         checked_in_by: null
@@ -261,6 +262,13 @@ function databaseQuery(sql, params = []) {
   if (/SELECT \* FROM latidos_tickets WHERE order_id = \$1 ORDER BY sequence/i.test(query)) {
     const rows = tickets.filter((ticket) => ticket.order_id === params[0]).sort((a, b) => a.sequence - b.sequence).map((ticket) => ({ ...ticket }));
     return { rows, rowCount: rows.length };
+  }
+
+  if (/UPDATE latidos_tickets SET display_name = \$1/i.test(query)) {
+    const ticket = tickets.find((item) => item.order_id === params[1] && item.sequence === Number(params[2]));
+    if (!ticket) return { rows: [], rowCount: 0 };
+    ticket.display_name = params[0] || null;
+    return { rows: [], rowCount: 1 };
   }
 
   if (/FROM latidos_orders o JOIN latidos_experiences e ON e\.id = o\.experience_id LEFT JOIN latidos_registrations r/i.test(query)) {
@@ -629,6 +637,10 @@ async function run() {
       quantity: 20
     }, { headers: { Authorization: `Bearer ${staffLogin.body.token}` } });
     assert.strictEqual(staffExhibitor.status, 403);
+    const staffExhibitorLabels = await request(server, "PUT", "/api/latidos/exhibitor-batches/expositores-premium-2026/labels", {
+      labels: ["Bajo Cero"]
+    }, { headers: { Authorization: `Bearer ${staffLogin.body.token}` } });
+    assert.strictEqual(staffExhibitorLabels.status, 403);
 
     const login = await request(server, "POST", "/api/auth/login", {
       username: "staff-test",
@@ -798,6 +810,31 @@ async function run() {
     assert.strictEqual(orders.length, 3);
     assert.strictEqual(registrations.length, 3);
     assert.strictEqual(tickets.length, 43);
+
+    const exhibitorNames = [
+      "Bajo Cero",
+      "Capital Mujer",
+      "CEOM (Clínica de Especialidades Odontológicas y Médicas)",
+      "Hannae",
+      "La Querendona",
+      "Teen Universe Hidalgo",
+      "Zinzino",
+      "Ex Hacienda El Zoquital"
+    ];
+    const originalExhibitorTokens = exhibitors.body.tickets.map((ticket) => ticket.token);
+    const originalExhibitorNumbers = exhibitors.body.tickets.map((ticket) => ticket.ticketNumber);
+    const labeledExhibitors = await request(server, "PUT", "/api/latidos/exhibitor-batches/expositores-premium-2026/labels", {
+      labels: exhibitorNames
+    }, { headers: authHeaders });
+    assert.strictEqual(labeledExhibitors.status, 200);
+    assert.strictEqual(labeledExhibitors.body.quantity, 20);
+    assert.strictEqual(labeledExhibitors.body.updated, 8);
+    assert.deepStrictEqual(labeledExhibitors.body.tickets.slice(0, 8).map((ticket) => ticket.displayName), exhibitorNames);
+    assert.ok(labeledExhibitors.body.tickets.slice(8).every((ticket) => ticket.displayName === null));
+    assert.deepStrictEqual(labeledExhibitors.body.tickets.map((ticket) => ticket.token), originalExhibitorTokens);
+    assert.deepStrictEqual(labeledExhibitors.body.tickets.map((ticket) => ticket.ticketNumber), originalExhibitorNumbers);
+    assert.strictEqual(orders.length, 3);
+    assert.strictEqual(tickets.length, 43);
     assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeExhibitors);
 
     const repeatedExhibitors = await request(server, "POST", "/api/latidos/exhibitor-batches", {
@@ -822,7 +859,7 @@ async function run() {
     assert.strictEqual(exhibitorQr.headers["content-type"], "image/png");
     assert.deepStrictEqual([...exhibitorQr.body.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
 
-    const exhibitorPdf = await request(server, "GET", exhibitors.body.pdfUrl);
+    const exhibitorPdf = await request(server, "GET", labeledExhibitors.body.pdfUrl);
     assert.strictEqual(exhibitorPdf.status, 200);
     assert.ok(String(exhibitorPdf.headers["content-type"]).includes("application/pdf"));
     assert.ok(String(exhibitorPdf.headers["content-disposition"]).includes("expositores-premium"));

@@ -429,6 +429,7 @@ async function ensureSchema() {
         REFERENCES latidos_experiences(id),
       sequence INTEGER NOT NULL CHECK (sequence > 0),
       ticket_number TEXT NOT NULL UNIQUE,
+      display_name TEXT,
       status TEXT NOT NULL DEFAULT 'active'
         CHECK (status IN ('active', 'used', 'cancelled')),
       used_at TIMESTAMPTZ,
@@ -460,6 +461,7 @@ async function ensureSchema() {
       ADD COLUMN IF NOT EXISTS experience_id TEXT REFERENCES latidos_experiences(id),
       ADD COLUMN IF NOT EXISTS sequence INTEGER,
       ADD COLUMN IF NOT EXISTS ticket_number TEXT,
+      ADD COLUMN IF NOT EXISTS display_name TEXT,
       ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active',
       ADD COLUMN IF NOT EXISTS used_at TIMESTAMPTZ,
       ADD COLUMN IF NOT EXISTS checked_in_by UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -859,6 +861,36 @@ function sanitizeLatidosExhibitorBatch(input = {}) {
   };
 }
 
+function sanitizeLatidosExhibitorLabels(input = {}) {
+  const batchKey = String(input.batchKey || "").trim().toLowerCase();
+  const rawLabels = Array.isArray(input.labels) ? input.labels : [];
+
+  if (!/^[a-z0-9][a-z0-9-]{2,49}$/.test(batchKey)) {
+    const error = new Error("La clave del lote de expositores no es valida");
+    error.status = 400;
+    throw error;
+  }
+
+  if (rawLabels.length < 1 || rawLabels.length > LATIDOS_EXHIBITOR_MAX_TICKETS) {
+    const error = new Error(`Debes indicar de 1 a ${LATIDOS_EXHIBITOR_MAX_TICKETS} nombres de expositores`);
+    error.status = 400;
+    throw error;
+  }
+
+  const labels = rawLabels.map((label) => String(label || "").trim());
+  if (labels.some((label) => !label || label.length > 100)) {
+    const error = new Error("Cada nombre de expositor debe contener entre 1 y 100 caracteres");
+    error.status = 400;
+    throw error;
+  }
+
+  return {
+    batchKey,
+    labels,
+    externalReference: `latidos:expositor:${batchKey}`
+  };
+}
+
 function createLatidosSignedToken(kind, id) {
   const payload = base64UrlEncode(JSON.stringify({ version: 1, kind, id }));
   return `lt1.${payload}.${signPayload(`latidos:${payload}`)}`;
@@ -1011,6 +1043,7 @@ function latidosTicketDto(ticket) {
 
   return {
     ticketNumber: ticket.ticket_number,
+    displayName: ticket.display_name || null,
     sequence: Number(ticket.sequence),
     status: ticket.status,
     usedAt: ticket.used_at || null,
@@ -1221,37 +1254,48 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
   const pageHeight = document.page.height;
   const night = "#101827";
   const navy = "#182b4f";
-  const copper = "#d6a15f";
-  const aqua = "#67d6ce";
+  const gold = "#d6b35f";
+  const sky = "#8dd7f7";
   const ice = "#f4f7f5";
+  const displayName = String(ticket.display_name || order.registration_name || "Expositor").trim();
+  const displayNameFontSize = displayName.length > 48
+    ? 19
+    : displayName.length > 36
+      ? 23
+      : displayName.length > 25
+        ? 28
+        : displayName.length > 16
+          ? 34
+          : 40;
 
   document.rect(0, 0, pageWidth, pageHeight).fill(night);
-  document.rect(22, 22, pageWidth - 44, pageHeight - 44).lineWidth(2.2).strokeColor(copper).stroke();
-  document.rect(30, 30, pageWidth - 60, pageHeight - 60).lineWidth(0.75).strokeColor(aqua).stroke();
+  document.rect(22, 22, pageWidth - 44, pageHeight - 44).lineWidth(2.2).strokeColor(sky).stroke();
+  document.rect(30, 30, pageWidth - 60, pageHeight - 60).lineWidth(0.75).strokeColor("#d8effa").stroke();
 
   document.save();
-  document.opacity(0.18).fillColor(aqua);
+  document.opacity(0.18).fillColor(sky);
   document.polygon([0, 0], [125, 0], [0, 250]).fill();
   document.polygon([pageWidth, pageHeight], [pageWidth - 125, pageHeight], [pageWidth, pageHeight - 250]).fill();
   document.restore();
 
   document.save();
-  document.opacity(0.12).fillColor(copper);
+  document.opacity(0.16).fillColor(gold);
   for (let x = 52; x < pageWidth - 30; x += 52) {
     document.circle(x, 52, 2.5).fill();
     document.circle(x, pageHeight - 52, 2.5).fill();
   }
   document.restore();
 
-  document.fillColor(aqua).font("Helvetica-Bold").fontSize(9).text(
+  document.fillColor(sky).font("Helvetica-Bold").fontSize(9).text(
     "CREDENCIAL OFICIAL - EXPOSITOR",
     62,
     56,
     { width: pageWidth - 124, align: "center", characterSpacing: 2.3 }
   );
 
+  document.roundedRect(pageWidth / 2 - 64, 76, 128, 114, 11).fillAndStroke(gold, sky);
   if (fs.existsSync(logoPath)) {
-    document.image(logoPath, pageWidth / 2 - 44, 84, { fit: [88, 104], align: "center" });
+    document.image(logoPath, pageWidth / 2 - 44, 82, { fit: [88, 102], align: "center" });
   }
 
   document.fillColor(ice).font("Times-Roman").fontSize(30).text(
@@ -1260,27 +1304,27 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
     194,
     { width: pageWidth - 120, align: "center", characterSpacing: 1.2 }
   );
-  document.fillColor(copper).font("Helvetica-Bold").fontSize(11).text(
+  document.fillColor(gold).font("Helvetica-Bold").fontSize(11).text(
     "ACCESO PROFESIONAL",
     62,
     238,
     { width: pageWidth - 124, align: "center", characterSpacing: 3 }
   );
-  document.moveTo(150, 270).lineTo(pageWidth - 150, 270).lineWidth(0.9).strokeColor(aqua).stroke();
-  document.fillColor(copper).font("Times-BoldItalic").fontSize(42).text(
-    order.registration_name,
+  document.moveTo(150, 270).lineTo(pageWidth - 150, 270).lineWidth(0.9).strokeColor(sky).stroke();
+  document.fillColor(gold).font("Times-BoldItalic").fontSize(displayNameFontSize).text(
+    displayName,
     62,
-    285,
-    { width: pageWidth - 124, align: "center" }
+    280,
+    { width: pageWidth - 124, height: 66, align: "center", lineGap: 1 }
   );
 
   const qrSize = 220;
   const qrX = pageWidth / 2 - qrSize / 2;
   const qrY = 354;
-  document.roundedRect(qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 10).fillAndStroke(ice, aqua);
+  document.roundedRect(qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 10).fillAndStroke(ice, sky);
   document.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
 
-  document.fillColor(aqua).font("Helvetica-Bold").fontSize(13).text(
+  document.fillColor(sky).font("Helvetica-Bold").fontSize(13).text(
     ticket.ticket_number,
     62,
     598,
@@ -1300,7 +1344,7 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
   );
 
   document.roundedRect(84, 700, pageWidth - 168, 58, 8).fill(navy);
-  document.fillColor(copper).font("Helvetica-Bold").fontSize(9).text(
+  document.fillColor(gold).font("Helvetica-Bold").fontSize(9).text(
     `EXPOSITOR ${String(ticket.sequence).padStart(2, "0")} / ${String(order.quantity).padStart(2, "0")}`,
     100,
     714,
@@ -1326,7 +1370,7 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
     document.opacity(1);
   }
 
-  document.fillColor(aqua).font("Helvetica-Bold").fontSize(8).text(
+  document.fillColor(sky).font("Helvetica-Bold").fontSize(8).text(
     "LATIDOS DE MEXICO - EDICION 2026",
     62,
     pageHeight - 58,
@@ -2307,6 +2351,76 @@ app.post("/api/latidos/exhibitor-batches", authRequired, adminRequired, async (r
       registrationId: registrationResult.rows[0].id,
       quantity: Number(order.quantity),
       tickets: tickets.map(latidosTicketDto),
+      pdfUrl: `/api/latidos/tickets/pdf?token=${encodeURIComponent(orderToken)}`
+    });
+  } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.put("/api/latidos/exhibitor-batches/:batchKey/labels", authRequired, adminRequired, async (req, res, next) => {
+  let client;
+
+  try {
+    await getInitPromise();
+    const batch = sanitizeLatidosExhibitorLabels({
+      batchKey: req.params.batchKey,
+      labels: req.body?.labels
+    });
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const orderResult = await client.query(
+      `SELECT * FROM latidos_orders WHERE external_reference = $1 FOR UPDATE`,
+      [batch.externalReference]
+    );
+    const order = orderResult.rows[0];
+    if (!order || order.experience_id !== LATIDOS_EXHIBITOR_EXPERIENCE_ID || order.status !== "approved") {
+      const error = new Error("No encontramos el lote de expositores solicitado");
+      error.status = 404;
+      throw error;
+    }
+
+    const existingTickets = await client.query(
+      `SELECT * FROM latidos_tickets WHERE order_id = $1 ORDER BY sequence`,
+      [order.id]
+    );
+    if (existingTickets.rows.length !== Number(order.quantity)) {
+      const error = new Error("El lote no tiene todos sus accesos emitidos");
+      error.status = 409;
+      throw error;
+    }
+
+    for (const ticket of existingTickets.rows) {
+      const displayName = batch.labels[Number(ticket.sequence) - 1] || null;
+      await client.query(
+        `
+          UPDATE latidos_tickets
+          SET display_name = $1, updated_at = now()
+          WHERE order_id = $2 AND sequence = $3
+        `,
+        [displayName, order.id, Number(ticket.sequence)]
+      );
+    }
+
+    const ticketsResult = await client.query(
+      `SELECT * FROM latidos_tickets WHERE order_id = $1 ORDER BY sequence`,
+      [order.id]
+    );
+    await client.query("COMMIT");
+
+    const orderToken = createLatidosSignedToken("order", order.id);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({
+      ok: true,
+      batchKey: batch.batchKey,
+      orderId: order.id,
+      quantity: Number(order.quantity),
+      updated: batch.labels.length,
+      tickets: ticketsResult.rows.map(latidosTicketDto),
       pdfUrl: `/api/latidos/tickets/pdf?token=${encodeURIComponent(orderToken)}`
     });
   } catch (error) {
