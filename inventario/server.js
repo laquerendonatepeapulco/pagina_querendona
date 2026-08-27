@@ -1252,7 +1252,7 @@ function renderLatidosCourtesyTicketPage(document, order, ticket, qrBuffer, logo
 function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, logoPath) {
   const pageWidth = document.page.width;
   const pageHeight = document.page.height;
-  const goldBackground = "#af8c57";
+  const goldBackground = "#f4eddf";
   const navy = "#10213b";
   const sky = "#a9e2fa";
   const ice = "#fffaf0";
@@ -1342,14 +1342,14 @@ function renderLatidosExhibitorTicketPage(document, order, ticket, qrBuffer, log
     { width: pageWidth - 124, align: "center" }
   );
 
-  document.roundedRect(84, 700, pageWidth - 168, 58, 8).fill(ice);
-  document.fillColor(black).font("Helvetica-Bold").fontSize(9).text(
+  document.roundedRect(84, 700, pageWidth - 168, 58, 8).fill("#223423");
+  document.fillColor(goldBackground).font("Helvetica-Bold").fontSize(9).text(
     `EXPOSITOR ${String(ticket.sequence).padStart(2, "0")} / ${String(order.quantity).padStart(2, "0")}`,
     100,
     714,
     { width: pageWidth - 200, align: "center", characterSpacing: 1.6 }
   );
-  document.fillColor(black).font("Helvetica").fontSize(8.5).text(
+  document.fillColor(goldBackground).font("Helvetica").fontSize(8.5).text(
     "Acceso individual de un solo uso. El QR se invalida despues de su primer escaneo.",
     100,
     735,
