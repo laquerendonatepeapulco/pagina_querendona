@@ -17,6 +17,8 @@ const pool = new Pool({
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 8;
 const LATIDOS_MAX_TICKETS = 50;
 const LATIDOS_RESERVATION_MINUTES = 15;
+const LATIDOS_COURTESY_EXPERIENCE_ID = "cortesia";
+const LATIDOS_COURTESY_MAX_TICKETS = 100;
 const LATIDOS_EXPERIENCES = Object.freeze({
   tradicional: Object.freeze({
     id: "tradicional",
@@ -224,6 +226,8 @@ async function getLatidosAvailability(client = pool) {
 
     LEFT JOIN latidos_orders o
       ON o.experience_id = e.id
+
+    WHERE e.id IN ('tradicional', 'gastronomica')
 
     GROUP BY
       e.id,
@@ -562,7 +566,8 @@ async function ensureSchema() {
     )
     VALUES 
       ($1, $2, $3, $4),
-      ($5, $6, $7, $8)
+      ($5, $6, $7, $8),
+      ($9, $10, $11, $12)
 
       ON CONFLICT (id)
       DO UPDATE SET
@@ -580,7 +585,12 @@ async function ensureSchema() {
       "gastronomica",
       "Cena mexicana de gala",
       40,
-      599
+      599,
+
+      LATIDOS_COURTESY_EXPERIENCE_ID,
+      "Acceso especial de cortesia",
+      0,
+      0
     ]
   );
 
@@ -795,6 +805,29 @@ function sanitizeLatidosRegistration(input = {}) {
   };
 }
 
+function sanitizeLatidosCourtesyBatch(input = {}) {
+  const batchKey = String(input.batchKey || "").trim().toLowerCase();
+  const quantity = Number.parseInt(String(input.quantity || ""), 10);
+
+  if (!/^[a-z0-9][a-z0-9-]{2,49}$/.test(batchKey)) {
+    const error = new Error("La clave del lote de cortesia no es valida");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > LATIDOS_COURTESY_MAX_TICKETS) {
+    const error = new Error(`La cantidad de cortesias debe ser de 1 a ${LATIDOS_COURTESY_MAX_TICKETS}`);
+    error.status = 400;
+    throw error;
+  }
+
+  return {
+    batchKey,
+    quantity,
+    externalReference: `latidos:cortesia:${batchKey}`
+  };
+}
+
 function createLatidosSignedToken(kind, id) {
   const payload = base64UrlEncode(JSON.stringify({ version: 1, kind, id }));
   return `lt1.${payload}.${signPayload(`latidos:${payload}`)}`;
@@ -824,7 +857,9 @@ function readLatidosSignedToken(token, expectedKind) {
 }
 
 function createLatidosTicketNumber(experienceId) {
-  const prefix = experienceId === "gastronomica" ? "G" : "T";
+  const prefix = experienceId === LATIDOS_COURTESY_EXPERIENCE_ID
+    ? "C"
+    : experienceId === "gastronomica" ? "G" : "T";
   return `LDM-${prefix}-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
 }
 
@@ -1038,15 +1073,128 @@ async function getLatidosTicketBundle(client, orderId) {
   return { order, tickets: ticketResult.rows };
 }
 
+function renderLatidosCourtesyTicketPage(document, order, ticket, qrBuffer, logoPath) {
+  const pageWidth = document.page.width;
+  const pageHeight = document.page.height;
+  const midnight = "#0b211a";
+  const forest = "#17392d";
+  const gold = "#c9a45f";
+  const paleGold = "#ecd7a6";
+  const ivory = "#fff9ea";
+
+  document.rect(0, 0, pageWidth, pageHeight).fill(midnight);
+  document.rect(22, 22, pageWidth - 44, pageHeight - 44).lineWidth(2.2).strokeColor(gold).stroke();
+  document.rect(30, 30, pageWidth - 60, pageHeight - 60).lineWidth(0.65).strokeColor(paleGold).stroke();
+
+  document.save();
+  document.opacity(0.18).fillColor(gold);
+  document.polygon([0, 0], [180, 0], [0, 180]).fill();
+  document.polygon([pageWidth, pageHeight], [pageWidth - 180, pageHeight], [pageWidth, pageHeight - 180]).fill();
+  document.restore();
+
+  document.fillColor(paleGold).font("Helvetica-Bold").fontSize(9).text(
+    "SERIE ESPECIAL - INVITACION DE CORTESIA",
+    62,
+    56,
+    { width: pageWidth - 124, align: "center", characterSpacing: 2.1 }
+  );
+
+  if (fs.existsSync(logoPath)) {
+    document.image(logoPath, pageWidth / 2 - 44, 84, { fit: [88, 104], align: "center" });
+  }
+
+  document.fillColor(ivory).font("Times-Roman").fontSize(30).text(
+    "LATIDOS DE MEXICO",
+    60,
+    194,
+    { width: pageWidth - 120, align: "center", characterSpacing: 1.2 }
+  );
+  document.fillColor(gold).font("Helvetica-Bold").fontSize(11).text(
+    "ACCESO PREMIUM",
+    62,
+    238,
+    { width: pageWidth - 124, align: "center", characterSpacing: 3 }
+  );
+  document.moveTo(150, 270).lineTo(pageWidth - 150, 270).lineWidth(0.9).strokeColor(gold).stroke();
+  document.fillColor(paleGold).font("Times-BoldItalic").fontSize(42).text(
+    order.registration_name,
+    62,
+    285,
+    { width: pageWidth - 124, align: "center" }
+  );
+
+  const qrSize = 220;
+  const qrX = pageWidth / 2 - qrSize / 2;
+  const qrY = 354;
+  document.roundedRect(qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 10).fillAndStroke(ivory, gold);
+  document.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
+
+  document.fillColor(paleGold).font("Helvetica-Bold").fontSize(13).text(
+    ticket.ticket_number,
+    62,
+    598,
+    { width: pageWidth - 124, align: "center", characterSpacing: 1.5 }
+  );
+  document.fillColor(ivory).font("Helvetica").fontSize(11).text(
+    "12 DE SEPTIEMBRE DE 2026",
+    62,
+    636,
+    { width: pageWidth - 124, align: "center", characterSpacing: 1 }
+  );
+  document.fillColor(ivory).font("Helvetica").fontSize(10).text(
+    "Restaurante La Querendona - Tepeapulco, Hidalgo",
+    62,
+    658,
+    { width: pageWidth - 124, align: "center" }
+  );
+
+  document.roundedRect(84, 700, pageWidth - 168, 58, 8).fill(forest);
+  document.fillColor(paleGold).font("Helvetica-Bold").fontSize(9).text(
+    `CORTESIA ${String(ticket.sequence).padStart(2, "0")} / ${String(order.quantity).padStart(2, "0")}`,
+    100,
+    714,
+    { width: pageWidth - 200, align: "center", characterSpacing: 1.6 }
+  );
+  document.fillColor(ivory).font("Helvetica").fontSize(8.5).text(
+    "Este codigo QR permite un solo ingreso y se invalida despues de su primer escaneo.",
+    100,
+    735,
+    { width: pageWidth - 200, align: "center" }
+  );
+
+  if (ticket.status === "cancelled") {
+    document.save();
+    document.rotate(-24, { origin: [pageWidth / 2, pageHeight / 2] });
+    document.fillColor("#b7474a").opacity(0.35).font("Helvetica-Bold").fontSize(64).text(
+      "CANCELADO",
+      72,
+      pageHeight / 2 - 34,
+      { width: pageWidth - 144, align: "center" }
+    );
+    document.restore();
+    document.opacity(1);
+  }
+
+  document.fillColor(gold).font("Helvetica-Bold").fontSize(8).text(
+    "LA QUERENDONA - EDICION 2026",
+    62,
+    pageHeight - 58,
+    { width: pageWidth - 124, align: "center", characterSpacing: 1.4 }
+  );
+}
+
 async function renderLatidosTicketsPdf(res, bundle) {
   const { order, tickets } = bundle;
+  const isCourtesy = order.experience_id === LATIDOS_COURTESY_EXPERIENCE_ID;
   const qrBuffers = await Promise.all(
     tickets.map((ticket) => QRCode.toBuffer(createLatidosSignedToken("ticket", ticket.id), {
       type: "png",
       width: 720,
       margin: 2,
       errorCorrectionLevel: "H",
-      color: { dark: "#1e3323", light: "#fffdf8" }
+      color: isCourtesy
+        ? { dark: "#0b211a", light: "#fff9ea" }
+        : { dark: "#1e3323", light: "#fffdf8" }
     }))
   );
   const document = new PDFDocument({
@@ -1054,7 +1202,7 @@ async function renderLatidosTicketsPdf(res, bundle) {
     margin: 0,
     autoFirstPage: false,
     info: {
-      Title: "Boletos Latidos de Mexico",
+      Title: isCourtesy ? "Cortesias premium Latidos de Mexico" : "Boletos Latidos de Mexico",
       Author: "La Querendona",
       Subject: "Acceso al evento Latidos de Mexico"
     }
@@ -1066,12 +1214,21 @@ async function renderLatidosTicketsPdf(res, bundle) {
   const ochre = "#b2905a";
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", 'attachment; filename="boletos-latidos-de-mexico.pdf"');
+  res.setHeader(
+    "Content-Disposition",
+    isCourtesy
+      ? 'attachment; filename="cortesias-premium-latidos-de-mexico.pdf"'
+      : 'attachment; filename="boletos-latidos-de-mexico.pdf"'
+  );
   res.setHeader("Cache-Control", "private, no-store");
   document.pipe(res);
 
   tickets.forEach((ticket, index) => {
     document.addPage();
+    if (isCourtesy) {
+      renderLatidosCourtesyTicketPage(document, order, ticket, qrBuffers[index], logoPath);
+      return;
+    }
     const pageWidth = document.page.width;
     const pageHeight = document.page.height;
 
@@ -1744,6 +1901,133 @@ app.post("/api/latidos/registration", async (req, res, next) => {
   }
 });
 
+app.post("/api/latidos/courtesy-batches", authRequired, adminRequired, async (req, res, next) => {
+  let client;
+
+  try {
+    await getInitPromise();
+    const batch = sanitizeLatidosCourtesyBatch(req.body);
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const existingResult = await client.query(
+      `SELECT * FROM latidos_orders WHERE external_reference = $1 FOR UPDATE`,
+      [batch.externalReference]
+    );
+    let order = existingResult.rows[0];
+    let created = false;
+
+    if (order) {
+      if (
+        order.experience_id !== LATIDOS_COURTESY_EXPERIENCE_ID ||
+        Number(order.quantity) !== batch.quantity ||
+        order.status !== "approved"
+      ) {
+        const error = new Error("La clave ya pertenece a un lote de cortesia diferente");
+        error.status = 409;
+        throw error;
+      }
+    } else {
+      const orderResult = await client.query(
+        `
+          INSERT INTO latidos_orders (
+            external_reference,
+            experience_id,
+            quantity,
+            unit_price,
+            total,
+            status,
+            reserved_until,
+            paid_at
+          )
+          VALUES ($1, $2, $3, 0, 0, 'approved', NULL, now())
+          RETURNING *
+        `,
+        [batch.externalReference, LATIDOS_COURTESY_EXPERIENCE_ID, batch.quantity]
+      );
+      order = orderResult.rows[0];
+      created = true;
+    }
+
+    let registrationResult = await client.query(
+      `
+        UPDATE latidos_registrations
+        SET
+          name = $2,
+          origin = $3,
+          contact_name = $4,
+          age = $5,
+          email = $6,
+          phone = $7,
+          business_type = $8,
+          updated_at = now()
+        WHERE order_id = $1
+        RETURNING id
+      `,
+      [
+        order.id,
+        "Cortesía",
+        "La Querendona",
+        "Cortesía",
+        0,
+        "cortesia@laquerendonacg.com",
+        "0000000000",
+        ""
+      ]
+    );
+
+    if (registrationResult.rowCount === 0) {
+      registrationResult = await client.query(
+        `
+          INSERT INTO latidos_registrations (
+            order_id,
+            name,
+            origin,
+            contact_name,
+            age,
+            email,
+            phone,
+            business_type
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING id
+        `,
+        [
+          order.id,
+          "Cortesía",
+          "La Querendona",
+          "Cortesía",
+          0,
+          "cortesia@laquerendonacg.com",
+          "0000000000",
+          ""
+        ]
+      );
+    }
+
+    const tickets = await ensureLatidosTickets(client, order);
+    await client.query("COMMIT");
+
+    const orderToken = createLatidosSignedToken("order", order.id);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.status(created ? 201 : 200).json({
+      ok: true,
+      created,
+      batchKey: batch.batchKey,
+      orderId: order.id,
+      registrationId: registrationResult.rows[0].id,
+      quantity: Number(order.quantity),
+      tickets: tickets.map(latidosTicketDto),
+      pdfUrl: `/api/latidos/tickets/pdf?token=${encodeURIComponent(orderToken)}`
+    });
+  } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    if (client) client.release();
+  }
+});
+
 app.post("/api/latidos/test-ticket", authRequired, adminRequired, async (req, res, next) => {
   try {
     await getInitPromise();
@@ -1858,10 +2142,11 @@ app.get("/api/latidos/tickets/:token/qr", async (req, res, next) => {
     }
 
     const ticketResult = await query(
-      `SELECT id FROM latidos_tickets WHERE id = $1`,
+      `SELECT id, experience_id FROM latidos_tickets WHERE id = $1`,
       [ticketToken.id]
     );
-    if (!ticketResult.rows[0]) {
+    const ticket = ticketResult.rows[0];
+    if (!ticket) {
       const error = new Error("Boleto no encontrado");
       error.status = 404;
       throw error;
@@ -1872,7 +2157,9 @@ app.get("/api/latidos/tickets/:token/qr", async (req, res, next) => {
       width: 720,
       margin: 2,
       errorCorrectionLevel: "H",
-      color: { dark: "#1e3323", light: "#fffdf8" }
+      color: ticket.experience_id === LATIDOS_COURTESY_EXPERIENCE_ID
+        ? { dark: "#0b211a", light: "#fff9ea" }
+        : { dark: "#1e3323", light: "#fffdf8" }
     });
     res.setHeader("Content-Type", "image/png");
     res.setHeader("Content-Length", image.length);

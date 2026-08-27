@@ -356,6 +356,12 @@ VALUES
     'Cena mexicana de gala',
     40,
     599
+  ),
+  (
+    'cortesia',
+    'Acceso especial de cortesia',
+    0,
+    0
   )
 
 ON CONFLICT (id)

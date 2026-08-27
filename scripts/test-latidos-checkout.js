@@ -21,7 +21,8 @@ process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_JSON = JSON.stringify({
 
 const experiences = new Map([
   ["tradicional", { id: "tradicional", name: "Buffet de antojitos mexicanos", capacity: 60, price: 349 }],
-  ["gastronomica", { id: "gastronomica", name: "Cena mexicana de gala", capacity: 40, price: 599 }]
+  ["gastronomica", { id: "gastronomica", name: "Cena mexicana de gala", capacity: 40, price: 599 }],
+  ["cortesia", { id: "cortesia", name: "Acceso especial de cortesia", capacity: 0, price: 0 }]
 ]);
 const orders = [];
 const registrations = [];
@@ -83,7 +84,10 @@ function databaseQuery(sql, params = []) {
   }
 
   if (/FROM latidos_experiences e/i.test(query)) {
-    const rows = [...experiences.values()].map((experience) => {
+    const publicOnly = /WHERE e\.id IN \('tradicional', 'gastronomica'\)/i.test(query);
+    const rows = [...experiences.values()].filter((experience) => (
+      !publicOnly || ["tradicional", "gastronomica"].includes(experience.id)
+    )).map((experience) => {
       const related = orders.filter((order) => order.experience_id === experience.id);
       return {
         ...experience,
@@ -107,22 +111,23 @@ function databaseQuery(sql, params = []) {
   }
 
   if (/INSERT INTO latidos_orders/i.test(query)) {
+    const isCourtesy = /'approved'/i.test(query);
     const order = {
       id: `order-${nextOrderId++}`,
       external_reference: params[0],
       experience_id: params[1],
       quantity: Number(params[2]),
-      unit_price: Number(params[3]),
-      total: Number(params[4]),
-      status: "reserved",
-      reserved_until: params[5],
+      unit_price: isCourtesy ? 0 : Number(params[3]),
+      total: isCourtesy ? 0 : Number(params[4]),
+      status: isCourtesy ? "approved" : "reserved",
+      reserved_until: isCourtesy ? null : params[5],
       mercadopago_preference_id: null,
       mercadopago_payment_id: null,
-      paid_at: null,
+      paid_at: isCourtesy ? new Date().toISOString() : null,
       created_at: new Date().toISOString()
     };
     orders.push(order);
-    return { rows: [{ id: order.id }], rowCount: 1 };
+    return { rows: [isCourtesy ? { ...order } : { id: order.id }], rowCount: 1 };
   }
 
   if (/SET mercadopago_preference_id = \$1/i.test(query)) {
@@ -205,6 +210,7 @@ function databaseQuery(sql, params = []) {
         order_id: params[0],
         sequence: Number(params[1]),
         ticket_number: params[2],
+        experience_id: params[3],
         status: "active",
         used_at: null,
         checked_in_by: null
@@ -310,9 +316,12 @@ function databaseQuery(sql, params = []) {
     };
   }
 
-  if (/SELECT id FROM latidos_tickets WHERE id = \$1/i.test(query)) {
+  if (/SELECT id(?:, experience_id)? FROM latidos_tickets WHERE id = \$1/i.test(query)) {
     const ticket = tickets.find((item) => item.id === params[0]);
-    return { rows: ticket ? [{ id: ticket.id }] : [], rowCount: ticket ? 1 : 0 };
+    return {
+      rows: ticket ? [{ id: ticket.id, experience_id: ticket.experience_id }] : [],
+      rowCount: ticket ? 1 : 0
+    };
   }
 
   if (/FROM latidos_tickets t JOIN latidos_orders o/i.test(query)) {
@@ -609,6 +618,11 @@ async function run() {
       headers: { Authorization: `Bearer ${staffLogin.body.token}` }
     });
     assert.strictEqual(staffRegistrations.status, 403);
+    const staffCourtesy = await request(server, "POST", "/api/latidos/courtesy-batches", {
+      batchKey: "cortesia-premium-2026",
+      quantity: 20
+    }, { headers: { Authorization: `Bearer ${staffLogin.body.token}` } });
+    assert.strictEqual(staffCourtesy.status, 403);
 
     const login = await request(server, "POST", "/api/auth/login", {
       username: "staff-test",
@@ -702,6 +716,68 @@ async function run() {
     assert.strictEqual(tickets.length, 3);
     assert.strictEqual(registrations[0].origin, "Pachuca, Hidalgo");
 
+    const mercadoPagoCallsBeforeCourtesy = mercadoPagoCalls.length;
+    const courtesy = await request(server, "POST", "/api/latidos/courtesy-batches", {
+      batchKey: "cortesia-premium-2026",
+      quantity: 20
+    }, { headers: authHeaders });
+    assert.strictEqual(courtesy.status, 201);
+    assert.strictEqual(courtesy.body.created, true);
+    assert.strictEqual(courtesy.body.quantity, 20);
+    assert.strictEqual(courtesy.body.tickets.length, 20);
+    assert.strictEqual(new Set(courtesy.body.tickets.map((ticket) => ticket.ticketNumber)).size, 20);
+    assert.ok(courtesy.body.tickets.every((ticket) => ticket.ticketNumber.startsWith("LDM-C-")));
+    assert.strictEqual(orders.length, 2);
+    assert.strictEqual(registrations.length, 2);
+    assert.strictEqual(tickets.length, 23);
+    assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeCourtesy);
+
+    const repeatedCourtesy = await request(server, "POST", "/api/latidos/courtesy-batches", {
+      batchKey: "cortesia-premium-2026",
+      quantity: 20
+    }, { headers: authHeaders });
+    assert.strictEqual(repeatedCourtesy.status, 200);
+    assert.strictEqual(repeatedCourtesy.body.created, false);
+    assert.deepStrictEqual(
+      repeatedCourtesy.body.tickets.map((ticket) => ticket.ticketNumber),
+      courtesy.body.tickets.map((ticket) => ticket.ticketNumber)
+    );
+    assert.strictEqual(tickets.length, 23);
+
+    const availabilityAfterCourtesy = await request(server, "GET", "/api/latidos/availability");
+    assert.deepStrictEqual(Object.keys(availabilityAfterCourtesy.body.experiences).sort(), ["gastronomica", "tradicional"]);
+    assert.strictEqual(availabilityAfterCourtesy.body.experiences.tradicional.available, 60);
+    assert.strictEqual(availabilityAfterCourtesy.body.experiences.gastronomica.available, 37);
+
+    const courtesyQr = await request(server, "GET", courtesy.body.tickets[0].qrUrl);
+    assert.strictEqual(courtesyQr.status, 200);
+    assert.strictEqual(courtesyQr.headers["content-type"], "image/png");
+    assert.deepStrictEqual([...courtesyQr.body.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+
+    const courtesyPdf = await request(server, "GET", courtesy.body.pdfUrl);
+    assert.strictEqual(courtesyPdf.status, 200);
+    assert.ok(String(courtesyPdf.headers["content-type"]).includes("application/pdf"));
+    assert.ok(String(courtesyPdf.headers["content-disposition"]).includes("cortesias-premium"));
+    assert.strictEqual(courtesyPdf.body.subarray(0, 4).toString("ascii"), "%PDF");
+    if (process.env.LATIDOS_TEST_COURTESY_PDF_OUTPUT) {
+      fs.mkdirSync(path.dirname(process.env.LATIDOS_TEST_COURTESY_PDF_OUTPUT), { recursive: true });
+      fs.writeFileSync(process.env.LATIDOS_TEST_COURTESY_PDF_OUTPUT, courtesyPdf.body);
+    }
+
+    const courtesyCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: courtesy.body.tickets[0].token
+    }, { headers: authHeaders });
+    assert.strictEqual(courtesyCheckIn.status, 200);
+    assert.strictEqual(courtesyCheckIn.body.valid, true);
+    assert.strictEqual(courtesyCheckIn.body.ticket.experience, "cortesia");
+    assert.strictEqual(courtesyCheckIn.body.ticket.customerName, "Cortesía");
+
+    const duplicateCourtesyCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: courtesy.body.tickets[0].token
+    }, { headers: authHeaders });
+    assert.strictEqual(duplicateCourtesyCheckIn.status, 409);
+    assert.strictEqual(duplicateCourtesyCheckIn.body.reason, "used");
+
     const mercadoPagoCallsBeforeTestTicket = mercadoPagoCalls.length;
     const testTicket = await request(server, "POST", "/api/latidos/test-ticket", {}, { headers: authHeaders });
     assert.strictEqual(testTicket.status, 201);
@@ -770,6 +846,10 @@ async function run() {
     assert.strictEqual(gastronomicaSummary.issued, 3);
     assert.strictEqual(gastronomicaSummary.used, 1);
     assert.strictEqual(gastronomicaSummary.active, 2);
+    const courtesySummary = summary.body.experiences.find((item) => item.id === "cortesia");
+    assert.strictEqual(courtesySummary.issued, 20);
+    assert.strictEqual(courtesySummary.used, 1);
+    assert.strictEqual(courtesySummary.active, 19);
 
     paymentAmount = 1;
     const mismatchedPayment = await request(server, "GET", "/api/latidos/payment?payment_id=987654321");
@@ -798,7 +878,7 @@ async function run() {
     assert.strictEqual(refundWebhook.body.processed, true);
     assert.strictEqual(orders[0].status, "refunded");
     assert.strictEqual(tickets.filter((ticket) => ticket.status === "cancelled").length, 2);
-    assert.strictEqual(tickets.filter((ticket) => ticket.status === "used").length, 1);
+    assert.strictEqual(tickets.filter((ticket) => ticket.status === "used").length, 2);
 
     const cancelledCheckIn = await request(server, "POST", "/api/latidos/check-in", {
       ticketToken: registration.body.tickets[1].token
