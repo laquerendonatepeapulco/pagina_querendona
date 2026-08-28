@@ -284,6 +284,7 @@
     appendDetail("Boleto", ticket.ticketNumber);
     appendDetail("Titular", ticket.customerName);
     appendDetail("Experiencia", ticket.experienceName);
+    appendDetail("Tipo de acceso", ticket.accessLabel);
     if (isTest) appendDetail("Tipo", "PRUEBA - NO AUTORIZA INGRESO");
     appendDetail("Acceso", ticket.sequence && ticket.quantity ? `${ticket.sequence} de ${ticket.quantity}` : "");
     if (!valid && ticket.usedAt) appendDetail("Utilizado", new Date(ticket.usedAt).toLocaleString("es-MX"));

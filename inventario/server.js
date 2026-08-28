@@ -21,6 +21,7 @@ const LATIDOS_COURTESY_EXPERIENCE_ID = "cortesia";
 const LATIDOS_COURTESY_MAX_TICKETS = 100;
 const LATIDOS_EXHIBITOR_EXPERIENCE_ID = "expositor";
 const LATIDOS_EXHIBITOR_MAX_TICKETS = 100;
+const LATIDOS_MANUAL_MAX_TICKETS = 50;
 const LATIDOS_EXPERIENCES = Object.freeze({
   tradicional: Object.freeze({
     id: "tradicional",
@@ -891,6 +892,69 @@ function sanitizeLatidosExhibitorLabels(input = {}) {
   };
 }
 
+function sanitizeLatidosManualTicket(input = {}) {
+  const referenceKey = String(input.referenceKey || "").trim().toLowerCase();
+  const experienceId = String(input.experience || "").trim().toLowerCase();
+  const experience = LATIDOS_EXPERIENCES[experienceId];
+  const quantity = Number.parseInt(String(input.quantity || ""), 10);
+  const unitPrice = Number(input.unitPrice);
+  const name = String(input.name || "").trim();
+  const accessLabel = String(input.accessLabel || "").trim();
+
+  if (!/^[a-z0-9][a-z0-9-]{2,69}$/.test(referenceKey)) {
+    const error = new Error("La clave del boleto administrativo no es valida");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!experience) {
+    const error = new Error("Selecciona una experiencia valida");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > LATIDOS_MANUAL_MAX_TICKETS) {
+    const error = new Error(`La cantidad administrativa debe ser de 1 a ${LATIDOS_MANUAL_MAX_TICKETS} boletos`);
+    error.status = 400;
+    throw error;
+  }
+
+  if (!Number.isFinite(unitPrice) || unitPrice < 0 || unitPrice > experience.unitPrice) {
+    const error = new Error(`La tarifa administrativa debe estar entre $0 y $${experience.unitPrice}`);
+    error.status = 400;
+    throw error;
+  }
+
+  if (!name || name.length > 180) {
+    const error = new Error("El titular es obligatorio y debe tener maximo 180 caracteres");
+    error.status = 400;
+    throw error;
+  }
+
+  if (accessLabel.length > 100) {
+    const error = new Error("La descripcion del acceso debe tener maximo 100 caracteres");
+    error.status = 400;
+    throw error;
+  }
+
+  return {
+    referenceKey,
+    externalReference: `latidos:manual:${referenceKey}`,
+    experience,
+    quantity,
+    unitPrice: Math.round(unitPrice * 100) / 100,
+    total: Math.round(unitPrice * quantity * 100) / 100,
+    name,
+    accessLabel,
+    origin: String(input.origin || "Registro administrativo").trim().slice(0, 180) || "Registro administrativo",
+    contactName: String(input.contactName || name).trim().slice(0, 180) || name,
+    age: Math.min(120, Math.max(0, Number.parseInt(String(input.age ?? 0), 10) || 0)),
+    email: String(input.email || "registro-interno@laquerendonacg.com").trim().toLowerCase().slice(0, 254),
+    phone: String(input.phone || "0000000000").trim().slice(0, 30),
+    businessType: String(input.businessType || accessLabel).trim().slice(0, 180)
+  };
+}
+
 function createLatidosSignedToken(kind, id) {
   const payload = base64UrlEncode(JSON.stringify({ version: 1, kind, id }));
   return `lt1.${payload}.${signPayload(`latidos:${payload}`)}`;
@@ -1484,6 +1548,15 @@ async function renderLatidosTicketsPdf(res, bundle) {
       606,
       { width: pageWidth - 124, align: "center" }
     );
+
+    if (ticket.display_name) {
+      document.fillColor(wine).font("Helvetica-Bold").fontSize(10).text(
+        `Tipo de acceso: ${ticket.display_name}`,
+        62,
+        628,
+        { width: pageWidth - 124, align: "center" }
+      );
+    }
 
     document.moveTo(78, 650).lineTo(pageWidth - 78, 650).strokeColor(ochre).lineWidth(0.8).stroke();
     document.fillColor("#526052").font("Helvetica").fontSize(9).text(
@@ -2098,6 +2171,180 @@ app.post("/api/latidos/registration", async (req, res, next) => {
       ok: true,
       registrationId: registrationResult.rows[0].id,
       tickets: ticketDtos,
+      pdfUrl: `/api/latidos/tickets/pdf?token=${encodeURIComponent(orderToken)}`
+    });
+  } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.post("/api/latidos/manual-tickets", authRequired, adminRequired, async (req, res, next) => {
+  let client;
+
+  try {
+    await getInitPromise();
+    const manual = sanitizeLatidosManualTicket(req.body);
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const existingResult = await client.query(
+      `SELECT * FROM latidos_orders WHERE external_reference = $1 FOR UPDATE`,
+      [manual.externalReference]
+    );
+    let order = existingResult.rows[0];
+    let created = false;
+
+    if (order) {
+      if (
+        order.experience_id !== manual.experience.id ||
+        Number(order.quantity) !== manual.quantity ||
+        Number(order.unit_price) !== manual.unitPrice ||
+        Number(order.total) !== manual.total ||
+        order.status !== "approved"
+      ) {
+        const error = new Error("La clave ya pertenece a un boleto administrativo diferente");
+        error.status = 409;
+        throw error;
+      }
+    } else {
+      const experienceResult = await client.query(
+        `SELECT * FROM latidos_experiences WHERE id = $1 FOR UPDATE`,
+        [manual.experience.id]
+      );
+      const experience = experienceResult.rows[0];
+      if (!experience) {
+        const error = new Error("La experiencia seleccionada no esta disponible");
+        error.status = 404;
+        throw error;
+      }
+
+      const occupiedResult = await client.query(
+        `
+          SELECT COALESCE(SUM(quantity), 0)::INTEGER AS occupied
+          FROM latidos_orders
+          WHERE experience_id = $1
+            AND (
+              status = 'approved'
+              OR (status = 'reserved' AND reserved_until > now())
+            )
+        `,
+        [manual.experience.id]
+      );
+      const available = Math.max(0, Number(experience.capacity) - Number(occupiedResult.rows[0].occupied));
+      if (manual.quantity > available) {
+        const error = new Error(available === 0 ? "Ya no hay lugares disponibles" : `Solo quedan ${available} lugares disponibles`);
+        error.status = 409;
+        throw error;
+      }
+
+      const orderResult = await client.query(
+        `
+          INSERT INTO latidos_orders (
+            external_reference,
+            experience_id,
+            quantity,
+            unit_price,
+            total,
+            status,
+            reserved_until,
+            paid_at
+          )
+          VALUES ($1, $2, $3, $4, $5, 'approved', NULL, now())
+          RETURNING *
+        `,
+        [manual.externalReference, manual.experience.id, manual.quantity, manual.unitPrice, manual.total]
+      );
+      order = orderResult.rows[0];
+      created = true;
+    }
+
+    let registrationResult = await client.query(
+      `
+        UPDATE latidos_registrations
+        SET
+          name = $2,
+          origin = $3,
+          contact_name = $4,
+          age = $5,
+          email = $6,
+          phone = $7,
+          business_type = $8,
+          updated_at = now()
+        WHERE order_id = $1
+        RETURNING id
+      `,
+      [
+        order.id,
+        manual.name,
+        manual.origin,
+        manual.contactName,
+        manual.age,
+        manual.email,
+        manual.phone,
+        manual.businessType
+      ]
+    );
+
+    if (registrationResult.rowCount === 0) {
+      registrationResult = await client.query(
+        `
+          INSERT INTO latidos_registrations (
+            order_id,
+            name,
+            origin,
+            contact_name,
+            age,
+            email,
+            phone,
+            business_type
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING id
+        `,
+        [
+          order.id,
+          manual.name,
+          manual.origin,
+          manual.contactName,
+          manual.age,
+          manual.email,
+          manual.phone,
+          manual.businessType
+        ]
+      );
+    }
+
+    await ensureLatidosTickets(client, order);
+    await client.query(
+      `
+        UPDATE latidos_tickets
+        SET display_name = $1, updated_at = now()
+        WHERE order_id = $2
+      `,
+      [manual.accessLabel || null, order.id]
+    );
+    const ticketsResult = await client.query(
+      `SELECT * FROM latidos_tickets WHERE order_id = $1 ORDER BY sequence`,
+      [order.id]
+    );
+    await client.query("COMMIT");
+
+    const orderToken = createLatidosSignedToken("order", order.id);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.status(created ? 201 : 200).json({
+      ok: true,
+      created,
+      referenceKey: manual.referenceKey,
+      orderId: order.id,
+      registrationId: registrationResult.rows[0].id,
+      experience: order.experience_id,
+      quantity: Number(order.quantity),
+      unitPrice: Number(order.unit_price),
+      total: Number(order.total),
+      tickets: ticketsResult.rows.map(latidosTicketDto),
       pdfUrl: `/api/latidos/tickets/pdf?token=${encodeURIComponent(orderToken)}`
     });
   } catch (error) {
@@ -2768,6 +3015,7 @@ app.post("/api/latidos/check-in", authRequired, async (req, res, next) => {
       experience: ticket.experience_id,
       experienceName: ticket.experience_name,
       customerName: ticket.registration_name,
+      accessLabel: ticket.display_name || null,
       status: ticket.status,
       usedAt: ticket.used_at || null
     };

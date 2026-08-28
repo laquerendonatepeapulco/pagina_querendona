@@ -112,23 +112,24 @@ function databaseQuery(sql, params = []) {
   }
 
   if (/INSERT INTO latidos_orders/i.test(query)) {
-    const isCourtesy = /'approved'/i.test(query);
+    const isApproved = /'approved'/i.test(query);
+    const hasPricedApprovedValues = /VALUES \(\$1, \$2, \$3, \$4, \$5, 'approved'/i.test(query.replace(/\s+/g, " "));
     const order = {
       id: `order-${nextOrderId++}`,
       external_reference: params[0],
       experience_id: params[1],
       quantity: Number(params[2]),
-      unit_price: isCourtesy ? 0 : Number(params[3]),
-      total: isCourtesy ? 0 : Number(params[4]),
-      status: isCourtesy ? "approved" : "reserved",
-      reserved_until: isCourtesy ? null : params[5],
+      unit_price: hasPricedApprovedValues ? Number(params[3]) : isApproved ? 0 : Number(params[3]),
+      total: hasPricedApprovedValues ? Number(params[4]) : isApproved ? 0 : Number(params[4]),
+      status: isApproved ? "approved" : "reserved",
+      reserved_until: isApproved ? null : params[5],
       mercadopago_preference_id: null,
       mercadopago_payment_id: null,
-      paid_at: isCourtesy ? new Date().toISOString() : null,
+      paid_at: isApproved ? new Date().toISOString() : null,
       created_at: new Date().toISOString()
     };
     orders.push(order);
-    return { rows: [isCourtesy ? { ...order } : { id: order.id }], rowCount: 1 };
+    return { rows: [isApproved ? { ...order } : { id: order.id }], rowCount: 1 };
   }
 
   if (/SET mercadopago_preference_id = \$1/i.test(query)) {
@@ -265,6 +266,13 @@ function databaseQuery(sql, params = []) {
   }
 
   if (/UPDATE latidos_tickets SET display_name = \$1/i.test(query)) {
+    if (params.length === 2) {
+      const related = tickets.filter((item) => item.order_id === params[1]);
+      related.forEach((ticket) => {
+        ticket.display_name = params[0] || null;
+      });
+      return { rows: [], rowCount: related.length };
+    }
     const ticket = tickets.find((item) => item.order_id === params[1] && item.sequence === Number(params[2]));
     if (!ticket) return { rows: [], rowCount: 0 };
     ticket.display_name = params[0] || null;
@@ -641,6 +649,15 @@ async function run() {
       labels: ["Bajo Cero"]
     }, { headers: { Authorization: `Bearer ${staffLogin.body.token}` } });
     assert.strictEqual(staffExhibitorLabels.status, 403);
+    const staffManualTicket = await request(server, "POST", "/api/latidos/manual-tickets", {
+      referenceKey: "indira-child-test",
+      experience: "tradicional",
+      quantity: 1,
+      unitPrice: 174.5,
+      name: "Indira Gamero Martinez",
+      accessLabel: "1 niño"
+    }, { headers: { Authorization: `Bearer ${staffLogin.body.token}` } });
+    assert.strictEqual(staffManualTicket.status, 403);
 
     const login = await request(server, "POST", "/api/auth/login", {
       username: "staff-test",
@@ -998,6 +1015,63 @@ async function run() {
     const availabilityAfterRefund = await request(server, "GET", "/api/latidos/availability");
     assert.strictEqual(availabilityAfterRefund.body.experiences.gastronomica.sold, 0);
     assert.strictEqual(availabilityAfterRefund.body.experiences.gastronomica.available, 40);
+
+    const mercadoPagoCallsBeforeManualTicket = mercadoPagoCalls.length;
+    const manualTicket = await request(server, "POST", "/api/latidos/manual-tickets", {
+      referenceKey: "indira-gamero-martinez-nino-2026",
+      experience: "tradicional",
+      quantity: 1,
+      unitPrice: 174.5,
+      name: "Indira Gamero Martinez",
+      accessLabel: "1 niño"
+    }, { headers: authHeaders });
+    assert.strictEqual(manualTicket.status, 201);
+    assert.strictEqual(manualTicket.body.created, true);
+    assert.strictEqual(manualTicket.body.experience, "tradicional");
+    assert.strictEqual(manualTicket.body.quantity, 1);
+    assert.strictEqual(manualTicket.body.unitPrice, 174.5);
+    assert.strictEqual(manualTicket.body.total, 174.5);
+    assert.strictEqual(manualTicket.body.tickets.length, 1);
+    assert.strictEqual(manualTicket.body.tickets[0].displayName, "1 niño");
+    assert.ok(manualTicket.body.tickets[0].ticketNumber.startsWith("LDM-T-"));
+    assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeManualTicket);
+
+    const repeatedManualTicket = await request(server, "POST", "/api/latidos/manual-tickets", {
+      referenceKey: "indira-gamero-martinez-nino-2026",
+      experience: "tradicional",
+      quantity: 1,
+      unitPrice: 174.5,
+      name: "Indira Gamero Martinez",
+      accessLabel: "1 niño"
+    }, { headers: authHeaders });
+    assert.strictEqual(repeatedManualTicket.status, 200);
+    assert.strictEqual(repeatedManualTicket.body.created, false);
+    assert.strictEqual(repeatedManualTicket.body.tickets[0].ticketNumber, manualTicket.body.tickets[0].ticketNumber);
+
+    const availabilityAfterManualTicket = await request(server, "GET", "/api/latidos/availability");
+    assert.strictEqual(availabilityAfterManualTicket.body.experiences.tradicional.sold, 1);
+    assert.strictEqual(availabilityAfterManualTicket.body.experiences.tradicional.available, 59);
+
+    const manualQr = await request(server, "GET", manualTicket.body.tickets[0].qrUrl);
+    assert.strictEqual(manualQr.status, 200);
+    assert.strictEqual(manualQr.headers["content-type"], "image/png");
+    assert.deepStrictEqual([...manualQr.body.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+
+    const manualPdf = await request(server, "GET", manualTicket.body.pdfUrl);
+    assert.strictEqual(manualPdf.status, 200);
+    assert.ok(String(manualPdf.headers["content-type"]).includes("application/pdf"));
+    assert.strictEqual(manualPdf.body.subarray(0, 4).toString("ascii"), "%PDF");
+    if (process.env.LATIDOS_TEST_MANUAL_PDF_OUTPUT) {
+      fs.mkdirSync(path.dirname(process.env.LATIDOS_TEST_MANUAL_PDF_OUTPUT), { recursive: true });
+      fs.writeFileSync(process.env.LATIDOS_TEST_MANUAL_PDF_OUTPUT, manualPdf.body);
+    }
+
+    const manualCheckIn = await request(server, "POST", "/api/latidos/check-in", {
+      ticketToken: manualTicket.body.tickets[0].token
+    }, { headers: authHeaders });
+    assert.strictEqual(manualCheckIn.status, 200);
+    assert.strictEqual(manualCheckIn.body.ticket.customerName, "Indira Gamero Martinez");
+    assert.strictEqual(manualCheckIn.body.ticket.accessLabel, "1 niño");
 
     const ignoredWebhook = await request(server, "POST", "/api/latidos/webhook", {
       type: "merchant_order",
