@@ -6,6 +6,8 @@
 
     const translations = {
         en: {
+            "¿Dónde quieres vivir la experiencia?": "Where would you like to enjoy the experience?",
+            "ELIGE TU SUCURSAL": "CHOOSE YOUR LOCATION",
             'Platillo anterior': 'Previous dish',
             'Siguiente platillo': 'Next dish',
             "Sabor, tradición y un ambiente familiar para disfrutar comida mexicana auténtica, hecha con cariño y servida como en casa.": "Flavor, tradition and a family atmosphere to enjoy authentic Mexican food, made with care and served just like at home.",
@@ -235,6 +237,8 @@
             'Seleccionar Restaurante - La Querendona': 'Select a Restaurant - La Querendona'
         },
         fr: {
+            "¿Dónde quieres vivir la experiencia?": "Où souhaitez-vous vivre cette expérience ?",
+            "ELIGE TU SUCURSAL": "CHOISISSEZ VOTRE RESTAURANT",
             'Platillo anterior': 'Plat précédent',
             'Siguiente platillo': 'Plat suivant',
             "Sabor, tradición y un ambiente familiar para disfrutar comida mexicana auténtica, hecha con cariño y servida como en casa.": "Saveurs, tradition et ambiance familiale pour savourer une cuisine mexicaine authentique, préparée avec soin et servie comme à la maison.",

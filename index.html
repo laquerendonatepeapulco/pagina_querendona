@@ -21,7 +21,7 @@
     <meta name="twitter:image" content="https://www.laquerendonacg.com/img/comida/restaurante.jpg">
     <link rel="icon" href="img/logo_pestaña.png?v=20260724-2" type="image/png">
     <link rel="stylesheet" href="styles.css?v=20260727-1">
-    <link rel="stylesheet" href="opcion.css?v=20260907-3">
+    <link rel="stylesheet" href="opcion.css?v=20260907-5">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -166,31 +166,23 @@
         <section class="selector-restaurant-section reveal" id="seleccionar-restaurante" aria-labelledby="home-branches-title">
             <div class="selector-section-heading">
                 <span class="section-mini-title">ELIGE TU SUCURSAL</span>
-                <h2 id="home-branches-title">Te esperamos en la mesa</h2>
+                <h2 id="home-branches-title">¿Dónde quieres vivir la experiencia?</h2>
             </div>
-            <div class="home-branches">
-                <article class="home-branch">
-                    <a class="home-branch-photo" href="tepeapulco.html"><img src="img/comida/eleccion.jpg" alt="La Querendona Tepeapulco" loading="lazy" decoding="async"></a>
-                    <div class="home-branch-copy">
-                        <h3><a href="tepeapulco.html">Tepeapulco</a></h3>
-                        <p>Av. Juárez, Centro</p>
-                        <div class="home-branch-actions">
-                            <a class="cta" href="menu.html">Ver menú</a>
-                            <a class="home-text-link" href="https://maps.app.goo.gl/JJ6a2DawLvwhbstQ8" target="_blank" rel="noopener">Cómo llegar</a>
-                        </div>
-                    </div>
-                </article>
-                <article class="home-branch">
-                    <a class="home-branch-photo" href="sahagun.html"><img src="img/sahagun/interior.jpg" alt="Interior de La Querendona Sahagún" loading="lazy" decoding="async"></a>
-                    <div class="home-branch-copy">
-                        <h3><a href="sahagun.html">Ciudad Sahagún</a></h3>
-                        <p>Carretera Pachuca–Cd. Sahagún, Vicente Guerrero</p>
-                        <div class="home-branch-actions">
-                            <a class="cta" href="menu.html?sucursal=sahagun">Ver menú</a>
-                            <a class="home-text-link" href="https://www.google.com/maps/search/?api=1&amp;query=Carr.%20Pachuca%20-%20Cd.%20Sahag%C3%BAn%20Manzana%20%231-Lote%2010%2C%20Vicente%20Guerrero%2C%2043998%20Cd%20Sahag%C3%BAn%2C%20Hgo." target="_blank" rel="noopener">Cómo llegar</a>
-                        </div>
-                    </div>
-                </article>
+
+            <div class="selector-container">
+                <a class="restaurant-option" href="tepeapulco.html">
+                    <img src="img/comida/eleccion.jpg" alt="La Querendona Tepeapulco" >
+                    <h3>La Querendona Tepeapulco</h3>
+                    <p>Ubicación: Tepeapulco</p>
+                    <span class="btn-select">Seleccionar</span>
+                </a>
+
+                <a class="restaurant-option" href="sahagun.html">
+                    <img src="img/sahagun/interior.jpg" alt="Interior de La Querendona Sahagún">
+                    <h3>La Querendona Ciudad Sahagún</h3>
+                    <p>Ubicación: Ciudad Sahagún, Hidalgo</p>
+                    <span class="btn-select">Seleccionar</span>
+                </a>
             </div>
         </section>
 
@@ -376,7 +368,7 @@
         </div>
     </div>
 
-    <script src="translations.js?v=20260907-4"></script>
+    <script src="translations.js?v=20260907-5"></script>
     <script src="script.js?v=20260907-2"></script>
 </body>
 </html>
