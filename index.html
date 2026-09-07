@@ -21,7 +21,7 @@
     <meta name="twitter:image" content="https://www.laquerendonacg.com/img/comida/restaurante.jpg">
     <link rel="icon" href="img/logo_pestaña.png?v=20260724-2" type="image/png">
     <link rel="stylesheet" href="styles.css?v=20260727-1">
-    <link rel="stylesheet" href="opcion.css">
+    <link rel="stylesheet" href="opcion.css?v=20260907-7">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -113,7 +113,7 @@
     </script>
     <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
-<body>
+<body class="home-refresh">
     <div class="bg-decoration"></div>
 
     <div class="page index-navbar-shell">
@@ -150,93 +150,91 @@
                 <span class="tag">Restaurante tradicional en Hidalgo</span>
                 <p class="subtitle">BIENVENIDO A</p>
                 <h1>La Querendona</h1>
-                <p class="description">
-                    Sabor, tradición y un ambiente familiar para disfrutar comida mexicana
-                    auténtica, hecha con cariño y servida como en casa.
-                </p>
-
+                <p class="description">Sabor, tradición y un ambiente familiar para disfrutar comida mexicana auténtica, hecha con cariño y servida como en casa.</p>
                 <div class="hero-buttons">
-                    <a class="cta" href="#seleccionar-restaurante">Elegir sucursal</a>
-                    <a class="secondary-btn" href="#sobre-nosotros-index">Conocer historia</a>
+                    <a class="cta" href="#seleccionar-restaurante">Ver menú</a>
+                    <a class="secondary-btn" href="contacto.html">Reservar</a>
                 </div>
             </div>
-
             <div class="hero-image floating">
                 <div class="hero-image-container">
-                    <img src="img/comida/restaurante.jpg" alt="Ambiente de La Querendona" class="hero-image">
-                    <div class="hero-overlay"></div>
+                    <img src="img/comida/quesabirria2.jpg" alt="Quesabirria con consomé de La Querendona" class="hero-image" width="2048" height="1536" fetchpriority="high">
                 </div>
             </div>
         </section>
 
-        <section class="about-hero selector-about-hero reveal" id="sobre-nosotros-index">
-            <div class="about-hero-text">
-                <span class="tag">Nuestra historia</span>
-
-                <h1>Tradición, sabor y familia</h1>
-
-                <p>
-                    En La Querendona compartimos la riqueza de la cocina tradicional mexicana
-                    con calidad, hospitalidad y sabor casero.
-                </p>
+        <section class="selector-restaurant-section reveal" id="seleccionar-restaurante" aria-labelledby="home-branches-title">
+            <div class="selector-section-heading">
+                <span class="section-mini-title">ELIGE TU SUCURSAL</span>
+                <h2 id="home-branches-title">¿Dónde quieres vivir la experiencia?</h2>
             </div>
 
-            <div class="about-hero-image floating">
-                <div class="hero-video-container">
-                    <div class="video-placeholder youtube-video-placeholder">
-                        <iframe
-                            class="youtube-video-frame"
-                            src="https://www.youtube-nocookie.com/embed/fDZf0dTb0no?autoplay=1&amp;mute=1&amp;loop=1&amp;playlist=fDZf0dTb0no&amp;controls=1&amp;playsinline=1&amp;rel=0"
-                            title="Video de La Querendona"
-                            loading="lazy"
-                            allow="autoplay; encrypted-media; picture-in-picture; web-share"
-                            referrerpolicy="strict-origin-when-cross-origin"
-                            allowfullscreen>
-                        </iframe>
-                    </div>
-                </div>
+            <div class="selector-container">
+                <a class="restaurant-option" href="tepeapulco.html">
+                    <img src="img/comida/eleccion.jpg" alt="La Querendona Tepeapulco" >
+                    <h3>La Querendona Tepeapulco</h3>
+                    <p>Ubicación: Tepeapulco</p>
+                    <span class="btn-select">Seleccionar</span>
+                </a>
+
+                <a class="restaurant-option" href="sahagun.html">
+                    <img src="img/sahagun/interior.jpg" alt="Interior de La Querendona Sahagún">
+                    <h3>La Querendona Ciudad Sahagún</h3>
+                    <p>Ubicación: Ciudad Sahagún, Hidalgo</p>
+                    <span class="btn-select">Seleccionar</span>
+                </a>
             </div>
         </section>
 
-        <section class="history-section reveal">
-            <div class="history-card">
-                <div class="history-image">
-                    <div class="history-image-container">
-                        <img src="img/comida/cantarito2.jpg" alt="Historia de La Querendona" class="history-img">
-                        <div class="history-overlay"></div>
-                    </div>
+        <section class="home-food-section reveal" id="platillos" aria-labelledby="home-food-title">
+            <div class="selector-section-heading">
+                <span class="section-mini-title">SABOR DE CASA</span>
+                <h2 id="home-food-title">¿Qué se te antoja hoy?</h2>
+            </div>
+            <div class="home-food-grid" id="home-food-track" tabindex="0" role="group" aria-labelledby="home-food-title">
+                <article class="home-food-card">
+                    <img src="img/comida/quesabirria2.jpg" alt="Quesabirria con consomé de La Querendona" width="2048" height="1536" loading="lazy" decoding="async">
+                    <h3>Quesabirria</h3>
+                    <p>Tortilla dorada, queso fundido y consomé.</p>
+                </article>
+                <article class="home-food-card">
+                    <img src="img/comida/chilaquiles.jpg" alt="Chilaquiles de La Querendona" width="899" height="1599" loading="lazy" decoding="async">
+                    <h3>Chilaquiles</h3>
+                    <p>El antojo perfecto para empezar el día.</p>
+                </article>
+                <article class="home-food-card">
+                    <img src="img/tepeapulco/cocina/cocina-01.webp" alt="Pozole, quesadillas y guarniciones mexicanas" width="1200" height="1553" loading="lazy" decoding="async">
+                    <h3>Pozole y antojitos</h3>
+                    <p>Sabores mexicanos para disfrutar sin prisa.</p>
+                </article>
+            </div>
+            <div class="home-carousel-controls" hidden>
+                <button type="button" class="home-carousel-arrow" data-food-prev aria-label="Platillo anterior" aria-controls="home-food-track"><span aria-hidden="true">←</span></button>
+                <div class="home-carousel-dots">
+                    <button type="button" data-food-slide="0" aria-label="Quesabirria" aria-controls="home-food-track" aria-current="true"><span></span></button>
+                    <button type="button" data-food-slide="1" aria-label="Chilaquiles" aria-controls="home-food-track"><span></span></button>
+                    <button type="button" data-food-slide="2" aria-label="Pozole y antojitos" aria-controls="home-food-track"><span></span></button>
                 </div>
-
-                <div class="history-text">
-                    <span class="section-mini-title">NUESTRA ESENCIA</span>
-
-                    <h2>Un restaurante hecho con pasión mexicana</h2>
-
-                    <p>
-                        La Querendona fue fundada en 2021 bajo la inspiración del Sr. Horacio
-                        Molina Silva, con la visión de crear un espacio especializado en comida
-                        típica mexicana.
-                    </p>
-
-                    <p>
-                        Nuestra primera sucursal abrió en Ciudad Sahagún, Hidalgo, y posteriormente
-                        llegó la sucursal de Tepeapulco, conservando el estilo mexicano, el menú,
-                        la coctelería y el sazón casero que nos distingue.
-                    </p>
-
-                    <p>
-                        Hoy seguimos creciendo con el mismo propósito: ofrecer platillos inspirados
-                        en la gastronomía mexicana y una experiencia cálida, familiar y relajada.
-                    </p>
-                </div>
+                <button type="button" class="home-carousel-arrow" data-food-next aria-label="Siguiente platillo" aria-controls="home-food-track"><span aria-hidden="true">→</span></button>
             </div>
         </section>
 
-        <section class="institution-section reveal">
+        <section class="home-story reveal" id="sobre-nosotros-index" aria-labelledby="home-story-title">
+            <div class="home-story-copy">
+                <span class="section-mini-title">DESDE 2021</span>
+                <h2 id="home-story-title">Una mesa para sentirse en casa</h2>
+                <p>Desde Ciudad Sahagún hasta Tepeapulco, compartimos nuestro sazón mexicano y el gusto de recibirte en familia.</p>
+                <a class="home-text-link" href="nosotros.html">Conoce nuestra historia</a>
+            </div>
+            <div class="home-story-video floating">
+                <iframe src="https://www.youtube-nocookie.com/embed/fDZf0dTb0no?autoplay=1&amp;mute=1&amp;loop=1&amp;playlist=fDZf0dTb0no&amp;controls=1&amp;playsinline=1&amp;rel=0" title="Video de La Querendona" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+        </section>
+        <section class="institution-section reveal" id="filosofia-institucional" aria-labelledby="home-philosophy-title">
             <div class="institution-header">
                 <span class="section-mini-title">FILOSOFÍA INSTITUCIONAL</span>
 
-                <h2>Nuestra forma de servir</h2>
+                <h2 id="home-philosophy-title">Nuestra forma de servir</h2>
 
                 <p>
                     Trabajamos con identidad, pasión y compromiso para preservar los sabores
@@ -273,29 +271,6 @@
                     manteniendo la calidad de nuestros productos, el reconocimiento de marca y una
                     experiencia que haga sentir a cada cliente cobijado por la esencia de México.
                 </p>
-            </div>
-        </section>
-
-        <section class="selector-restaurant-section reveal" id="seleccionar-restaurante">
-            <div class="selector-section-heading">
-                <span class="section-mini-title">ELIGE TU SUCURSAL</span>
-                <h2>¿Dónde quieres vivir la experiencia?</h2>
-            </div>
-
-            <div class="selector-container">
-                <a class="restaurant-option" href="tepeapulco.html">
-                    <img src="img/comida/eleccion.jpg" alt="La Querendona Tepeapulco" >
-                    <h3>La Querendona Tepeapulco</h3>
-                    <p>Ubicación: Tepeapulco</p>
-                    <span class="btn-select">Seleccionar</span>
-                </a>
-
-                <a class="restaurant-option" href="sahagun.html">
-                    <img src="img/sahagun/interior.jpg" alt="Interior de La Querendona Sahagún">
-                    <h3>La Querendona Ciudad Sahagún</h3>
-                    <p>Ubicación: Ciudad Sahagún, Hidalgo</p>
-                    <span class="btn-select">Seleccionar</span>
-                </a>
             </div>
         </section>
     </main>
@@ -436,7 +411,7 @@
         </div>
     </div>
 
-    <script src="translations.js?v=20260723-1"></script>
-    <script src="script.js?v=20260727-1"></script>
+    <script src="translations.js?v=20260907-5"></script>
+    <script src="script.js?v=20260907-2"></script>
 </body>
 </html>
