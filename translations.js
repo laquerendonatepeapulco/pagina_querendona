@@ -8,7 +8,7 @@
         en: {
             'Platillo anterior': 'Previous dish',
             'Siguiente platillo': 'Next dish',
-            "Comida mexicana hecha con cariño, para compartir en familia.": "Mexican food made with care, to share with family.",
+            "Sabor, tradición y un ambiente familiar para disfrutar comida mexicana auténtica, hecha con cariño y servida como en casa.": "Flavor, tradition and a family atmosphere to enjoy authentic Mexican food, made with care and served just like at home.",
             "Te esperamos en la mesa": "A table is waiting for you",
             "Carretera Pachuca–Cd. Sahagún, Vicente Guerrero": "Pachuca–Cd. Sahagún road, Vicente Guerrero",
             "Cómo llegar": "Get directions",
@@ -237,7 +237,7 @@
         fr: {
             'Platillo anterior': 'Plat précédent',
             'Siguiente platillo': 'Plat suivant',
-            "Comida mexicana hecha con cariño, para compartir en familia.": "Une cuisine mexicaine préparée avec soin, à partager en famille.",
+            "Sabor, tradición y un ambiente familiar para disfrutar comida mexicana auténtica, hecha con cariño y servida como en casa.": "Saveurs, tradition et ambiance familiale pour savourer une cuisine mexicaine authentique, préparée avec soin et servie comme à la maison.",
             "Te esperamos en la mesa": "Votre table vous attend",
             "Carretera Pachuca–Cd. Sahagún, Vicente Guerrero": "Route Pachuca–Cd. Sahagún, Vicente Guerrero",
             "Cómo llegar": "Itinéraire",
