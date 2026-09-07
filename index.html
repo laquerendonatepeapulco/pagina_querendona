@@ -21,7 +21,7 @@
     <meta name="twitter:image" content="https://www.laquerendonacg.com/img/comida/restaurante.jpg">
     <link rel="icon" href="img/logo_pestaña.png?v=20260724-2" type="image/png">
     <link rel="stylesheet" href="styles.css?v=20260727-1">
-    <link rel="stylesheet" href="opcion.css?v=20260907-1">
+    <link rel="stylesheet" href="opcion.css?v=20260907-2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -193,12 +193,12 @@
             </div>
         </section>
 
-        <section class="home-food-section" aria-labelledby="home-food-title">
+        <section class="home-food-section" id="platillos" aria-labelledby="home-food-title">
             <div class="selector-section-heading">
                 <span class="section-mini-title">SABOR DE CASA</span>
                 <h2 id="home-food-title">¿Qué se te antoja hoy?</h2>
             </div>
-            <div class="home-food-grid">
+            <div class="home-food-grid" id="home-food-track" tabindex="0" role="group" aria-labelledby="home-food-title">
                 <article class="home-food-card">
                     <img src="img/comida/quesabirria2.jpg" alt="Quesabirria con consomé de La Querendona" width="2048" height="1536" loading="lazy" decoding="async">
                     <h3>Quesabirria</h3>
@@ -214,6 +214,15 @@
                     <h3>Pozole y antojitos</h3>
                     <p>Sabores mexicanos para disfrutar sin prisa.</p>
                 </article>
+            </div>
+            <div class="home-carousel-controls" hidden>
+                <button type="button" class="home-carousel-arrow" data-food-prev aria-label="Platillo anterior" aria-controls="home-food-track"><span aria-hidden="true">←</span></button>
+                <div class="home-carousel-dots">
+                    <button type="button" data-food-slide="0" aria-label="Quesabirria" aria-controls="home-food-track" aria-current="true"><span></span></button>
+                    <button type="button" data-food-slide="1" aria-label="Chilaquiles" aria-controls="home-food-track"><span></span></button>
+                    <button type="button" data-food-slide="2" aria-label="Pozole y antojitos" aria-controls="home-food-track"><span></span></button>
+                </div>
+                <button type="button" class="home-carousel-arrow" data-food-next aria-label="Siguiente platillo" aria-controls="home-food-track"><span aria-hidden="true">→</span></button>
             </div>
         </section>
 
@@ -366,7 +375,7 @@
         </div>
     </div>
 
-    <script src="translations.js?v=20260907-1"></script>
-    <script src="script.js?v=20260727-1"></script>
+    <script src="translations.js?v=20260907-2"></script>
+    <script src="script.js?v=20260907-2"></script>
 </body>
 </html>

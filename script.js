@@ -1,3 +1,66 @@
+// Carrusel de platillos del inicio. El desplazamiento táctil funciona sin JavaScript.
+(function configureHomeFoodCarousel(){
+    const track = document.getElementById('home-food-track');
+    if(!track) return;
+
+    const section = track.closest('.home-food-section');
+    const slides = [...track.querySelectorAll('.home-food-card')];
+    const controls = section.querySelector('.home-carousel-controls');
+    const previous = section.querySelector('[data-food-prev]');
+    const next = section.querySelector('[data-food-next]');
+    const dots = [...section.querySelectorAll('[data-food-slide]')];
+    if(slides.length < 2 || !controls || !previous || !next) return;
+
+    let current = 0;
+    let frame = null;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function updateControls(){
+        previous.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+        dots.forEach((dot, index) => {
+            if(index === current) dot.setAttribute('aria-current', 'true');
+            else dot.removeAttribute('aria-current');
+        });
+    }
+
+    function goTo(index, behavior = reducedMotion.matches ? 'auto' : 'smooth'){
+        current = Math.max(0, Math.min(index, slides.length - 1));
+        track.scrollTo({left: slides[current].offsetLeft, behavior});
+        updateControls();
+    }
+
+    previous.addEventListener('click', () => goTo(current - 1));
+    next.addEventListener('click', () => goTo(current + 1));
+    dots.forEach((dot, index) => dot.addEventListener('click', () => goTo(index)));
+    track.addEventListener('keydown', (event) => {
+        const destination = {ArrowLeft: current - 1, ArrowRight: current + 1, Home: 0, End: slides.length - 1}[event.key];
+        if(destination === undefined) return;
+        event.preventDefault();
+        goTo(destination);
+    });
+    track.addEventListener('scroll', () => {
+        if(frame !== null) window.cancelAnimationFrame(frame);
+        frame = window.requestAnimationFrame(() => {
+            current = slides.reduce((nearest, slide, index) =>
+                Math.abs(slide.offsetLeft - track.scrollLeft) < Math.abs(slides[nearest].offsetLeft - track.scrollLeft) ? index : nearest, 0);
+            updateControls();
+            frame = null;
+        });
+    }, {passive: true});
+    // Mantener el platillo seleccionado al girar el teléfono o cambiar el ancho.
+    if('ResizeObserver' in window){
+        let lastWidth = track.clientWidth;
+        new ResizeObserver(() => {
+            if(track.clientWidth === lastWidth) return;
+            lastWidth = track.clientWidth;
+            goTo(current, 'instant');
+        }).observe(track);
+    }
+    controls.hidden = false;
+    updateControls();
+})();
+
 // ANIMACIÓN REVEAL AL HACER SCROLL
 function translateSiteText(text){
     return window.LaQuerendonaI18n?.t(text) || text;

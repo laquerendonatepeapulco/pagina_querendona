@@ -6,6 +6,8 @@
 
     const translations = {
         en: {
+            'Platillo anterior': 'Previous dish',
+            'Siguiente platillo': 'Next dish',
             "Comida mexicana hecha con cariño, para compartir en familia.": "Mexican food made with care, to share with family.",
             "Te esperamos en la mesa": "A table is waiting for you",
             "Carretera Pachuca–Cd. Sahagún, Vicente Guerrero": "Pachuca–Cd. Sahagún road, Vicente Guerrero",
@@ -233,6 +235,8 @@
             'Seleccionar Restaurante - La Querendona': 'Select a Restaurant - La Querendona'
         },
         fr: {
+            'Platillo anterior': 'Plat précédent',
+            'Siguiente platillo': 'Plat suivant',
             "Comida mexicana hecha con cariño, para compartir en familia.": "Une cuisine mexicaine préparée avec soin, à partager en famille.",
             "Te esperamos en la mesa": "Votre table vous attend",
             "Carretera Pachuca–Cd. Sahagún, Vicente Guerrero": "Route Pachuca–Cd. Sahagún, Vicente Guerrero",
