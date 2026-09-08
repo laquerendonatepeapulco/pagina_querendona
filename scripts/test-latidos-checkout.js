@@ -23,7 +23,8 @@ const experiences = new Map([
   ["tradicional", { id: "tradicional", name: "Buffet de antojitos mexicanos", capacity: 60, price: 349 }],
   ["gastronomica", { id: "gastronomica", name: "Cena mexicana de gala", capacity: 40, price: 599 }],
   ["cortesia", { id: "cortesia", name: "Acceso especial de cortesia", capacity: 0, price: 0 }],
-  ["expositor", { id: "expositor", name: "Acceso especial de expositor", capacity: 0, price: 0 }]
+  ["expositor", { id: "expositor", name: "Acceso especial de expositor", capacity: 0, price: 0 }],
+  ["acceso", { id: "acceso", name: "Boleto de acceso", capacity: 0, price: 0 }]
 ]);
 const orders = [];
 const registrations = [];
@@ -1051,6 +1052,54 @@ async function run() {
     const availabilityAfterManualTicket = await request(server, "GET", "/api/latidos/availability");
     assert.strictEqual(availabilityAfterManualTicket.body.experiences.tradicional.sold, 1);
     assert.strictEqual(availabilityAfterManualTicket.body.experiences.tradicional.available, 59);
+
+    const availabilityBeforeAccessTickets = JSON.parse(JSON.stringify(availabilityAfterManualTicket.body));
+    const accessTickets = await request(server, "POST", "/api/latidos/manual-tickets", {
+      referenceKey: "acceso-general-2-2026-lote-01",
+      experience: "acceso",
+      quantity: 2,
+      unitPrice: 0,
+      name: "Acceso general",
+      accessLabel: ""
+    }, { headers: authHeaders });
+    assert.strictEqual(accessTickets.status, 201);
+    assert.strictEqual(accessTickets.body.created, true);
+    assert.strictEqual(accessTickets.body.experience, "acceso");
+    assert.strictEqual(accessTickets.body.quantity, 2);
+    assert.strictEqual(accessTickets.body.unitPrice, 0);
+    assert.strictEqual(accessTickets.body.total, 0);
+    assert.strictEqual(accessTickets.body.tickets.length, 2);
+    assert.strictEqual(new Set(accessTickets.body.tickets.map((ticket) => ticket.token)).size, 2);
+    assert.ok(accessTickets.body.tickets.every((ticket) => ticket.ticketNumber.startsWith("LDM-A-")));
+    assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeManualTicket);
+
+    const repeatedAccessTickets = await request(server, "POST", "/api/latidos/manual-tickets", {
+      referenceKey: "acceso-general-2-2026-lote-01",
+      experience: "acceso",
+      quantity: 2,
+      unitPrice: 0,
+      name: "Acceso general",
+      accessLabel: ""
+    }, { headers: authHeaders });
+    assert.strictEqual(repeatedAccessTickets.status, 200);
+    assert.strictEqual(repeatedAccessTickets.body.created, false);
+    assert.deepStrictEqual(
+      repeatedAccessTickets.body.tickets.map((ticket) => ticket.ticketNumber),
+      accessTickets.body.tickets.map((ticket) => ticket.ticketNumber)
+    );
+
+    const availabilityAfterAccessTickets = await request(server, "GET", "/api/latidos/availability");
+    assert.deepStrictEqual(availabilityAfterAccessTickets.body, availabilityBeforeAccessTickets);
+
+    const accessQr = await request(server, "GET", accessTickets.body.tickets[0].qrUrl);
+    assert.strictEqual(accessQr.status, 200);
+    assert.strictEqual(accessQr.headers["content-type"], "image/png");
+    assert.deepStrictEqual([...accessQr.body.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+
+    const accessPdf = await request(server, "GET", accessTickets.body.pdfUrl);
+    assert.strictEqual(accessPdf.status, 200);
+    assert.ok(String(accessPdf.headers["content-type"]).includes("application/pdf"));
+    assert.strictEqual(accessPdf.body.subarray(0, 4).toString("ascii"), "%PDF");
 
     const manualQr = await request(server, "GET", manualTicket.body.tickets[0].qrUrl);
     assert.strictEqual(manualQr.status, 200);

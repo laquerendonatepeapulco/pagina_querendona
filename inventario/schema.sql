@@ -370,6 +370,12 @@ VALUES
     'Acceso especial de expositor',
     0,
     0
+  ),
+  (
+    'acceso',
+    'Boleto de acceso',
+    0,
+    0
   )
 
 ON CONFLICT (id)

@@ -21,6 +21,7 @@ const LATIDOS_COURTESY_EXPERIENCE_ID = "cortesia";
 const LATIDOS_COURTESY_MAX_TICKETS = 100;
 const LATIDOS_EXHIBITOR_EXPERIENCE_ID = "expositor";
 const LATIDOS_EXHIBITOR_MAX_TICKETS = 100;
+const LATIDOS_ACCESS_EXPERIENCE_ID = "acceso";
 const LATIDOS_MANUAL_MAX_TICKETS = 50;
 const LATIDOS_EXPERIENCES = Object.freeze({
   tradicional: Object.freeze({
@@ -34,6 +35,13 @@ const LATIDOS_EXPERIENCES = Object.freeze({
     title: "Experiencia gastronomica - Cena mexicana de gala",
     unitPrice: 599,
     capacity: 40
+  }),
+  acceso: Object.freeze({
+    id: LATIDOS_ACCESS_EXPERIENCE_ID,
+    title: "Boleto de acceso",
+    unitPrice: 0,
+    capacity: 0,
+    countsTowardsCapacity: false
   })
 });
 let initPromise;
@@ -573,7 +581,8 @@ async function ensureSchema() {
       ($1, $2, $3, $4),
       ($5, $6, $7, $8),
       ($9, $10, $11, $12),
-      ($13, $14, $15, $16)
+      ($13, $14, $15, $16),
+      ($17, $18, $19, $20)
 
       ON CONFLICT (id)
       DO UPDATE SET
@@ -600,6 +609,11 @@ async function ensureSchema() {
 
       LATIDOS_EXHIBITOR_EXPERIENCE_ID,
       "Acceso especial de expositor",
+      0,
+      0,
+
+      LATIDOS_ACCESS_EXPERIENCE_ID,
+      "Boleto de acceso",
       0,
       0
     ]
@@ -988,7 +1002,9 @@ function createLatidosTicketNumber(experienceId) {
     ? "C"
     : experienceId === LATIDOS_EXHIBITOR_EXPERIENCE_ID
       ? "E"
-      : experienceId === "gastronomica" ? "G" : "T";
+      : experienceId === LATIDOS_ACCESS_EXPERIENCE_ID
+        ? "A"
+        : experienceId === "gastronomica" ? "G" : "T";
   return `LDM-${prefix}-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
 }
 
@@ -2221,23 +2237,25 @@ app.post("/api/latidos/manual-tickets", authRequired, adminRequired, async (req,
         throw error;
       }
 
-      const occupiedResult = await client.query(
-        `
-          SELECT COALESCE(SUM(quantity), 0)::INTEGER AS occupied
-          FROM latidos_orders
-          WHERE experience_id = $1
-            AND (
-              status = 'approved'
-              OR (status = 'reserved' AND reserved_until > now())
-            )
-        `,
-        [manual.experience.id]
-      );
-      const available = Math.max(0, Number(experience.capacity) - Number(occupiedResult.rows[0].occupied));
-      if (manual.quantity > available) {
-        const error = new Error(available === 0 ? "Ya no hay lugares disponibles" : `Solo quedan ${available} lugares disponibles`);
-        error.status = 409;
-        throw error;
+      if (manual.experience.countsTowardsCapacity !== false) {
+        const occupiedResult = await client.query(
+          `
+            SELECT COALESCE(SUM(quantity), 0)::INTEGER AS occupied
+            FROM latidos_orders
+            WHERE experience_id = $1
+              AND (
+                status = 'approved'
+                OR (status = 'reserved' AND reserved_until > now())
+              )
+          `,
+          [manual.experience.id]
+        );
+        const available = Math.max(0, Number(experience.capacity) - Number(occupiedResult.rows[0].occupied));
+        if (manual.quantity > available) {
+          const error = new Error(available === 0 ? "Ya no hay lugares disponibles" : `Solo quedan ${available} lugares disponibles`);
+          error.status = 409;
+          throw error;
+        }
       }
 
       const orderResult = await client.query(
