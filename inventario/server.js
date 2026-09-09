@@ -46,6 +46,11 @@ const LATIDOS_EXPERIENCES = Object.freeze({
 });
 let initPromise;
 
+function areLatidosSalesClosed() {
+  const configuredValue = String(process.env.LATIDOS_SALES_CLOSED ?? "true").trim().toLowerCase();
+  return !["false", "0", "no", "off"].includes(configuredValue);
+}
+
 const demoProducts = [
   ["Laptop Pro 14", "TEC-LP14", "Equipo portatil para administracion", "Tecnologia", "Pieza", "Norte Digital", 18, 6, 14200, 18999, "Almacen A / Rack 1"],
   ["Monitor 27 QHD", "TEC-M27Q", "Pantalla para punto de venta", "Tecnologia", "Pieza", "Pixel Mayorista", 5, 8, 3600, 5299, "Almacen A / Rack 3"],
@@ -1751,9 +1756,21 @@ app.get("/api/latidos/availability", async (req, res, next) => {
   try {
     await getInitPromise();
 
-    const experiences = await getLatidosAvailability();
+    const currentExperiences = await getLatidosAvailability();
+    const salesClosed = areLatidosSalesClosed();
+    const experiences = Object.fromEntries(
+      Object.entries(currentExperiences).map(([id, experience]) => [
+        id,
+        {
+          ...experience,
+          available: salesClosed ? 0 : experience.available
+        }
+      ])
+    );
 
+    res.setHeader("Cache-Control", "no-store");
     res.json({
+      salesClosed,
       experiences
     });
   } catch (error) {
@@ -1767,6 +1784,11 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
 
   try {
     await getInitPromise();
+
+    if (areLatidosSalesClosed()) {
+      res.status(409).json({ error: "La venta de boletos ha finalizado. Ya no se aceptan nuevos pagos." });
+      return;
+    }
 
     const selection = sanitizeLatidosSelection(req.body);
 

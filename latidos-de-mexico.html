@@ -158,35 +158,35 @@
 
     <section class="latidos-section registration-section" id="registro" aria-labelledby="registration-title">
       <div class="registration-heading latidos-reveal" id="registration-heading">
-        <div class="editorial-label">Registro de reserva</div>
-        <h2 id="registration-title">Forma parte de esta experiencia.</h2>
-        <p>Elige la experiencia y la cantidad de boletos. Al completar el pago en Mercado Pago regresar&aacute;s autom&aacute;ticamente para terminar tu registro.</p>
+        <div class="editorial-label">Venta cerrada</div>
+        <h2 id="registration-title">La venta de boletos ha finalizado.</h2>
+        <p>Ya no se aceptan nuevos pagos para ninguna de las experiencias.</p>
       </div>
 
       <div class="payment-panel latidos-reveal latidos-delay-1" id="payment-panel" aria-labelledby="payment-title">
         <div class="payment-panel-copy">
-          <div class="editorial-label">Paso 1: Pago</div>
-          <h3 id="payment-title">Selecciona tus boletos</h3>
-          <p>El precio se calcula autom&aacute;ticamente de acuerdo con la experiencia y el n&uacute;mero de asistentes.</p>
+          <div class="editorial-label">Venta cerrada</div>
+          <h3 id="payment-title">Boletos agotados</h3>
+          <p>La disponibilidad para compra en l&iacute;nea es de cero lugares.</p>
 
           <fieldset class="ticket-options">
             <legend>Selecciona una experiencia</legend>
             <label class="ticket-option">
-              <input type="radio" name="checkoutExperience" value="tradicional" data-price="349">
+              <input type="radio" name="checkoutExperience" value="tradicional" data-price="349" disabled>
               <span class="ticket-option-content">
                 <span class="ticket-option-name">Experiencia tradicional</span>
                 <span class="ticket-option-description">Buffet de antojitos mexicanos</span>
                 <strong>$349 <small>por persona</small></strong>
-                <p class="latidos-availability" id="availability-tradicional"> Consultando disponibilidad... </p>
+                <p class="latidos-availability is-sold-out" id="availability-tradicional">0 de 60 lugares disponibles</p>
               </span>
             </label>
             <label class="ticket-option">
-              <input type="radio" name="checkoutExperience" value="gastronomica" data-price="599">
+              <input type="radio" name="checkoutExperience" value="gastronomica" data-price="599" disabled>
               <span class="ticket-option-content">
                 <span class="ticket-option-name">Experiencia gastron&oacute;mica</span>
                 <span class="ticket-option-description">Cena mexicana de gala</span>
                 <strong>$599 <small>por persona</small></strong>
-                <p class="latidos-availability" id="availability-gastronomica"> Consultando disponibilidad... </p>
+                <p class="latidos-availability is-sold-out" id="availability-gastronomica">0 de 40 lugares disponibles</p>
               </span>
             </label>
           </fieldset>
@@ -195,9 +195,9 @@
             <label class="ticket-quantity" for="ticket-quantity">
               <span>Cantidad de boletos</span>
               <span class="ticket-stepper">
-                <button type="button" data-quantity-action="decrease" aria-label="Quitar un boleto">&minus;</button>
-                <input id="ticket-quantity" type="number" min="1" max="50" value="1" inputmode="numeric" aria-describedby="ticket-limit">
-                <button type="button" data-quantity-action="increase" aria-label="Agregar un boleto">+</button>
+                <button type="button" data-quantity-action="decrease" aria-label="Quitar un boleto" disabled>&minus;</button>
+                <input id="ticket-quantity" type="number" min="1" max="50" value="1" inputmode="numeric" aria-describedby="ticket-limit" disabled>
+                <button type="button" data-quantity-action="increase" aria-label="Agregar un boleto" disabled>+</button>
               </span>
               <small id="ticket-limit">M&aacute;ximo 50 boletos por pago</small>
             </label>
@@ -209,11 +209,10 @@
         </div>
         <div class="payment-panel-action">
           <div class="payment-brand">
-            <span>Pago seguro con</span>
-            <img src="img/mercado-pago-logo.svg" alt="Mercado Pago" width="150" height="61">
+            <span>Venta en l&iacute;nea finalizada</span>
           </div>
-          <button class="payment-link" id="mercado-pago-button" type="button" disabled>Selecciona una experiencia</button>
-          <span class="payment-panel-note">Regresar&aacute;s a esta p&aacute;gina despu&eacute;s de pagar.</span>
+          <button class="payment-link" id="mercado-pago-button" type="button" disabled>Pagos no disponibles</button>
+          <span class="payment-panel-note">Ya no es posible iniciar un nuevo pago.</span>
           <p class="checkout-feedback" id="checkout-feedback" role="status" aria-live="polite" hidden></p>
         </div>
       </div>
@@ -449,6 +448,7 @@
     }
     let verifiedPayment = null;
     let latidosAvailability = {};
+    let latidosSalesClosed = true;
     const paymentRecoveryKey = 'latidosPaymentRecovery';
     const paymentRecoveryMaxAge = 7 * 24 * 60 * 60 * 1000;
 
@@ -546,6 +546,11 @@
       const selection = getTicketSelection();
       if (ticketTotal) ticketTotal.textContent = currencyFormatter.format(selection?.total || 0);
       if (!checkoutButton) return;
+      if (latidosSalesClosed) {
+        checkoutButton.disabled = true;
+        checkoutButton.textContent = 'Pagos no disponibles';
+        return;
+      }
       checkoutButton.disabled = !selection;
       checkoutButton.textContent = selection ? `Pagar ${currencyFormatter.format(selection.total)}` : 'Selecciona una experiencia';
     }
@@ -787,6 +792,7 @@
         }
 
         const data = await response.json();
+        latidosSalesClosed = data.salesClosed === true;
         latidosAvailability = data.experiences || {};
         renderLatidosAvailability();
         return latidosAvailability;
@@ -810,7 +816,7 @@
 
         if (!element || !availability) continue;
 
-        const soldOut = availability.available <= 0;
+        const soldOut = latidosSalesClosed || availability.available <= 0;
         element.classList.remove('is-low', 'is-sold-out');
 
         if (radio) {
@@ -818,7 +824,10 @@
           if (soldOut && radio.checked) radio.checked = false;
         }
 
-        if (soldOut) {
+        if (latidosSalesClosed) {
+          element.textContent = `0 de ${availability.capacity} lugares disponibles`;
+          element.classList.add('is-sold-out');
+        } else if (soldOut) {
           element.textContent = 'Agotado';
           element.classList.add('is-sold-out');
         } else if (availability.available <= 5) {

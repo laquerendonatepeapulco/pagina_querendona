@@ -10,6 +10,7 @@ process.env.DATABASE_URL = "postgres://database-simulada/sin-red";
 process.env.MERCADO_PAGO_ACCESS_TOKEN = "TEST-token-simulado";
 process.env.PUBLIC_SITE_URL = "https://laquerendonacg.com";
 process.env.SESSION_SECRET = "secreto-seguro-para-pruebas-automatizadas-latidos";
+process.env.LATIDOS_SALES_CLOSED = "false";
 const googleWalletKeys = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
 const googleWalletPrivateKey = googleWalletKeys.privateKey.export({ type: "pkcs8", format: "pem" });
 process.env.GOOGLE_WALLET_ISSUER_ID = "1234567890123456789";
@@ -493,6 +494,10 @@ function validateInlineScripts() {
   assert.ok(html.includes('id="payment-success-heading"'), "El regreso aprobado debe mostrar un encabezado de confirmacion");
   assert.ok(html.includes("PAGO EXITOSO"), "El regreso aprobado debe confirmar el pago de forma visible");
   assert.ok(html.includes("LLENA EL FORMULARIO PARA QUE SE OTORGUE SU BOLETO DE ACCESO (QR)"), "La confirmacion debe indicar que el formulario genera los boletos QR");
+  assert.ok(html.includes("La venta de boletos ha finalizado"), "La pagina publica debe informar que la venta termino");
+  assert.ok(html.includes("0 de 60 lugares disponibles"), "El buffet debe mostrar cero lugares publicos");
+  assert.ok(html.includes("0 de 40 lugares disponibles"), "La cena debe mostrar cero lugares publicos");
+  assert.ok(html.includes("Pagos no disponibles"), "El boton de pago debe permanecer bloqueado");
   assert.ok(html.includes("paymentSuccessHeading.scrollIntoView"), "El regreso aprobado debe llevar directamente al formulario");
   assert.ok(html.includes("fragmentParams"), "Los regresos antiguos deben recuperar parametros ubicados despues del fragmento");
   assert.ok(html.includes("google-wallet-button"), "Cada boleto debe mostrar la opcion de Google Wallet cuando esta configurada");
@@ -1121,6 +1126,30 @@ async function run() {
     assert.strictEqual(manualCheckIn.status, 200);
     assert.strictEqual(manualCheckIn.body.ticket.customerName, "Indira Gamero Martinez");
     assert.strictEqual(manualCheckIn.body.ticket.accessLabel, "1 niño");
+
+    const summaryBeforeClosingSales = await request(server, "GET", "/api/latidos/check-in/summary", null, { headers: authHeaders });
+    const ordersBeforeClosingSales = orders.length;
+    const mercadoPagoCallsBeforeClosingSales = mercadoPagoCalls.length;
+    process.env.LATIDOS_SALES_CLOSED = "true";
+
+    const closedAvailability = await request(server, "GET", "/api/latidos/availability");
+    assert.strictEqual(closedAvailability.status, 200);
+    assert.strictEqual(closedAvailability.body.salesClosed, true);
+    assert.strictEqual(closedAvailability.body.experiences.tradicional.available, 0);
+    assert.strictEqual(closedAvailability.body.experiences.gastronomica.available, 0);
+
+    const closedCheckout = await request(server, "POST", "/api/latidos/checkout", {
+      experience: "tradicional",
+      quantity: 1
+    });
+    assert.strictEqual(closedCheckout.status, 409);
+    assert.ok(closedCheckout.body.error.includes("venta de boletos ha finalizado"));
+    assert.strictEqual(orders.length, ordersBeforeClosingSales);
+    assert.strictEqual(mercadoPagoCalls.length, mercadoPagoCallsBeforeClosingSales);
+
+    const summaryAfterClosingSales = await request(server, "GET", "/api/latidos/check-in/summary", null, { headers: authHeaders });
+    assert.deepStrictEqual(summaryAfterClosingSales.body, summaryBeforeClosingSales.body);
+    process.env.LATIDOS_SALES_CLOSED = "false";
 
     const ignoredWebhook = await request(server, "POST", "/api/latidos/webhook", {
       type: "merchant_order",
