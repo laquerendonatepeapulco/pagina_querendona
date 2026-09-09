@@ -838,6 +838,8 @@ function sanitizeLatidosRegistration(input = {}) {
 function sanitizeLatidosCourtesyBatch(input = {}) {
   const batchKey = String(input.batchKey || "").trim().toLowerCase();
   const quantity = Number.parseInt(String(input.quantity || ""), 10);
+  const name = String(input.name || "Cortesía").trim();
+  const accessLabel = String(input.accessLabel || "").trim();
 
   if (!/^[a-z0-9][a-z0-9-]{2,49}$/.test(batchKey)) {
     const error = new Error("La clave del lote de cortesia no es valida");
@@ -851,9 +853,23 @@ function sanitizeLatidosCourtesyBatch(input = {}) {
     throw error;
   }
 
+  if (!name || name.length > 180) {
+    const error = new Error("El titular de la cortesia debe contener entre 1 y 180 caracteres");
+    error.status = 400;
+    throw error;
+  }
+
+  if (accessLabel.length > 100) {
+    const error = new Error("La descripcion de la cortesia debe tener maximo 100 caracteres");
+    error.status = 400;
+    throw error;
+  }
+
   return {
     batchKey,
     quantity,
+    name,
+    accessLabel,
     externalReference: `latidos:cortesia:${batchKey}`
   };
 }
@@ -1232,6 +1248,7 @@ function renderLatidosCourtesyTicketPage(document, order, ticket, qrBuffer, logo
   const gold = "#c9a45f";
   const paleGold = "#ecd7a6";
   const ivory = "#fff9ea";
+  const accessLabel = String(ticket.display_name || "ACCESO PREMIUM").trim().toUpperCase();
 
   document.rect(0, 0, pageWidth, pageHeight).fill(midnight);
   document.rect(22, 22, pageWidth - 44, pageHeight - 44).lineWidth(2.2).strokeColor(gold).stroke();
@@ -1261,7 +1278,7 @@ function renderLatidosCourtesyTicketPage(document, order, ticket, qrBuffer, logo
     { width: pageWidth - 120, align: "center", characterSpacing: 1.2 }
   );
   document.fillColor(gold).font("Helvetica-Bold").fontSize(11).text(
-    "ACCESO PREMIUM",
+    accessLabel,
     62,
     238,
     { width: pageWidth - 124, align: "center", characterSpacing: 3 }
@@ -2460,9 +2477,9 @@ app.post("/api/latidos/courtesy-batches", authRequired, adminRequired, async (re
       `,
       [
         order.id,
-        "Cortesía",
+        batch.name,
         "La Querendona",
-        "Cortesía",
+        batch.name,
         0,
         "cortesia@laquerendonacg.com",
         "0000000000",
@@ -2488,9 +2505,9 @@ app.post("/api/latidos/courtesy-batches", authRequired, adminRequired, async (re
         `,
         [
           order.id,
-          "Cortesía",
+          batch.name,
           "La Querendona",
-          "Cortesía",
+          batch.name,
           0,
           "cortesia@laquerendonacg.com",
           "0000000000",
@@ -2500,6 +2517,17 @@ app.post("/api/latidos/courtesy-batches", authRequired, adminRequired, async (re
     }
 
     const tickets = await ensureLatidosTickets(client, order);
+    await client.query(
+      `
+        UPDATE latidos_tickets
+        SET display_name = $1, updated_at = now()
+        WHERE order_id = $2
+      `,
+      [batch.accessLabel || null, order.id]
+    );
+    tickets.forEach((ticket) => {
+      ticket.display_name = batch.accessLabel || null;
+    });
     await client.query("COMMIT");
 
     const orderToken = createLatidosSignedToken("order", order.id);

@@ -775,7 +775,9 @@ async function run() {
 
     const repeatedCourtesy = await request(server, "POST", "/api/latidos/courtesy-batches", {
       batchKey: "cortesia-premium-2026",
-      quantity: 20
+      quantity: 20,
+      name: "Imelda - Tenangos",
+      accessLabel: "Buffet de antojitos mexicanos"
     }, { headers: authHeaders });
     assert.strictEqual(repeatedCourtesy.status, 200);
     assert.strictEqual(repeatedCourtesy.body.created, false);
@@ -784,6 +786,8 @@ async function run() {
       courtesy.body.tickets.map((ticket) => ticket.ticketNumber)
     );
     assert.strictEqual(tickets.length, 23);
+    assert.strictEqual(registrations[1].name, "Imelda - Tenangos");
+    assert.ok(repeatedCourtesy.body.tickets.every((ticket) => ticket.displayName === "Buffet de antojitos mexicanos"));
 
     const availabilityAfterCourtesy = await request(server, "GET", "/api/latidos/availability");
     assert.deepStrictEqual(Object.keys(availabilityAfterCourtesy.body.experiences).sort(), ["gastronomica", "tradicional"]);
@@ -811,7 +815,8 @@ async function run() {
     assert.strictEqual(courtesyCheckIn.status, 200);
     assert.strictEqual(courtesyCheckIn.body.valid, true);
     assert.strictEqual(courtesyCheckIn.body.ticket.experience, "cortesia");
-    assert.strictEqual(courtesyCheckIn.body.ticket.customerName, "Cortesía");
+    assert.strictEqual(courtesyCheckIn.body.ticket.customerName, "Imelda - Tenangos");
+    assert.strictEqual(courtesyCheckIn.body.ticket.accessLabel, "Buffet de antojitos mexicanos");
 
     const duplicateCourtesyCheckIn = await request(server, "POST", "/api/latidos/check-in", {
       ticketToken: courtesy.body.tickets[0].token
