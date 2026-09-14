@@ -212,11 +212,11 @@
     return row;
   }
 
-  function updateSummary() {
-    const completed = orders.filter((order) => order.registration).length;
-    const pending = orders.length - completed;
-    const ticketCount = orders.reduce((sum, order) => sum + order.tickets.issued, 0);
-    const revenue = orders
+  function updateSummary(filteredOrders = orders) {
+    const completed = filteredOrders.filter((order) => order.registration).length;
+    const pending = filteredOrders.length - completed;
+    const ticketCount = filteredOrders.reduce((sum, order) => sum + order.tickets.issued, 0);
+    const revenue = filteredOrders
       .filter((order) => order.paymentStatus === "approved")
       .reduce((sum, order) => sum + order.total, 0);
     summaryCompleted.textContent = String(completed);
@@ -246,6 +246,7 @@
         (!sourceFilter.value || paymentSource === sourceFilter.value);
     });
 
+    updateSummary(visibleOrders);
     tableBody.replaceChildren(...visibleOrders.map(renderRow));
     tableWrap.hidden = visibleOrders.length === 0;
     statusLabel.hidden = visibleOrders.length > 0;
@@ -265,7 +266,6 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "No fue posible cargar los registros");
       orders = Array.isArray(data.orders) ? data.orders : [];
-      updateSummary();
       applyFilters();
     } catch (error) {
       orders = [];

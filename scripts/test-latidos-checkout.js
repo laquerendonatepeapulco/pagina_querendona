@@ -619,6 +619,7 @@ function validateScannerScript() {
   const recordsScript = fs.readFileSync(recordsScriptPath, "utf8");
   assert.ok(recordsScript.includes("/api/latidos/registrations"), "La pagina debe consultar la API privada de registros");
   assert.ok(recordsScript.includes('const paymentSource = order.paymentId ? "online" : "manual"'), "El origen debe derivarse del identificador real de Mercado Pago");
+  assert.ok(recordsScript.includes("updateSummary(visibleOrders)"), "Los conteos superiores deben responder a los filtros seleccionados");
   assert.ok(recordsScript.includes("URL.createObjectURL"), "La pagina debe generar el archivo CSV localmente");
   assert.ok(recordsScript.includes("if (/^[=+\\-@]/.test(text))"), "La exportacion CSV debe neutralizar formulas peligrosas");
 }
