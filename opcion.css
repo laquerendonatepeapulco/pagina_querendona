@@ -1,5 +1,7 @@
 /* Inicio: fotos, sucursales y una historia breve. Reglas limitadas a esta página. */
 .home-refresh .selector-social-section + .institution-section { margin-top: clamp(48px, 6vw, 72px); }
+.home-refresh .institution-section { margin-bottom: 0; }
+.home-refresh .selector-footer { margin-top: 12px; }
 .home-refresh .selector-story-page { padding-top: 24px; }
 .home-refresh .selector-intro-hero { grid-template-columns: 1fr 1.15fr; gap: 44px; padding: 24px 0 56px; }
 .home-refresh .selector-intro-hero .description { max-width: 29rem; font-size: 1.125rem; line-height: 1.65; }
