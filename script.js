@@ -303,6 +303,7 @@ function initSahagunGalleryCarousel(){
         const previousButton = carousel.querySelector('[data-gallery-prev]');
         const nextButton = carousel.querySelector('[data-gallery-next]');
         const dotsContainer = carousel.parentElement?.querySelector('[data-gallery-dots]');
+        const loops = carousel.hasAttribute('data-gallery-loop');
 
         if(!track || slides.length === 0){
             return;
@@ -356,17 +357,19 @@ function initSahagunGalleryCarousel(){
             });
 
             if(previousButton){
-                previousButton.disabled = activeIndex === 0;
+                previousButton.disabled = slides.length < 2 || (!loops && activeIndex === 0);
             }
 
             if(nextButton){
-                nextButton.disabled = activeIndex === slides.length - 1;
+                nextButton.disabled = slides.length < 2 || (!loops && activeIndex === slides.length - 1);
             }
         };
 
         function scrollToSlide(index){
-            const clampedIndex = Math.max(0, Math.min(index, slides.length - 1));
-            const slide = slides[clampedIndex];
+            const targetIndex = loops
+                ? ((index % slides.length) + slides.length) % slides.length
+                : Math.max(0, Math.min(index, slides.length - 1));
+            const slide = slides[targetIndex];
             const targetLeft =
                 slide.offsetLeft -
                 track.offsetLeft -
