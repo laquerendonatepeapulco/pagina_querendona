@@ -359,6 +359,24 @@ function databaseQuery(sql, params = []) {
     };
   }
 
+  if (/FROM latidos_tickets t JOIN latidos_orders o.*WHERE o\.experience_id = \$1.*FOR UPDATE OF t/i.test(query)) {
+    const rows = tickets
+      .filter((ticket) => {
+        const order = orders.find((item) => item.id === ticket.order_id);
+        return order?.experience_id === params[0];
+      })
+      .map((ticket) => {
+        const order = orders.find((item) => item.id === ticket.order_id);
+        const registration = registrations.find((item) => item.order_id === order.id);
+        return {
+          ...ticket,
+          registration_name: registration?.name || null,
+          experience_name: experiences.get(order.experience_id)?.name || ""
+        };
+      });
+    return { rows, rowCount: rows.length };
+  }
+
   if (/FROM latidos_tickets t JOIN latidos_orders o/i.test(query)) {
     const ticket = tickets.find((item) => item.id === params[0]);
     const order = ticket ? orders.find((item) => item.id === ticket.order_id) : null;
@@ -376,6 +394,19 @@ function databaseQuery(sql, params = []) {
       }],
       rowCount: 1
     };
+  }
+
+  if (/UPDATE latidos_tickets SET status = 'used'.*WHERE id = ANY\(\$2::uuid\[\]\)/i.test(query)) {
+    const updated = [];
+    tickets.forEach((ticket) => {
+      if (params[1].includes(ticket.id) && ticket.status === "active") {
+        ticket.status = "used";
+        ticket.used_at = new Date().toISOString();
+        ticket.checked_in_by = params[0];
+        updated.push({ id: ticket.id, used_at: ticket.used_at });
+      }
+    });
+    return { rows: updated, rowCount: updated.length };
   }
 
   if (/UPDATE latidos_tickets SET status = 'used'/i.test(query)) {
@@ -1201,6 +1232,50 @@ async function run() {
     assert.strictEqual(manualCheckIn.status, 200);
     assert.strictEqual(manualCheckIn.body.ticket.customerName, "Indira Gamero Martinez");
     assert.strictEqual(manualCheckIn.body.ticket.accessLabel, "1 niño");
+
+    const adjustmentSourceTicket = await request(server, "POST", "/api/latidos/manual-tickets", {
+      referenceKey: "ajuste-ingresos-prueba-2026",
+      experience: "gastronomica",
+      quantity: 1,
+      unitPrice: 0,
+      name: "Ajuste de ingresos de prueba",
+      accessLabel: ""
+    }, { headers: authHeaders });
+    assert.strictEqual(adjustmentSourceTicket.status, 201);
+    assert.strictEqual(adjustmentSourceTicket.body.tickets[0].status, "active");
+
+    const gastronomicaBeforeAdjustment = (await request(
+      server,
+      "GET",
+      "/api/latidos/check-in/summary",
+      null,
+      { headers: authHeaders }
+    )).body.experiences.find((item) => item.id === "gastronomica");
+    const checkInAdjustment = await request(server, "POST", "/api/latidos/check-in/adjustment", {
+      experience: "gastronomica",
+      expectedUsed: gastronomicaBeforeAdjustment.used,
+      targetUsed: gastronomicaBeforeAdjustment.used + 1
+    }, { headers: authHeaders });
+    assert.strictEqual(checkInAdjustment.status, 200, JSON.stringify(checkInAdjustment.body));
+    assert.strictEqual(checkInAdjustment.body.changed, true);
+    assert.strictEqual(checkInAdjustment.body.adjustedTickets.length, 1);
+    assert.strictEqual(checkInAdjustment.body.used, gastronomicaBeforeAdjustment.used + 1);
+
+    const repeatedCheckInAdjustment = await request(server, "POST", "/api/latidos/check-in/adjustment", {
+      experience: "gastronomica",
+      expectedUsed: gastronomicaBeforeAdjustment.used,
+      targetUsed: gastronomicaBeforeAdjustment.used + 1
+    }, { headers: authHeaders });
+    assert.strictEqual(repeatedCheckInAdjustment.status, 200);
+    assert.strictEqual(repeatedCheckInAdjustment.body.changed, false);
+    assert.strictEqual(repeatedCheckInAdjustment.body.adjustedTickets.length, 0);
+
+    const conflictingCheckInAdjustment = await request(server, "POST", "/api/latidos/check-in/adjustment", {
+      experience: "gastronomica",
+      expectedUsed: 0,
+      targetUsed: 10
+    }, { headers: authHeaders });
+    assert.strictEqual(conflictingCheckInAdjustment.status, 409);
 
     const summaryBeforeClosingSales = await request(server, "GET", "/api/latidos/check-in/summary", null, { headers: authHeaders });
     const ordersBeforeClosingSales = orders.length;

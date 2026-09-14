@@ -3218,6 +3218,129 @@ app.post("/api/latidos/check-in", authRequired, async (req, res, next) => {
   }
 });
 
+app.post("/api/latidos/check-in/adjustment", authRequired, adminRequired, async (req, res, next) => {
+  const experience = String(req.body.experience || "").trim();
+  const expectedUsed = Number(req.body.expectedUsed);
+  const targetUsed = Number(req.body.targetUsed);
+
+  if (!["tradicional", "gastronomica"].includes(experience)) {
+    res.status(400).json({ error: "La experiencia indicada no admite este ajuste" });
+    return;
+  }
+
+  if (
+    !Number.isInteger(expectedUsed)
+    || !Number.isInteger(targetUsed)
+    || expectedUsed < 0
+    || targetUsed <= expectedUsed
+    || targetUsed - expectedUsed > 20
+  ) {
+    res.status(400).json({ error: "El ajuste de ingresos no es valido" });
+    return;
+  }
+
+  let client;
+
+  try {
+    await getInitPromise();
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const ticketResult = await client.query(
+      `
+        SELECT
+          t.*,
+          r.name AS registration_name,
+          e.name AS experience_name
+        FROM latidos_tickets t
+        JOIN latidos_orders o ON o.id = t.order_id
+        JOIN latidos_experiences e ON e.id = o.experience_id
+        LEFT JOIN latidos_registrations r ON r.order_id = o.id
+        WHERE o.experience_id = $1
+        ORDER BY t.created_at, t.order_id, t.sequence
+        FOR UPDATE OF t
+      `,
+      [experience]
+    );
+
+    const currentUsed = ticketResult.rows.filter((ticket) => ticket.status === "used").length;
+    const activeTickets = ticketResult.rows.filter((ticket) => ticket.status === "active");
+
+    if (currentUsed === targetUsed) {
+      await client.query("COMMIT");
+      res.setHeader("Cache-Control", "private, no-store");
+      res.json({
+        ok: true,
+        changed: false,
+        experience,
+        previousUsed: expectedUsed,
+        used: targetUsed,
+        active: activeTickets.length,
+        adjustedTickets: []
+      });
+      return;
+    }
+
+    if (currentUsed !== expectedUsed) {
+      const error = new Error(`El conteo cambio antes del ajuste: ahora hay ${currentUsed} ingresos`);
+      error.status = 409;
+      throw error;
+    }
+
+    const quantity = targetUsed - expectedUsed;
+    if (activeTickets.length < quantity) {
+      const error = new Error("No hay suficientes boletos pendientes para realizar el ajuste");
+      error.status = 409;
+      throw error;
+    }
+
+    const selectedTickets = activeTickets.slice(0, quantity);
+    const updatedResult = await client.query(
+      `
+        UPDATE latidos_tickets
+        SET
+          status = 'used',
+          used_at = now(),
+          checked_in_by = $1,
+          updated_at = now()
+        WHERE id = ANY($2::uuid[])
+          AND status = 'active'
+        RETURNING id, used_at
+      `,
+      [req.user.id, selectedTickets.map((ticket) => ticket.id)]
+    );
+
+    if (updatedResult.rowCount !== quantity) {
+      const error = new Error("No fue posible completar todo el ajuste de ingresos");
+      error.status = 409;
+      throw error;
+    }
+
+    const usedAtById = new Map(updatedResult.rows.map((ticket) => [ticket.id, ticket.used_at]));
+    await client.query("COMMIT");
+
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({
+      ok: true,
+      changed: true,
+      experience,
+      previousUsed: currentUsed,
+      used: targetUsed,
+      active: activeTickets.length - quantity,
+      adjustedTickets: selectedTickets.map((ticket) => ({
+        ticketNumber: ticket.ticket_number,
+        customerName: ticket.registration_name || "Sin formulario",
+        usedAt: usedAtById.get(ticket.id) || null
+      }))
+    });
+  } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    if (client) client.release();
+  }
+});
+
 app.get("/api/latidos/check-in/summary", authRequired, async (req, res, next) => {
   try {
     const result = await query(`
