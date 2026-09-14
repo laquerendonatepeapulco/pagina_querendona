@@ -274,6 +274,11 @@ function databaseQuery(sql, params = []) {
     return { rows, rowCount: rows.length };
   }
 
+  if (/SELECT \* FROM latidos_tickets WHERE order_id = \$1 FOR UPDATE/i.test(query)) {
+    const rows = tickets.filter((ticket) => ticket.order_id === params[0]).map((ticket) => ({ ...ticket }));
+    return { rows, rowCount: rows.length };
+  }
+
   if (/UPDATE latidos_tickets SET display_name = \$1/i.test(query)) {
     if (params.length === 2) {
       const related = tickets.filter((item) => item.order_id === params[1]);
@@ -1314,6 +1319,29 @@ async function run() {
       ticketNumbers: [checkInAdjustment.body.adjustedTickets[0].ticketNumber]
     }, { headers: authHeaders });
     assert.strictEqual(repeatedReopen.status, 409);
+
+    const exactOrderCheckIn = await request(
+      server,
+      "POST",
+      `/api/latidos/orders/${adjustmentSourceTicket.body.orderId}/check-in-active`,
+      {},
+      { headers: authHeaders }
+    );
+    assert.strictEqual(exactOrderCheckIn.status, 200);
+    assert.strictEqual(exactOrderCheckIn.body.changed, true);
+    assert.strictEqual(exactOrderCheckIn.body.used, 1);
+    assert.strictEqual(exactOrderCheckIn.body.active, 0);
+
+    const repeatedExactOrderCheckIn = await request(
+      server,
+      "POST",
+      `/api/latidos/orders/${adjustmentSourceTicket.body.orderId}/check-in-active`,
+      {},
+      { headers: authHeaders }
+    );
+    assert.strictEqual(repeatedExactOrderCheckIn.status, 200);
+    assert.strictEqual(repeatedExactOrderCheckIn.body.changed, false);
+    assert.strictEqual(repeatedExactOrderCheckIn.body.used, 1);
 
     const conflictingCheckInAdjustment = await request(server, "POST", "/api/latidos/check-in/adjustment", {
       experience: "gastronomica",

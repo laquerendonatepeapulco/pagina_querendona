@@ -3435,6 +3435,109 @@ app.post("/api/latidos/check-in/reopen", authRequired, adminRequired, async (req
   }
 });
 
+app.post("/api/latidos/orders/:orderId/check-in-active", authRequired, adminRequired, async (req, res, next) => {
+  let client;
+
+  try {
+    await getInitPromise();
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const orderResult = await client.query(
+      `SELECT * FROM latidos_orders WHERE id = $1 FOR UPDATE`,
+      [req.params.orderId]
+    );
+    const order = orderResult.rows[0];
+
+    if (!order) {
+      const error = new Error("No encontramos la compra indicada");
+      error.status = 404;
+      throw error;
+    }
+
+    if (order.status !== "approved") {
+      const error = new Error("La compra no esta aprobada");
+      error.status = 409;
+      throw error;
+    }
+
+    const ticketResult = await client.query(
+      `SELECT * FROM latidos_tickets WHERE order_id = $1 FOR UPDATE`,
+      [order.id]
+    );
+
+    if (!ticketResult.rows.length) {
+      const error = new Error("La compra no tiene boletos emitidos");
+      error.status = 404;
+      throw error;
+    }
+
+    const activeTickets = ticketResult.rows.filter((ticket) => ticket.status === "active");
+    if (!activeTickets.length) {
+      const allUsed = ticketResult.rows.every((ticket) => ticket.status === "used");
+      if (!allUsed) {
+        const error = new Error("La compra no tiene boletos pendientes disponibles");
+        error.status = 409;
+        throw error;
+      }
+
+      await client.query("COMMIT");
+      res.setHeader("Cache-Control", "private, no-store");
+      res.json({
+        ok: true,
+        changed: false,
+        orderId: order.id,
+        used: ticketResult.rows.length,
+        active: 0,
+        tickets: ticketResult.rows.map(latidosTicketDto)
+      });
+      return;
+    }
+
+    const updatedResult = await client.query(
+      `
+        UPDATE latidos_tickets
+        SET
+          status = 'used',
+          used_at = now(),
+          checked_in_by = $1,
+          updated_at = now()
+        WHERE id = ANY($2::uuid[])
+          AND status = 'active'
+        RETURNING id, used_at
+      `,
+      [req.user.id, activeTickets.map((ticket) => ticket.id)]
+    );
+
+    if (updatedResult.rowCount !== activeTickets.length) {
+      const error = new Error("No fue posible registrar todos los ingresos de esta compra");
+      error.status = 409;
+      throw error;
+    }
+
+    const usedAtById = new Map(updatedResult.rows.map((ticket) => [ticket.id, ticket.used_at]));
+    const tickets = ticketResult.rows.map((ticket) => activeTickets.includes(ticket)
+      ? { ...ticket, status: "used", used_at: usedAtById.get(ticket.id) || null }
+      : ticket);
+    await client.query("COMMIT");
+
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({
+      ok: true,
+      changed: true,
+      orderId: order.id,
+      used: tickets.filter((ticket) => ticket.status === "used").length,
+      active: tickets.filter((ticket) => ticket.status === "active").length,
+      tickets: tickets.map(latidosTicketDto)
+    });
+  } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    if (client) client.release();
+  }
+});
+
 app.get("/api/latidos/check-in/summary", authRequired, async (req, res, next) => {
   try {
     const result = await query(`
