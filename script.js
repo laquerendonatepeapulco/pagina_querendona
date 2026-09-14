@@ -16,8 +16,8 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     function updateControls(){
-        previous.disabled = current === 0;
-        next.disabled = current === slides.length - 1;
+        previous.disabled = false;
+        next.disabled = false;
         dots.forEach((dot, index) => {
             if(index === current) dot.setAttribute('aria-current', 'true');
             else dot.removeAttribute('aria-current');
@@ -25,7 +25,7 @@
     }
 
     function goTo(index, behavior = reducedMotion.matches ? 'auto' : 'smooth'){
-        current = Math.max(0, Math.min(index, slides.length - 1));
+        current = ((index % slides.length) + slides.length) % slides.length;
         track.scrollTo({left: slides[current].offsetLeft, behavior});
         updateControls();
     }
