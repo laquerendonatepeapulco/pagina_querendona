@@ -3328,9 +3328,12 @@ app.post("/api/latidos/check-in/adjustment", authRequired, adminRequired, async 
       used: targetUsed,
       active: activeTickets.length - quantity,
       adjustedTickets: selectedTickets.map((ticket) => ({
-        ticketNumber: ticket.ticket_number,
-        customerName: ticket.registration_name || "Sin formulario",
-        usedAt: usedAtById.get(ticket.id) || null
+        ...latidosTicketDto({
+          ...ticket,
+          status: "used",
+          used_at: usedAtById.get(ticket.id) || null
+        }),
+        customerName: ticket.registration_name || "Sin formulario"
       }))
     });
   } catch (error) {

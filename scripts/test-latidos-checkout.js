@@ -1260,6 +1260,11 @@ async function run() {
     assert.strictEqual(checkInAdjustment.body.changed, true);
     assert.strictEqual(checkInAdjustment.body.adjustedTickets.length, 1);
     assert.strictEqual(checkInAdjustment.body.used, gastronomicaBeforeAdjustment.used + 1);
+    assert.ok(checkInAdjustment.body.adjustedTickets[0].token);
+    assert.strictEqual(checkInAdjustment.body.adjustedTickets[0].status, "used");
+    const adjustedTicketQr = await request(server, "GET", checkInAdjustment.body.adjustedTickets[0].qrUrl);
+    assert.strictEqual(adjustedTicketQr.status, 200);
+    assert.strictEqual(adjustedTicketQr.headers["content-type"], "image/png");
 
     const repeatedCheckInAdjustment = await request(server, "POST", "/api/latidos/check-in/adjustment", {
       experience: "gastronomica",
