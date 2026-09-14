@@ -128,23 +128,25 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "No fue posible cargar el resumen");
       summaryGrid.replaceChildren();
-      data.experiences.forEach((experience) => {
-        const card = document.createElement("article");
-        card.className = "scanner-summary-card";
-        const heading = document.createElement("h3");
-        heading.textContent = experience.name;
-        const numbers = document.createElement("div");
-        numbers.className = "scanner-summary-numbers";
-        [["Ingresaron", experience.used], ["Pendientes", experience.active], ["Emitidos", experience.issued]].forEach(([label, value]) => {
-          const item = document.createElement("span");
-          const strong = document.createElement("strong");
-          strong.textContent = String(value);
-          item.append(strong, label);
-          numbers.append(item);
+      data.experiences
+        .filter((experience) => experience.id !== "expositor")
+        .forEach((experience) => {
+          const card = document.createElement("article");
+          card.className = "scanner-summary-card";
+          const heading = document.createElement("h3");
+          heading.textContent = experience.name;
+          const numbers = document.createElement("div");
+          numbers.className = "scanner-summary-numbers";
+          [["Ingresaron", experience.used], ["Pendientes", experience.active], ["Emitidos", experience.issued]].forEach(([label, value]) => {
+            const item = document.createElement("span");
+            const strong = document.createElement("strong");
+            strong.textContent = String(value);
+            item.append(strong, label);
+            numbers.append(item);
+          });
+          card.append(heading, numbers);
+          summaryGrid.append(card);
         });
-        card.append(heading, numbers);
-        summaryGrid.append(card);
-      });
     } catch (error) {
       summaryGrid.textContent = error.message;
     }
