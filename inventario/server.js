@@ -3344,6 +3344,97 @@ app.post("/api/latidos/check-in/adjustment", authRequired, adminRequired, async 
   }
 });
 
+app.post("/api/latidos/check-in/reopen", authRequired, adminRequired, async (req, res, next) => {
+  const ticketNumbers = [...new Set(
+    (Array.isArray(req.body.ticketNumbers) ? req.body.ticketNumbers : [])
+      .map((value) => String(value || "").trim().toUpperCase())
+      .filter(Boolean)
+  )];
+
+  if (!ticketNumbers.length || ticketNumbers.length > 20) {
+    res.status(400).json({ error: "Indica de 1 a 20 folios para devolver a pendientes" });
+    return;
+  }
+
+  let client;
+
+  try {
+    await getInitPromise();
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const ticketResult = await client.query(
+      `
+        SELECT
+          t.*,
+          r.name AS registration_name,
+          e.name AS experience_name
+        FROM latidos_tickets t
+        JOIN latidos_orders o ON o.id = t.order_id
+        JOIN latidos_experiences e ON e.id = o.experience_id
+        LEFT JOIN latidos_registrations r ON r.order_id = o.id
+        WHERE t.ticket_number = ANY($1::text[])
+        ORDER BY t.ticket_number
+        FOR UPDATE OF t
+      `,
+      [ticketNumbers]
+    );
+
+    if (ticketResult.rows.length !== ticketNumbers.length) {
+      const found = new Set(ticketResult.rows.map((ticket) => ticket.ticket_number));
+      const missing = ticketNumbers.filter((ticketNumber) => !found.has(ticketNumber));
+      const error = new Error(`No encontramos los folios: ${missing.join(", ")}`);
+      error.status = 404;
+      throw error;
+    }
+
+    const invalid = ticketResult.rows.filter((ticket) => ticket.status !== "used");
+    if (invalid.length) {
+      const error = new Error(`Estos boletos no estan utilizados: ${invalid.map((ticket) => ticket.ticket_number).join(", ")}`);
+      error.status = 409;
+      throw error;
+    }
+
+    const updatedResult = await client.query(
+      `
+        UPDATE latidos_tickets
+        SET
+          status = 'active',
+          used_at = NULL,
+          checked_in_by = NULL,
+          updated_at = now()
+        WHERE id = ANY($1::uuid[])
+          AND status = 'used'
+        RETURNING id
+      `,
+      [ticketResult.rows.map((ticket) => ticket.id)]
+    );
+
+    if (updatedResult.rowCount !== ticketNumbers.length) {
+      const error = new Error("No fue posible devolver todos los boletos a pendientes");
+      error.status = 409;
+      throw error;
+    }
+
+    await client.query("COMMIT");
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({
+      ok: true,
+      reopenedTickets: ticketResult.rows.map((ticket) => ({
+        ticketNumber: ticket.ticket_number,
+        customerName: ticket.registration_name || "Sin formulario",
+        experienceName: ticket.experience_name,
+        status: "active"
+      }))
+    });
+  } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    if (client) client.release();
+  }
+});
+
 app.get("/api/latidos/check-in/summary", authRequired, async (req, res, next) => {
   try {
     const result = await query(`

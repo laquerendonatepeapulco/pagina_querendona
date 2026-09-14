@@ -377,6 +377,21 @@ function databaseQuery(sql, params = []) {
     return { rows, rowCount: rows.length };
   }
 
+  if (/FROM latidos_tickets t JOIN latidos_orders o.*WHERE t\.ticket_number = ANY\(\$1::text\[\]\).*FOR UPDATE OF t/i.test(query)) {
+    const rows = tickets
+      .filter((ticket) => params[0].includes(ticket.ticket_number))
+      .map((ticket) => {
+        const order = orders.find((item) => item.id === ticket.order_id);
+        const registration = registrations.find((item) => item.order_id === order.id);
+        return {
+          ...ticket,
+          registration_name: registration?.name || null,
+          experience_name: experiences.get(order.experience_id)?.name || ""
+        };
+      });
+    return { rows, rowCount: rows.length };
+  }
+
   if (/FROM latidos_tickets t JOIN latidos_orders o/i.test(query)) {
     const ticket = tickets.find((item) => item.id === params[0]);
     const order = ticket ? orders.find((item) => item.id === ticket.order_id) : null;
@@ -404,6 +419,19 @@ function databaseQuery(sql, params = []) {
         ticket.used_at = new Date().toISOString();
         ticket.checked_in_by = params[0];
         updated.push({ id: ticket.id, used_at: ticket.used_at });
+      }
+    });
+    return { rows: updated, rowCount: updated.length };
+  }
+
+  if (/UPDATE latidos_tickets SET status = 'active'.*WHERE id = ANY\(\$1::uuid\[\]\)/i.test(query)) {
+    const updated = [];
+    tickets.forEach((ticket) => {
+      if (params[0].includes(ticket.id) && ticket.status === "used") {
+        ticket.status = "active";
+        ticket.used_at = null;
+        ticket.checked_in_by = null;
+        updated.push({ id: ticket.id });
       }
     });
     return { rows: updated, rowCount: updated.length };
@@ -1274,6 +1302,18 @@ async function run() {
     assert.strictEqual(repeatedCheckInAdjustment.status, 200);
     assert.strictEqual(repeatedCheckInAdjustment.body.changed, false);
     assert.strictEqual(repeatedCheckInAdjustment.body.adjustedTickets.length, 0);
+
+    const reopenedAdjustedTicket = await request(server, "POST", "/api/latidos/check-in/reopen", {
+      ticketNumbers: [checkInAdjustment.body.adjustedTickets[0].ticketNumber]
+    }, { headers: authHeaders });
+    assert.strictEqual(reopenedAdjustedTicket.status, 200);
+    assert.strictEqual(reopenedAdjustedTicket.body.reopenedTickets.length, 1);
+    assert.strictEqual(reopenedAdjustedTicket.body.reopenedTickets[0].status, "active");
+
+    const repeatedReopen = await request(server, "POST", "/api/latidos/check-in/reopen", {
+      ticketNumbers: [checkInAdjustment.body.adjustedTickets[0].ticketNumber]
+    }, { headers: authHeaders });
+    assert.strictEqual(repeatedReopen.status, 409);
 
     const conflictingCheckInAdjustment = await request(server, "POST", "/api/latidos/check-in/adjustment", {
       experience: "gastronomica",
