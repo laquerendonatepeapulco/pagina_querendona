@@ -3538,6 +3538,92 @@ app.post("/api/latidos/orders/:orderId/check-in-active", authRequired, adminRequ
   }
 });
 
+app.delete("/api/latidos/orders/:orderId/test-record", authRequired, adminRequired, async (req, res, next) => {
+  const expectedPaymentId = String(req.body.paymentId || "").trim();
+  const confirmation = String(req.body.confirmation || "").trim().toUpperCase();
+
+  if (!expectedPaymentId || confirmation !== "ELIMINAR PRUEBA") {
+    res.status(400).json({ error: "La confirmacion para eliminar el registro de prueba no es valida" });
+    return;
+  }
+
+  let client;
+
+  try {
+    await getInitPromise();
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const orderResult = await client.query(
+      `SELECT * FROM latidos_orders WHERE id = $1 FOR UPDATE`,
+      [req.params.orderId]
+    );
+    const order = orderResult.rows[0];
+
+    if (!order) {
+      const error = new Error("No encontramos el registro de prueba");
+      error.status = 404;
+      throw error;
+    }
+
+    if (String(order.mercadopago_payment_id || "") !== expectedPaymentId) {
+      const error = new Error("El identificador de pago no coincide con el registro solicitado");
+      error.status = 409;
+      throw error;
+    }
+
+    const registrationResult = await client.query(
+      `SELECT * FROM latidos_registrations WHERE order_id = $1`,
+      [order.id]
+    );
+    const registration = registrationResult.rows[0];
+
+    if (!registration || !/(?:prueba|test)/i.test(registration.name)) {
+      const error = new Error("Por seguridad, este registro no esta identificado como prueba");
+      error.status = 409;
+      throw error;
+    }
+
+    const ticketResult = await client.query(
+      `SELECT * FROM latidos_tickets WHERE order_id = $1 FOR UPDATE`,
+      [order.id]
+    );
+    const deletedResult = await client.query(
+      `DELETE FROM latidos_orders WHERE id = $1 RETURNING id`,
+      [order.id]
+    );
+
+    if (!deletedResult.rows[0]) {
+      const error = new Error("No fue posible eliminar el registro de prueba");
+      error.status = 409;
+      throw error;
+    }
+
+    await client.query("COMMIT");
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({
+      ok: true,
+      removed: {
+        orderId: order.id,
+        paymentId: order.mercadopago_payment_id,
+        name: registration.name,
+        experience: order.experience_id,
+        quantity: Number(order.quantity),
+        total: Number(order.total),
+        tickets: ticketResult.rows.map((ticket) => ({
+          ticketNumber: ticket.ticket_number,
+          status: ticket.status
+        }))
+      }
+    });
+  } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    if (client) client.release();
+  }
+});
+
 app.get("/api/latidos/check-in/summary", authRequired, async (req, res, next) => {
   try {
     const result = await query(`

@@ -213,6 +213,11 @@ function databaseQuery(sql, params = []) {
     return { rows: [{ id: registration.id }], rowCount: 1 };
   }
 
+  if (/SELECT \* FROM latidos_registrations WHERE order_id = \$1/i.test(query)) {
+    const registration = registrations.find((item) => item.order_id === params[0]);
+    return { rows: registration ? [{ ...registration }] : [], rowCount: registration ? 1 : 0 };
+  }
+
   if (/INSERT INTO latidos_tickets/i.test(query)) {
     let ticket = tickets.find((item) => item.order_id === params[0] && item.sequence === Number(params[1]));
     if (!ticket) {
@@ -460,6 +465,19 @@ function databaseQuery(sql, params = []) {
       }
     });
     return { rows: [], rowCount: count };
+  }
+
+  if (/DELETE FROM latidos_orders WHERE id = \$1 RETURNING id/i.test(query)) {
+    const index = orders.findIndex((item) => item.id === params[0]);
+    if (index < 0) return { rows: [], rowCount: 0 };
+    const [removed] = orders.splice(index, 1);
+    for (let ticketIndex = tickets.length - 1; ticketIndex >= 0; ticketIndex -= 1) {
+      if (tickets[ticketIndex].order_id === removed.id) tickets.splice(ticketIndex, 1);
+    }
+    for (let registrationIndex = registrations.length - 1; registrationIndex >= 0; registrationIndex -= 1) {
+      if (registrations[registrationIndex].order_id === removed.id) registrations.splice(registrationIndex, 1);
+    }
+    return { rows: [{ id: removed.id }], rowCount: 1 };
   }
 
   if (/SELECT \* FROM users WHERE username = \$1/i.test(query)) {
@@ -1380,6 +1398,24 @@ async function run() {
     });
     assert.strictEqual(ignoredWebhook.status, 200);
     assert.strictEqual(ignoredWebhook.body.processed, false);
+
+    const invalidTestRecordRemoval = await request(server, "DELETE", `/api/latidos/orders/${orders[0].id}/test-record`, {
+      paymentId: "pago-equivocado",
+      confirmation: "ELIMINAR PRUEBA"
+    }, { headers: authHeaders });
+    assert.strictEqual(invalidTestRecordRemoval.status, 409);
+
+    const removedOrderId = orders[0].id;
+    const removedTestRecord = await request(server, "DELETE", `/api/latidos/orders/${removedOrderId}/test-record`, {
+      paymentId: "123456789",
+      confirmation: "ELIMINAR PRUEBA"
+    }, { headers: authHeaders });
+    assert.strictEqual(removedTestRecord.status, 200);
+    assert.strictEqual(removedTestRecord.body.removed.name, "Cliente de prueba");
+    assert.strictEqual(removedTestRecord.body.removed.quantity, 3);
+    assert.ok(!orders.some((order) => order.id === removedOrderId));
+    assert.ok(!tickets.some((ticket) => ticket.order_id === removedOrderId));
+    assert.ok(!registrations.some((registrationItem) => registrationItem.order_id === removedOrderId));
 
     console.log("Latidos: checkout, registros privados, pagos simulados, Google Wallet, QR, PDF y acceso unico verificados");
   } finally {
