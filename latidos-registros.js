@@ -14,6 +14,7 @@
   const experienceFilter = document.querySelector("#experience-filter");
   const registrationFilter = document.querySelector("#registration-filter");
   const paymentFilter = document.querySelector("#payment-filter");
+  const sourceFilter = document.querySelector("#source-filter");
   const tableWrap = document.querySelector("#records-table-wrap");
   const tableBody = document.querySelector("#records-table-body");
   const statusLabel = document.querySelector("#records-status");
@@ -228,6 +229,7 @@
     const search = searchInput.value.trim().toLocaleLowerCase("es-MX");
     visibleOrders = orders.filter((order) => {
       const registrationState = order.registration ? "completed" : "pending";
+      const paymentSource = order.paymentId ? "online" : "manual";
       const searchable = [
         order.paymentId,
         order.experienceName,
@@ -240,7 +242,8 @@
       return (!search || searchable.includes(search)) &&
         (!experienceFilter.value || order.experience === experienceFilter.value) &&
         (!registrationFilter.value || registrationState === registrationFilter.value) &&
-        (!paymentFilter.value || order.paymentStatus === paymentFilter.value);
+        (!paymentFilter.value || order.paymentStatus === paymentFilter.value) &&
+        (!sourceFilter.value || paymentSource === sourceFilter.value);
     });
 
     tableBody.replaceChildren(...visibleOrders.map(renderRow));
