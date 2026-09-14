@@ -129,7 +129,7 @@
       if (!response.ok) throw new Error(data.error || "No fue posible cargar el resumen");
       summaryGrid.replaceChildren();
       data.experiences
-        .filter((experience) => experience.id !== "expositor")
+        .filter((experience) => !["expositor", "acceso"].includes(experience.id))
         .forEach((experience) => {
           const card = document.createElement("article");
           card.className = "scanner-summary-card";

@@ -159,6 +159,13 @@ function databaseQuery(sql, params = []) {
     return { rows: order ? [{ ...order }] : [], rowCount: order ? 1 : 0 };
   }
 
+  if (/UPDATE latidos_orders SET experience_id = \$1/i.test(query)) {
+    const order = orders.find((item) => item.id === params[1]);
+    if (!order) return { rows: [], rowCount: 0 };
+    order.experience_id = params[0];
+    return { rows: [{ ...order }], rowCount: 1 };
+  }
+
   if (/FROM latidos_orders WHERE external_reference = \$1 FOR UPDATE/i.test(query)) {
     const order = orders.find((item) => item.external_reference === params[0]);
     return { rows: order ? [{ ...order }] : [], rowCount: order ? 1 : 0 };
@@ -279,6 +286,15 @@ function databaseQuery(sql, params = []) {
     if (!ticket) return { rows: [], rowCount: 0 };
     ticket.display_name = params[0] || null;
     return { rows: [], rowCount: 1 };
+  }
+
+  if (/UPDATE latidos_tickets SET experience_id = \$1, display_name = \$2/i.test(query)) {
+    const related = tickets.filter((item) => item.order_id === params[2]);
+    related.forEach((ticket) => {
+      ticket.experience_id = params[0];
+      ticket.display_name = params[1];
+    });
+    return { rows: [], rowCount: related.length };
   }
 
   if (/FROM latidos_orders o JOIN latidos_experiences e ON e\.id = o\.experience_id LEFT JOIN latidos_registrations r/i.test(query)) {
@@ -1110,6 +1126,60 @@ async function run() {
     assert.strictEqual(accessPdf.status, 200);
     assert.ok(String(accessPdf.headers["content-type"]).includes("application/pdf"));
     assert.strictEqual(accessPdf.body.subarray(0, 4).toString("ascii"), "%PDF");
+
+    const summaryBeforeAccessReclassification = await request(server, "GET", "/api/latidos/check-in/summary", null, { headers: authHeaders });
+    const accessBeforeReclassification = summaryBeforeAccessReclassification.body.experiences.find((item) => item.id === "acceso");
+    const courtesyBeforeAccessReclassification = summaryBeforeAccessReclassification.body.experiences.find((item) => item.id === "cortesia");
+    const originalAccessTicketNumbers = accessTickets.body.tickets.map((ticket) => ticket.ticketNumber);
+    const originalAccessTicketTokens = accessTickets.body.tickets.map((ticket) => ticket.token);
+
+    const reclassifiedAccessTickets = await request(
+      server,
+      "POST",
+      `/api/latidos/orders/${accessTickets.body.orderId}/reclassify-as-courtesy`,
+      {},
+      { headers: authHeaders }
+    );
+    assert.strictEqual(reclassifiedAccessTickets.status, 200);
+    assert.strictEqual(reclassifiedAccessTickets.body.changed, true);
+    assert.strictEqual(reclassifiedAccessTickets.body.experience, "cortesia");
+    assert.strictEqual(reclassifiedAccessTickets.body.quantity, 2);
+    assert.deepStrictEqual(
+      reclassifiedAccessTickets.body.tickets.map((ticket) => ticket.ticketNumber),
+      originalAccessTicketNumbers
+    );
+    assert.deepStrictEqual(
+      reclassifiedAccessTickets.body.tickets.map((ticket) => ticket.token),
+      originalAccessTicketTokens
+    );
+    assert.ok(reclassifiedAccessTickets.body.tickets.every((ticket) => ticket.displayName === "Acceso especial de cortesia"));
+
+    const repeatedAccessReclassification = await request(
+      server,
+      "POST",
+      `/api/latidos/orders/${accessTickets.body.orderId}/reclassify-as-courtesy`,
+      {},
+      { headers: authHeaders }
+    );
+    assert.strictEqual(repeatedAccessReclassification.status, 200);
+    assert.strictEqual(repeatedAccessReclassification.body.changed, false);
+    assert.deepStrictEqual(
+      repeatedAccessReclassification.body.tickets.map((ticket) => ticket.ticketNumber),
+      originalAccessTicketNumbers
+    );
+
+    const summaryAfterAccessReclassification = await request(server, "GET", "/api/latidos/check-in/summary", null, { headers: authHeaders });
+    const accessAfterReclassification = summaryAfterAccessReclassification.body.experiences.find((item) => item.id === "acceso");
+    const courtesyAfterAccessReclassification = summaryAfterAccessReclassification.body.experiences.find((item) => item.id === "cortesia");
+    assert.strictEqual(accessAfterReclassification.issued, accessBeforeReclassification.issued - 2);
+    assert.strictEqual(accessAfterReclassification.active, accessBeforeReclassification.active - 2);
+    assert.strictEqual(accessAfterReclassification.used, accessBeforeReclassification.used);
+    assert.strictEqual(courtesyAfterAccessReclassification.issued, courtesyBeforeAccessReclassification.issued + 2);
+    assert.strictEqual(courtesyAfterAccessReclassification.active, courtesyBeforeAccessReclassification.active + 2);
+    assert.strictEqual(courtesyAfterAccessReclassification.used, courtesyBeforeAccessReclassification.used);
+
+    const availabilityAfterAccessReclassification = await request(server, "GET", "/api/latidos/availability");
+    assert.deepStrictEqual(availabilityAfterAccessReclassification.body, availabilityBeforeAccessTickets);
 
     const manualQr = await request(server, "GET", manualTicket.body.tickets[0].qrUrl);
     assert.strictEqual(manualQr.status, 200);

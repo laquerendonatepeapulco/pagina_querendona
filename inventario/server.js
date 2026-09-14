@@ -2412,6 +2412,78 @@ app.post("/api/latidos/manual-tickets", authRequired, adminRequired, async (req,
   }
 });
 
+app.post("/api/latidos/orders/:orderId/reclassify-as-courtesy", authRequired, adminRequired, async (req, res, next) => {
+  let client;
+
+  try {
+    await getInitPromise();
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const orderResult = await client.query(
+      `SELECT * FROM latidos_orders WHERE id = $1 FOR UPDATE`,
+      [req.params.orderId]
+    );
+    let order = orderResult.rows[0];
+
+    if (!order) {
+      const error = new Error("No encontramos el registro de boletos solicitado");
+      error.status = 404;
+      throw error;
+    }
+
+    if (![LATIDOS_ACCESS_EXPERIENCE_ID, LATIDOS_COURTESY_EXPERIENCE_ID].includes(order.experience_id)) {
+      const error = new Error("Solo un boleto de acceso puede reclasificarse como cortesia");
+      error.status = 409;
+      throw error;
+    }
+
+    const changed = order.experience_id === LATIDOS_ACCESS_EXPERIENCE_ID;
+    if (changed) {
+      const updatedOrder = await client.query(
+        `
+          UPDATE latidos_orders
+          SET experience_id = $1, updated_at = now()
+          WHERE id = $2
+          RETURNING *
+        `,
+        [LATIDOS_COURTESY_EXPERIENCE_ID, order.id]
+      );
+      order = updatedOrder.rows[0];
+
+      await client.query(
+        `
+          UPDATE latidos_tickets
+          SET experience_id = $1, display_name = $2, updated_at = now()
+          WHERE order_id = $3
+        `,
+        [LATIDOS_COURTESY_EXPERIENCE_ID, "Acceso especial de cortesia", order.id]
+      );
+    }
+
+    const ticketsResult = await client.query(
+      `SELECT * FROM latidos_tickets WHERE order_id = $1 ORDER BY sequence`,
+      [order.id]
+    );
+    await client.query("COMMIT");
+
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({
+      ok: true,
+      changed,
+      orderId: order.id,
+      experience: order.experience_id,
+      quantity: Number(order.quantity),
+      tickets: ticketsResult.rows.map(latidosTicketDto)
+    });
+  } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
+    next(error);
+  } finally {
+    if (client) client.release();
+  }
+});
+
 app.post("/api/latidos/courtesy-batches", authRequired, adminRequired, async (req, res, next) => {
   let client;
 
