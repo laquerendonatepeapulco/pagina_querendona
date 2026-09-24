@@ -697,7 +697,7 @@ async function run() {
     });
     assert.strictEqual(invalid.status, 400);
 
-    const payment = await request(server, "GET", "/api/latidos/payment?payment_id=123456789");
+    const payment = await request(server, "GET", `/api/latidos/payment?payment_id=123456789&order_token=${encodeURIComponent(checkout.body.returnToken)}`);
     assert.strictEqual(payment.status, 200);
     assert.strictEqual(payment.body.approved, true);
     assert.strictEqual(payment.body.experience, "gastronomica");
@@ -737,7 +737,6 @@ async function run() {
       username: "staff-test",
       password: "entrada-segura"
     });
-    testUser.role = "admin";
     const staffRegistrations = await request(server, "GET", "/api/latidos/registrations", null, {
       headers: { Authorization: `Bearer ${staffLogin.body.token}` }
     });
@@ -766,6 +765,7 @@ async function run() {
     }, { headers: { Authorization: `Bearer ${staffLogin.body.token}` } });
     assert.strictEqual(staffManualTicket.status, 403);
 
+    testUser.role = "admin";
     const login = await request(server, "POST", "/api/auth/login", {
       username: "staff-test",
       password: "entrada-segura"
@@ -773,6 +773,47 @@ async function run() {
     assert.strictEqual(login.status, 200);
     assert.ok(login.body.token);
     const authHeaders = { Authorization: `Bearer ${login.body.token}` };
+
+    const privateWithoutSession = await request(server, "GET", "/api/reservations");
+    assert.strictEqual(privateWithoutSession.status, 401);
+    assert.strictEqual(privateWithoutSession.headers["cache-control"], "no-store");
+    const tokenData = JSON.parse(Buffer.from(login.body.token.split(".")[0], "base64url"));
+    assert.strictEqual(tokenData.version, 2);
+    assert.strictEqual(tokenData.user.password_hash, undefined);
+    const signSession = value => {
+      const payload = Buffer.from(JSON.stringify(value)).toString("base64url");
+      return payload + "." + Buffer.from(crypto.createHmac("sha256", process.env.SESSION_SECRET).update(payload).digest()).toString("base64url");
+    };
+    for (const invalid of [{user: tokenData.user, expiresAt: Date.now()+10000}, {...tokenData, expiresAt: null}, {...tokenData, expiresAt: Date.now()-1}]) {
+      const result = await request(server, "GET", "/api/session", null, {headers: {Authorization: "Bearer " + signSession(invalid)}});
+      assert.strictEqual(result.status, 401);
+    }
+    testUser.role = "staff";
+    const demoted = await request(server, "GET", "/api/latidos/registrations", null, {headers: authHeaders});
+    assert.strictEqual(demoted.status, 403, "Existing token must respect current database role");
+    testUser.role = "admin";
+    const originalHash = testUser.password_hash;
+    testUser.password_hash = crypto.createHash("sha256").update(testUser.salt + ":changed-password").digest("hex");
+    assert.strictEqual((await request(server, "GET", "/api/session", null, {headers: authHeaders})).status, 401);
+    for (const password of ["admin123", "alta123"]) {
+      testUser.password_hash = crypto.createHash("sha256").update(testUser.salt + ":" + password).digest("hex");
+      assert.strictEqual((await request(server, "POST", "/api/auth/login", {username: testUser.username, password})).status, 401);
+    }
+    testUser.password_hash = originalHash;
+    const legacySalt = testUser.salt;
+    testUser.salt = 'scrypt:' + crypto.randomBytes(24).toString('hex');
+    testUser.password_hash = crypto.scryptSync('new-private-password-for-test', testUser.salt.slice(7), 64).toString('hex');
+    const modernLogin = await request(server, 'POST', '/api/auth/login', {username: testUser.username, password: 'new-private-password-for-test'});
+    assert.strictEqual(modernLogin.status, 200);
+    assert.strictEqual((await request(server, 'GET', '/api/session', null, {headers: {Authorization: 'Bearer ' + modernLogin.body.token}})).status, 200);
+    testUser.salt = legacySalt;
+    testUser.password_hash = originalHash;
+
+    assert.strictEqual((await request(server, "GET", "/api/latidos/payment?payment_id=123456789")).status, 403);
+    assert.strictEqual((await request(server, "POST", "/api/latidos/registration", {paymentId: "123456789"})).status, 403);
+    const wrongOrderPayload = Buffer.from(JSON.stringify({version: 1, kind: "payment-return", id: "another-order"})).toString("base64url");
+    const wrongOrderToken = "lt1." + wrongOrderPayload + "." + crypto.createHmac("sha256", process.env.SESSION_SECRET).update("latidos:" + wrongOrderPayload).digest("base64url");
+    assert.strictEqual((await request(server, "GET", "/api/latidos/payment?payment_id=123456789&order_token=" + wrongOrderToken)).status, 403);
 
     const pendingRegistrationList = await request(server, "GET", "/api/latidos/registrations", null, { headers: authHeaders });
     assert.strictEqual(pendingRegistrationList.status, 200);
@@ -782,6 +823,7 @@ async function run() {
     assert.strictEqual(pendingRegistrationList.body.orders[0].tickets.issued, 0);
 
     const registrationPayload = {
+      orderToken: checkout.body.returnToken,
       paymentId: "123456789",
       name: "Cliente de prueba",
       origin: "Tepeapulco, Hidalgo",
@@ -791,6 +833,8 @@ async function run() {
       phone: "7711234567",
       businessType: "servicio"
     };
+    assert.strictEqual((await request(server, "POST", "/api/latidos/registration", {...registrationPayload, orderToken: wrongOrderToken})).status, 403);
+    assert.strictEqual(registrations.length, 0);
     const registration = await request(server, "POST", "/api/latidos/registration", registrationPayload);
     assert.strictEqual(registration.status, 201);
     assert.strictEqual(registration.body.ok, true);
@@ -1090,7 +1134,7 @@ async function run() {
     assert.strictEqual(exhibitorSummary.active, 19);
 
     paymentAmount = 1;
-    const mismatchedPayment = await request(server, "GET", "/api/latidos/payment?payment_id=987654321");
+    const mismatchedPayment = await request(server, "GET", `/api/latidos/payment?payment_id=987654321&order_token=${encodeURIComponent(checkout.body.returnToken)}`);
     assert.strictEqual(mismatchedPayment.status, 400);
     assert.strictEqual(orders[0].status, "approved");
     paymentAmount = 1797;

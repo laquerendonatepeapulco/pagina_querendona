@@ -63,6 +63,7 @@ const demoProducts = [
 app.use(express.json({ limit: "2mb" }));
 
 function hashPassword(password, salt) {
+  if (salt.startsWith("scrypt:")) return crypto.scryptSync(String(password), salt.slice(7), 64).toString("hex");
   return crypto.createHash("sha256").update(`${salt}:${password}`).digest("hex");
 }
 
@@ -75,7 +76,9 @@ function base64UrlDecode(value) {
 }
 
 function getSessionSecret() {
-  return process.env.SESSION_SECRET || process.env.DATABASE_URL || "inventario_querendona-dev-secret";
+  const secret = process.env.SESSION_SECRET || process.env.DATABASE_URL;
+  if (!secret) throw new Error("Configuracion de autenticacion no disponible");
+  return secret;
 }
 
 function signPayload(payload) {
@@ -84,7 +87,9 @@ function signPayload(payload) {
 
 function createSessionToken(user) {
   const payload = base64UrlEncode(JSON.stringify({
-    user,
+    version: 2,
+    user: userDto(user),
+    credentialTag: crypto.createHmac("sha256", getSessionSecret()).update(user.password_hash).digest("hex"),
     expiresAt: Date.now() + SESSION_DURATION_MS
   }));
   return `${payload}.${signPayload(payload)}`;
@@ -103,8 +108,8 @@ function readSessionToken(token) {
 
   try {
     const session = JSON.parse(base64UrlDecode(payload));
-    if (!session.user || Number(session.expiresAt) < Date.now()) return null;
-    return session.user;
+    if (session.version !== 2 || !session.user || !Number.isFinite(session.expiresAt) || session.expiresAt <= Date.now()) return null;
+    return session;
   } catch (error) {
     return null;
   }
@@ -626,23 +631,6 @@ async function ensureSchema() {
 
 }
 
-async function seedUsers() {
-  const users = [
-    { username: "admin", password: "admin123", name: "Administrador", role: "admin", label: "Admin total" },
-    { username: "capturista", password: "alta123", name: "Capturista", role: "staff", label: "Solo altas" }
-  ];
-
-  for (const user of users) {
-    const salt = crypto.randomBytes(16).toString("hex");
-    await query(
-      `INSERT INTO users (username, password_hash, salt, name, role, label)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (username) DO NOTHING`,
-      [user.username, hashPassword(user.password, salt), salt, user.name, user.role, user.label]
-    );
-  }
-}
-
 async function seedProducts() {
   const count = await query(`SELECT COUNT(*)::int AS count FROM products`);
   if (count.rows[0].count > 0) return;
@@ -666,7 +654,6 @@ function getInitPromise() {
 
   if (!initPromise) {
     initPromise = ensureSchema()
-      .then(seedUsers)
       .then(seedProducts)
       .catch((error) => {
         initPromise = null;
@@ -694,6 +681,7 @@ function isLatidosPaymentRequest(req) {
 }
 
 app.use("/api", async (req, res, next) => {
+  res.set("Cache-Control", "no-store");
   if (isLatidosPaymentRequest(req) || (!process.env.DATABASE_URL && isReservationCreateRequest(req))) {
     next();
     return;
@@ -2045,9 +2033,20 @@ app.post("/api/latidos/checkout", async (req, res, next) => {
   }
 });
 
+function requirePaymentAccess(value) {
+  const token = readLatidosSignedToken(value, "payment-return");
+  if (!token) { const error = new Error("Necesitas el enlace seguro de tu compra. Contacta al restaurante si no lo conservas."); error.status = 403; throw error; }
+  return token;
+}
+function verifyPaymentOwner(token, payment) {
+  if (token.id !== payment.orderId) { const error = new Error("El enlace no corresponde a esta compra"); error.status = 403; throw error; }
+}
+
 app.get("/api/latidos/payment", async (req, res, next) => {
   try {
+    const access = requirePaymentAccess(req.query.order_token);
     const payment = await syncLatidosPayment(req.query.payment_id);
+    verifyPaymentOwner(access, payment);
     const { orderId, ...publicPayment } = payment;
     res.json(publicPayment);
   } catch (error) {
@@ -2132,8 +2131,10 @@ app.post("/api/latidos/registration", async (req, res, next) => {
   let client;
 
   try {
+    const access = requirePaymentAccess(req.body.orderToken);
     const registration = sanitizeLatidosRegistration(req.body);
     const payment = await syncLatidosPayment(req.body.paymentId);
+    verifyPaymentOwner(access, payment);
 
     if (!payment.approved) {
       const error = new Error("El pago todavia no esta aprobado");
@@ -3748,17 +3749,27 @@ async function recordMovement(client, product, quantity, note, userId) {
   );
 }
 
-function authRequired(req, res, next) {
-  const header = req.get("authorization") || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-  const user = readSessionToken(token);
-  if (!user) {
-    res.status(401).json({ error: "Sesion no valida" });
-    return;
-  }
-  req.token = token;
-  req.user = user;
-  next();
+function hasPublishedPassword(user) {
+  if (user.salt.startsWith("scrypt:")) return false;
+  return ["admin123", "alta123"].some(password => hashPassword(password, user.salt) === user.password_hash);
+}
+
+async function authRequired(req, res, next) {
+  try {
+    const header = req.get("authorization") || "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+    const session = readSessionToken(token);
+    if (!session) return res.status(401).json({ error: "Sesion no valida" });
+    const result = await query("SELECT * FROM users WHERE username = $1", [session.user.username]);
+    const user = result.rows[0];
+    const tag = user && crypto.createHmac("sha256", getSessionSecret()).update(user.password_hash).digest("hex");
+    if (!user || user.id !== session.user.id || hasPublishedPassword(user) || tag !== session.credentialTag) {
+      return res.status(401).json({ error: "Sesion no valida" });
+    }
+    req.token = token;
+    req.user = userDto(user);
+    next();
+  } catch (error) { next(error); }
 }
 
 function adminRequired(req, res, next) {
@@ -3979,13 +3990,13 @@ app.post("/api/auth/login", async (req, res, next) => {
     const result = await query(`SELECT * FROM users WHERE username = $1`, [String(username).trim().toLowerCase()]);
     const user = result.rows[0];
 
-    if (!user || hashPassword(password, user.salt) !== user.password_hash) {
+    if (!user || ["admin123", "alta123"].includes(password) || hasPublishedPassword(user) || hashPassword(password, user.salt) !== user.password_hash) {
       res.status(401).json({ error: "Usuario o contrasena incorrectos" });
       return;
     }
 
     const safeUser = userDto(user);
-    res.json({ token: createSessionToken(safeUser), user: safeUser });
+    res.json({ token: createSessionToken(user), user: safeUser });
   } catch (error) {
     next(error);
   }
@@ -4370,7 +4381,7 @@ app.use((error, req, res, next) => {
     res.status(409).json({ error: "Ya existe un registro con ese SKU o usuario" });
     return;
   }
-  res.status(error.status || 500).json({ error: error.message || "Error interno" });
+  res.status(error.status || 500).json({ error: error.status && error.status < 500 ? error.message : "Error interno. Intenta de nuevo o contacta al restaurante." });
 });
 
 async function start() {

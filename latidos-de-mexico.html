@@ -691,7 +691,7 @@
 
       try {
         const verificationUrl = paymentId
-          ? `/api/latidos/payment?payment_id=${encodeURIComponent(paymentId)}`
+          ? `/api/latidos/payment?payment_id=${encodeURIComponent(paymentId)}&order_token=${encodeURIComponent(orderToken || "")}`
           : `/api/latidos/payment-return?order_token=${encodeURIComponent(orderToken)}`;
         const response = await fetch(verificationUrl, { cache: 'no-store' });
         const payment = await response.json().catch(() => ({}));
@@ -713,7 +713,7 @@
           return;
         }
 
-        applyApprovedPayment(payment);
+        applyApprovedPayment({ ...payment, orderToken });
         await loadLatidosAvailability();
       } catch (error) {
         checkoutFeedback.className = 'checkout-feedback is-error';
@@ -749,6 +749,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               paymentId: verifiedPayment.paymentId,
+              orderToken: verifiedPayment.orderToken,
               name: formData.get('nombre'),
               origin: formData.get('procedencia'),
               contactName: formData.get('representante'),
