@@ -190,13 +190,14 @@ function configureSahagunMenu(){
     }
 
     const menuImages = [
-        'img/menu-sahagun/pagina1.jpg',
-        'img/menu-sahagun/pagina2.jpg',
-        'img/menu-sahagun/pagina3.jpg',
-        'img/menu-sahagun/pagina4.jpg',
-        'img/menu-sahagun/pagina5.jpg',
-        'img/menu-sahagun/pagina6.jpg',
-        'img/menu-sahagun/pagina7.jpg'
+        'img/menu-sahagun/pagina1.jpg?v=20260924',
+        'img/menu-sahagun/pagina2.jpg?v=20260924',
+        'img/menu-sahagun/pagina3.jpg?v=20260924',
+        'img/menu-sahagun/pagina4.jpg?v=20260924',
+        'img/menu-sahagun/pagina5.jpg?v=20260924',
+        'img/menu-sahagun/pagina6.jpg?v=20260924',
+        'img/menu-sahagun/pagina7.jpg?v=20260924',
+        'img/menu-sahagun/pagina8.jpg?v=20260924'
     ];
 
     const fragment = document.createDocumentFragment();
@@ -216,6 +217,11 @@ function configureSahagunMenu(){
     });
 
     gallery.replaceChildren(fragment);
+    const downloadLink = document.querySelector('.menu-download a');
+    if(downloadLink){
+        downloadLink.href = 'img/menu-sahagun/menu-20260924.pdf';
+        downloadLink.setAttribute('download', 'Menu-Sahagun.pdf');
+    }
 }
 
 function configureSahagunTeam(){
