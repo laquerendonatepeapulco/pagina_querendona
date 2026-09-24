@@ -23,10 +23,7 @@
 
     <link rel="icon" href="img/logo_pestaña.png?v=20260724-2" type="image/png">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link data-consent-href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css?v=20260715-1">
     <link rel="stylesheet" href="opcion.css">
@@ -34,8 +31,11 @@
     <script>
         window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
     </script>
-    <script defer src="/_vercel/speed-insights/script.js"></script>
+
   <link rel="stylesheet" href="/privacidad.css?v=20260924">
+<link rel="stylesheet" href="/cookies.css?v=20260924">
+<script defer src="/cookies.js?v=20260924"></script>
+<meta name="cookie-performance-enabled" content="true">
 </head>
 
 <body>
@@ -367,7 +367,7 @@
             <div class="map-location">
                 <h3>La Querendona Ciudad Sahagún</h3>
                 <div class="map-container">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1578.541916749663!2d-98.57637020545683!3d19.77950377808956!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1b7fd291b7705%3A0xddb28d00b120566e!2sLa%20Querendona!5e0!3m2!1ses-419!2smx!4v1783717039132!5m2!1ses-419!2smx" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin">
+                    <iframe data-consent-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1578.541916749663!2d-98.57637020545683!3d19.77950377808956!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1b7fd291b7705%3A0xddb28d00b120566e!2sLa%20Querendona!5e0!3m2!1ses-419!2smx!4v1783717039132!5m2!1ses-419!2smx" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin">
                     </iframe>
                 </div>
             </div>
@@ -375,7 +375,7 @@
             <div class="map-location">
                 <h3>La Querendona Tepeapulco</h3>
                 <div class="map-container">
-                    <iframe id="locationMap" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4464.62959561049!2d-98.55251648761832!3d19.78525458194926!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1b50063742a9b%3A0xe8812e5c4845b93a!2sLa%20Querendona%2C%20Tepeapulco!5e0!3m2!1ses-419!2smx!4v1778186450464!5m2!1ses-419!2smx" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin">
+                    <iframe id="locationMap" data-consent-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4464.62959561049!2d-98.55251648761832!3d19.78525458194926!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1b50063742a9b%3A0xe8812e5c4845b93a!2sLa%20Querendona%2C%20Tepeapulco!5e0!3m2!1ses-419!2smx!4v1778186450464!5m2!1ses-419!2smx" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin">
                     </iframe>
                 </div>
             </div>
@@ -427,7 +427,8 @@
 </div>
 
 <script src="translations.js?v=20260715-1"></script>
-<script src="script.js?v=20260713-2"></script>
+<script src="script.js?v=20260924-cookies"></script>
 
+<p class="privacy-footer-link"><a href="/cookies.html">Política de cookies</a> · <button type="button" class="cookie-settings-link" data-cookie-settings>Configurar cookies</button></p>
 </body>
 </html>
