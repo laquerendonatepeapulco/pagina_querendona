@@ -120,10 +120,10 @@ function configureTeamHero(){
         return;
     }
 
-    const frame = media.querySelector('iframe[data-src]');
+    const frame = media.querySelector('iframe[data-consent-src]');
 
     if(frame){
-        frame.src = frame.dataset.src;
+        window.querendonaConsent?.refresh();
     }
 }
 
@@ -154,7 +154,8 @@ function configureBranchLocation(){
     });
 
     if(locationMap){
-        locationMap.src = sahagunMap;
+        locationMap.dataset.consentSrc = sahagunMap;
+        window.querendonaConsent?.refresh();
         locationMap.referrerPolicy = 'strict-origin-when-cross-origin';
     }
 

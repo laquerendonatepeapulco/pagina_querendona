@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600;700&display=swap");
+
 
 :root { --paper: #f5f0e8; --paper-light: #fffdf8; --ink: #1e3323; --ink-soft: #526052; --wine: #a44143; --ochre: #b2905a; --line: rgba(30, 51, 35, 0.22); --success: #24673b; --danger: #a52f35; }
 * { box-sizing: border-box; }
