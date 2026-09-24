@@ -1,0 +1,22 @@
+.privacy-page{margin:0;background:#141414;color:#f7efdf;font:17px/1.75 Arial,sans-serif}
+.privacy-header{max-width:960px;margin:auto;padding:24px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.privacy-header img{display:block;box-sizing:border-box;max-width:100%;height:auto;background:#f3ead7;border-radius:12px;padding:12px}
+.privacy-page a{color:#ffd132;text-underline-offset:4px}
+.privacy-page a:focus-visible,.privacy-footer-link a:focus-visible,.privacy-form-notice a:focus-visible{outline:3px solid #ef3a95;outline-offset:5px}
+.privacy-main{max-width:860px;margin:24px auto 64px;padding:0 24px}
+.privacy-eyebrow{color:#ffc632;letter-spacing:.1em;font-size:.8rem;text-transform:uppercase}
+.privacy-main h1{font-size:clamp(2.3rem,6vw,3.6rem);line-height:1.1;margin:20px 0}
+.privacy-intro{font-size:1.2rem;max-width:650px}
+.privacy-date{font-size:.88rem;color:#c7bdac}
+.privacy-nav{display:flex;flex-wrap:wrap;gap:12px 24px;padding:24px 0}
+.privacy-main section{background:#f3ead7;color:#25221d;border-radius:22px;padding:28px 32px;margin:22px 0;scroll-margin-top:24px}
+.privacy-main section a{color:#8b1751;overflow-wrap:anywhere}
+.privacy-main h2{font-size:1.35rem;line-height:1.35;margin:0 0 20px}
+.privacy-main li{margin-bottom:16px}
+.privacy-main ul{padding-left:22px}
+.privacy-page-footer{text-align:center;padding:24px;border-top:1px solid #665536}
+.privacy-footer-link{display:block;text-align:center;padding:16px 12px;margin:0;font-size:14px;line-height:1.6}
+.privacy-footer-link a{color:inherit;text-decoration:underline;text-underline-offset:4px}
+.privacy-form-notice{box-sizing:border-box;grid-column:1/-1;width:100%;padding:16px 18px;margin:16px 0;border:1px solid #957844;border-radius:12px;background:#f3ead7;color:#302920;font-size:14px;line-height:1.65;text-align:left}
+.privacy-form-notice a{color:#8b1751;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:600px){.privacy-header{padding:20px;gap:16px}.privacy-header img{width:140px}.privacy-header>a:last-child{font-size:14px}.privacy-main{padding:0 16px}.privacy-main section{padding:24px 20px}.privacy-main ul{padding-left:18px}}
