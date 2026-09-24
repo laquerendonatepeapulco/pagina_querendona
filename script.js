@@ -219,7 +219,7 @@ function configureSahagunMenu(){
     gallery.replaceChildren(fragment);
     const downloadLink = document.querySelector('.menu-download a');
     if(downloadLink){
-        downloadLink.href = 'img/menu-sahagun/menu-20260924.pdf';
+        downloadLink.href = 'img/menu-sahagun/menu-20260924.pdf?v=2';
         downloadLink.setAttribute('download', 'Menu-Sahagun.pdf');
     }
 }
