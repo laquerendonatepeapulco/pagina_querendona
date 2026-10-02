@@ -4,7 +4,7 @@ const AGE = 180 * 24 * 60 * 60 * 1000;
 let preference = null;
 try {
   const saved = JSON.parse(localStorage.getItem(KEY));
-  if (saved?.version === 1 && typeof saved.external === 'boolean' && typeof saved.metrics === 'boolean' && Date.now() - saved.time < AGE) preference = saved;
+  if (saved?.version === 2 && typeof saved.external === 'boolean' && typeof saved.metrics === 'boolean' && Date.now() - saved.time < AGE) preference = saved;
 } catch {}
 function applyConsent() {
   document.querySelectorAll('iframe[data-consent-src]').forEach(frame => {
@@ -32,23 +32,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('iframe[data-consent-src]').forEach(frame => {
     const placeholder = document.createElement('div');
     placeholder.className = 'cookie-placeholder';
-    placeholder.innerHTML = '<p>Este contenido de YouTube o Google Maps está desactivado.</p><button type="button" data-cookie-settings>Configurar cookies para verlo</button>';
+    placeholder.innerHTML = '<p>Este contenido externo está desactivado.</p><button type="button" data-cookie-settings>Configurar cookies para verlo</button>';
     frame.parentElement.append(placeholder);
   });
   const panel = document.createElement('section');
   panel.className = 'cookie-banner';
   panel.setAttribute('aria-label', 'Preferencias de cookies');
-  panel.innerHTML = '<h2>Tú eliges cómo navegar</h2><p>Usamos almacenamiento necesario para el sitio. Puedes permitir contenido externo (videos, mapas y fuentes de Google) y medición de rendimiento de Vercel por separado.</p><a href="/cookies.html">Política de cookies</a><div class="cookie-actions"><button type="button" data-cookie-reject>Rechazar opcionales</button><button type="button" data-cookie-accept>Aceptar todas</button><button type="button" data-cookie-settings>Configurar</button></div>';
+  panel.innerHTML = '<h2>Tú eliges cómo navegar</h2><p>Usamos almacenamiento necesario para el sitio. Puedes permitir contenido externo (publicaciones de Instagram y Facebook, videos, mapas y fuentes de Google) y medición de rendimiento de Vercel por separado.</p><a href="/cookies.html">Política de cookies</a><div class="cookie-actions"><button type="button" data-cookie-reject>Rechazar opcionales</button><button type="button" data-cookie-accept>Aceptar todas</button><button type="button" data-cookie-settings>Configurar</button></div>';
   panel.hidden = !!preference;
   document.body.append(panel);
   const dialog = document.createElement('dialog');
   dialog.className = 'cookie-dialog';
   dialog.setAttribute('aria-labelledby', 'cookie-dialog-title');
-  dialog.innerHTML = '<h2 id="cookie-dialog-title">Preferencias de cookies</h2><p>Las funciones necesarias permanecen activas. Las opciones siguientes están desactivadas hasta que las permitas.</p><label><input type="checkbox" checked disabled> Necesarias: preferencias y funciones del sitio</label><label><input type="checkbox" id="cookie-external"> Contenido externo: YouTube, mapas y fuentes de Google</label><label><input type="checkbox" id="cookie-metrics"> Rendimiento: Vercel Speed Insights</label><p><a href="/cookies.html">Consultar la política de cookies</a></p><div class="cookie-actions"><button type="button" data-cookie-save>Guardar elección</button><button type="button" data-cookie-reject>Rechazar opcionales</button><button type="button" data-cookie-close>Cerrar</button></div>';
+  dialog.innerHTML = '<h2 id="cookie-dialog-title">Preferencias de cookies</h2><p>Las funciones necesarias permanecen activas. Las opciones siguientes están desactivadas hasta que las permitas.</p><label><input type="checkbox" checked disabled> Necesarias: preferencias y funciones del sitio</label><label><input type="checkbox" id="cookie-external"> Contenido externo: Instagram, Facebook, YouTube, mapas y fuentes de Google</label><label><input type="checkbox" id="cookie-metrics"> Rendimiento: Vercel Speed Insights</label><p><a href="/cookies.html">Consultar la política de cookies</a></p><div class="cookie-actions"><button type="button" data-cookie-save>Guardar elección</button><button type="button" data-cookie-reject>Rechazar opcionales</button><button type="button" data-cookie-close>Cerrar</button></div>';
   document.body.append(dialog);
   function save(external, metrics) {
     const revokeMetrics = preference?.metrics && !metrics;
-    preference = {version: 1, external, metrics, time: Date.now()};
+    preference = {version: 2, external, metrics, time: Date.now()};
     try { localStorage.setItem(KEY, JSON.stringify(preference)); } catch {}
     panel.hidden = true;
     dialog.close();
