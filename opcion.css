@@ -120,11 +120,11 @@
 }
 
 .selector-navbar .selector-brand img.brand-logo-october {
-    width: 220px;
-    height: 80px;
-    object-fit: cover;
-    object-position: center 42%;
-    border-radius: 8px;
+    width: 108px;
+    height: 108px;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 10px;
     background: #080808;
     filter: none;
 }
@@ -398,6 +398,7 @@
     }
 
     .selector-navbar .brand img {
+        width: clamp(52px, 15vw, 66px) !important;
         height: clamp(52px, 15vw, 66px) !important;
         max-width: min(40vw, 172px) !important;
     }
