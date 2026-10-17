@@ -4922,11 +4922,11 @@ nav a:hover {
     display: inline-flex;
     width: fit-content;
     max-width: 100%;
-    padding: 10px 16px;
-    background-color: #f2e8d4;
-    border: 1px solid rgba(255, 210, 63, 0.46);
-    border-radius: 18px;
-    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.28);
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .footer-logo img {
