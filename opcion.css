@@ -119,14 +119,14 @@
     filter: drop-shadow(0 4px 10px rgba(255, 255, 255, 0.18));
 }
 
-.selector-navbar .selector-brand img.brand-logo-full {
-    width: 108px !important;
-    height: 108px !important;
+.selector-navbar .selector-brand img.brand-logo-folclorico {
+    width: 180px !important;
+    height: 120px !important;
     max-width: none !important;
     object-fit: contain !important;
     object-position: center;
-    border-radius: 10px;
-    background: #080808;
+    border-radius: 0;
+    background: transparent;
     filter: none;
 }
 
@@ -398,6 +398,11 @@
         justify-content: center !important;
     }
 
+    .selector-navbar .selector-brand img.brand-logo-folclorico {
+        width: clamp(96px, 24vw, 150px) !important;
+        height: clamp(64px, 16vw, 100px) !important;
+    }
+
     .selector-reserve-mobile {
         order: 3;
         display: inline-flex;
@@ -550,6 +555,11 @@
 
     .selector-navbar .brand img {
         max-width: min(39vw, 158px) !important;
+    }
+
+    .selector-navbar .selector-brand img.brand-logo-folclorico {
+        width: clamp(96px, 30vw, 150px) !important;
+        height: clamp(64px, 20vw, 100px) !important;
     }
 
     .selector-reserve-mobile {
