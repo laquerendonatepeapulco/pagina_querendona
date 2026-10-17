@@ -7186,6 +7186,15 @@ body.promo-modal-open {
     object-fit: contain;
 }
 
+/* El cartel del Jueves Pozolero es vertical; limita su tamaño en el modal
+   para mantener visibles el cierre y las acciones en pantallas bajas. */
+.promo-modal__link img[src*="jueves-pozolero"] {
+    width: auto;
+    max-width: 100%;
+    max-height: min(72dvh, 760px);
+    margin-inline: auto;
+}
+
 .promo-modal__actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7282,6 +7291,10 @@ body.promo-modal-open {
 
     .promo-modal__link img {
         max-height: calc(100dvh - 102px);
+    }
+
+    .promo-modal__link img[src*="jueves-pozolero"] {
+        max-height: min(62dvh, 620px);
     }
 
     .promo-modal__actions {
