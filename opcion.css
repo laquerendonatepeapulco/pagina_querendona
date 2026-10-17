@@ -119,10 +119,11 @@
     filter: drop-shadow(0 4px 10px rgba(255, 255, 255, 0.18));
 }
 
-.selector-navbar .selector-brand img.brand-logo-october {
-    width: 108px;
-    height: 108px;
-    object-fit: contain;
+.selector-navbar .selector-brand img.brand-logo-full {
+    width: 108px !important;
+    height: 108px !important;
+    max-width: none !important;
+    object-fit: contain !important;
     object-position: center;
     border-radius: 10px;
     background: #080808;
@@ -395,12 +396,6 @@
 
     .selector-navbar .brand a {
         justify-content: center !important;
-    }
-
-    .selector-navbar .brand img {
-        width: clamp(52px, 15vw, 66px) !important;
-        height: clamp(52px, 15vw, 66px) !important;
-        max-width: min(40vw, 172px) !important;
     }
 
     .selector-reserve-mobile {
