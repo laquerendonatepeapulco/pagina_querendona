@@ -684,7 +684,7 @@ box-shadow: var(--shadow);
     z-index: 1;
     top: 9px;
     left: 18px;
-    color: #ff3f9d;
+    color: #722537;
     font-size: .72rem;
     font-weight: 700;
     line-height: 1;
@@ -742,7 +742,7 @@ width: fit-content;
 margin-bottom: 10px;
 padding: 4px 8px;
 background: rgba(255,255,255,0.58);
-border: 1px solid rgba(198,40,88,0.24);
+border: 1px solid rgba(114,37,55,0.24);
 }
 .featured-copy h2 {
 margin: 0 0 4px;
@@ -1252,7 +1252,7 @@ width: 100%;
     padding: 12px 14px;
     color: inherit;
     text-decoration: none;
-    border: 1px solid rgba(157, 36, 92, 0.18);
+    border: 1px solid rgba(114, 37, 55, 0.18);
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.34);
     transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
@@ -1265,7 +1265,7 @@ width: 100%;
 
 .contact-location strong {
     margin-bottom: 4px;
-    color: #9d245c;
+    color: #722537;
     font-size: 0.95rem;
 }
 
@@ -1278,7 +1278,7 @@ width: 100%;
 .contact-location:hover,
 .contact-location:focus-visible {
     transform: translateY(-2px);
-    border-color: rgba(255, 63, 157, 0.55);
+    border-color: rgba(114, 37, 55, 0.55);
     background: rgba(255, 255, 255, 0.62);
 }
 
@@ -3889,12 +3889,12 @@ iframe {
     --card: #0d0d12;
     --text: #fff8ef;
     --muted-text: #d9d1c6;
-    --accent: #ff3f9d;
+    --accent: #722537;
     --accent2: #ffd23f;
     --mex-blue: #1aa7ff;
     --mex-green: #21c45a;
     --mex-purple: #9b5cff;
-    --mex-pink: #ff3f9d;
+    --mex-pink: #722537;
     --soft: #151018;
     --shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
 }
@@ -3925,7 +3925,7 @@ nav a {
 }
 
 nav a:hover {
-    color: #9d245c !important;
+    color: #722537 !important;
 }
 
 nav a::after {
@@ -3941,7 +3941,7 @@ nav a::after {
 .btn-select {
     background: var(--mex-pink) !important;
     color: #ffffff;
-    box-shadow: 0 12px 26px rgba(255, 63, 157, 0.28);
+    box-shadow: 0 12px 26px rgba(114, 37, 55, 0.28);
 }
 
 .btn-primary {
@@ -4221,8 +4221,8 @@ footer h3 {
 .mini-tag,
 .section-mini-title {
     background: var(--bone-soft) !important;
-    color: #9d245c !important;
-    border-color: rgba(157, 36, 92, 0.25);
+    color: #722537 !important;
+    border-color: rgba(114, 37, 55, 0.25);
 }
 
 @media(max-width:480px){
@@ -4379,19 +4379,19 @@ footer h3 {
     --card: rgba(15, 14, 22, 0.88);
     --text: #fff7ea;
     --muted-text: #d8ccbc;
-    --accent: #ff3f9d;
+    --accent: #722537;
     --accent2: #ffd23f;
     --mex-blue: #00b7ff;
     --mex-green: #20d66b;
     --mex-purple: #9b5cff;
-    --mex-pink: #ff3f9d;
-    --soft: rgba(255, 63, 157, 0.12);
+    --mex-pink: #722537;
+    --soft: rgba(114, 37, 55, 0.12);
     --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
 body {
     background:
-        radial-gradient(circle at 10% 8%, rgba(255, 63, 157, 0.22), transparent 26%),
+        radial-gradient(circle at 10% 8%, rgba(114, 37, 55, 0.22), transparent 26%),
         radial-gradient(circle at 88% 14%, rgba(0, 183, 255, 0.18), transparent 24%),
         radial-gradient(circle at 18% 88%, rgba(32, 214, 107, 0.16), transparent 25%),
         radial-gradient(circle at 86% 82%, rgba(155, 92, 255, 0.20), transparent 26%),
@@ -4402,7 +4402,7 @@ body {
 .bg-decoration {
     background:
         linear-gradient(120deg, rgba(255, 210, 63, 0.06), transparent 36%),
-        radial-gradient(circle at top left, rgba(255, 63, 157, 0.16), transparent 28%),
+        radial-gradient(circle at top left, rgba(114, 37, 55, 0.16), transparent 28%),
         radial-gradient(circle at bottom right, rgba(0, 183, 255, 0.14), transparent 30%);
 }
 
@@ -4411,7 +4411,7 @@ body {
     border: 1px solid rgba(255, 210, 63, 0.18);
     box-shadow:
         0 18px 44px rgba(0, 0, 0, 0.42),
-        0 0 38px rgba(255, 63, 157, 0.12);
+        0 0 38px rgba(114, 37, 55, 0.12);
 }
 
 nav a,
@@ -4451,7 +4451,7 @@ nav a::after {
     background: linear-gradient(135deg, var(--mex-pink), var(--mex-purple) 48%, var(--mex-blue));
     color: #fff;
     box-shadow:
-        0 14px 28px rgba(255, 63, 157, 0.28),
+        0 14px 28px rgba(114, 37, 55, 0.28),
         0 0 24px rgba(0, 183, 255, 0.18);
 }
 
@@ -4476,8 +4476,8 @@ nav a::after {
 }
 
 .tag {
-    background: linear-gradient(135deg, rgba(255, 63, 157, 0.20), rgba(0, 183, 255, 0.14));
-    color: #fff2f9;
+    background: linear-gradient(135deg, rgba(114, 37, 55, 0.20), rgba(0, 183, 255, 0.14));
+    color: #fff3dc;
     border: 1px solid rgba(255, 210, 63, 0.22);
 }
 
@@ -4502,7 +4502,7 @@ nav a::after {
 footer h3 {
     color: #fffaf0;
     text-shadow:
-        0 0 20px rgba(255, 63, 157, 0.18),
+        0 0 20px rgba(114, 37, 55, 0.18),
         0 0 36px rgba(0, 183, 255, 0.12);
 }
 
@@ -4539,7 +4539,7 @@ footer h3 {
 .info-card:nth-child(3n + 1),
 .value-card:nth-child(3n + 1),
 .social-card:nth-child(3n + 1) {
-    border-color: rgba(255, 63, 157, 0.34);
+    border-color: rgba(114, 37, 55, 0.34);
 }
 
 .info-card:nth-child(3n + 2),
@@ -4573,7 +4573,7 @@ footer h3 {
     border: 1px solid rgba(255, 210, 63, 0.18);
     box-shadow:
         0 24px 64px rgba(0, 0, 0, 0.55),
-        0 0 34px rgba(255, 63, 157, 0.16);
+        0 0 34px rgba(114, 37, 55, 0.16);
 }
 
 .hero-overlay,
@@ -4586,7 +4586,7 @@ footer h3 {
 .experience-overlay {
     background:
         linear-gradient(to top, rgba(0, 0, 0, 0.74), rgba(0, 0, 0, 0.15)),
-        radial-gradient(circle at 20% 20%, rgba(255, 63, 157, 0.18), transparent 34%),
+        radial-gradient(circle at 20% 20%, rgba(114, 37, 55, 0.18), transparent 34%),
         radial-gradient(circle at 82% 18%, rgba(0, 183, 255, 0.14), transparent 34%);
 }
 
@@ -4625,7 +4625,7 @@ footer {
 @media(max-width:768px){
     .navbar nav {
         background:
-            radial-gradient(circle at top left, rgba(255, 63, 157, 0.18), transparent 36%),
+            radial-gradient(circle at top left, rgba(114, 37, 55, 0.18), transparent 36%),
             radial-gradient(circle at bottom right, rgba(0, 183, 255, 0.16), transparent 34%),
             rgba(5, 5, 10, 0.98);
         border-left: 1px solid rgba(255, 210, 63, 0.22);
@@ -4695,7 +4695,7 @@ nav a,
 }
 
 nav a:hover {
-    color: #9d245c !important;
+    color: #722537 !important;
 }
 
 .info-card h2,
@@ -4734,7 +4734,7 @@ nav a:hover {
 
 .cta,
 .btn-select {
-    background: #ff3f9d !important;
+    background: #722537 !important;
     color: #ffffff !important;
 }
 
@@ -4783,7 +4783,7 @@ nav a:hover {
 }
 
 .institution-card:nth-child(1) {
-    border-color: rgba(255, 63, 157, 0.34);
+    border-color: rgba(114, 37, 55, 0.34);
 }
 
 .institution-card:nth-child(2) {
@@ -5063,7 +5063,7 @@ nav a:hover {
 .navbar nav a[aria-current="page"] {
     color: #111111 !important;
     background-color: rgba(255, 210, 63, 0.52);
-    border: 1px solid rgba(157, 36, 92, 0.24);
+    border: 1px solid rgba(114, 37, 55, 0.24);
     border-radius: 999px;
     padding: 9px 14px;
     box-shadow:
@@ -5078,14 +5078,14 @@ nav a:hover {
     bottom: 5px;
     width: auto;
     height: 2px;
-    background: #9d245c !important;
+    background: #722537 !important;
 }
 
 @media(max-width:768px){
     .navbar nav a.active-nav,
     .navbar nav a[aria-current="page"] {
         background: linear-gradient(135deg, rgba(255, 210, 63, 0.78), rgba(255, 244, 205, 0.96)) !important;
-        border-color: rgba(157, 36, 92, 0.34) !important;
+        border-color: rgba(114, 37, 55, 0.34) !important;
         color: #111111 !important;
         box-shadow: 0 12px 24px rgba(255, 210, 63, 0.18);
     }
@@ -5283,7 +5283,7 @@ nav a:hover {
 /* ========================= */
 
 .sahagun-page {
-    --sahagun-red: #c62858;
+    --sahagun-red: #722537;
     --sahagun-yellow: #ffd23f;
     --sahagun-blue: #1aa7ff;
     --sahagun-green: #20c95a;
@@ -5668,7 +5668,7 @@ nav a:hover {
 .sahagun-broths-carousel .sahagun-broths-slide figcaption .sahagun-broth-number {
     grid-row: 1 / span 2;
     min-width: 48px;
-    color: #ff3f9d;
+    color: #722537;
     font-size: .82rem;
     font-weight: 900;
     letter-spacing: .08em;
@@ -5880,7 +5880,7 @@ nav a:hover {
     scroll-behavior: smooth;
     scroll-padding-inline: 6px;
     scroll-snap-type: x mandatory;
-    scrollbar-color: rgba(255, 63, 157, 0.78) rgba(255, 248, 236, 0.12);
+    scrollbar-color: rgba(114, 37, 55, 0.78) rgba(255, 248, 236, 0.12);
     scrollbar-width: thin;
 }
 
@@ -5933,8 +5933,8 @@ nav a:hover {
     border: 1px solid rgba(255, 210, 63, 0.46);
     border-radius: 50%;
     color: #fff;
-    background: linear-gradient(135deg, #ff3f9d, #9b5cff);
-    box-shadow: 0 16px 34px rgba(255, 63, 157, 0.32);
+    background: #722537;
+    box-shadow: 0 16px 34px rgba(114, 37, 55, 0.32);
     cursor: pointer;
     font-size: 2.2rem;
     line-height: 1;
@@ -5979,8 +5979,8 @@ nav a:hover {
 .sahagun-gallery-dot.is-active {
     width: 34px;
     border-radius: 999px;
-    background: #ff3f9d;
-    box-shadow: 0 8px 22px rgba(255, 63, 157, 0.32);
+    background: #722537;
+    box-shadow: 0 8px 22px rgba(114, 37, 55, 0.32);
 }
 
 .sahagun-gallery-grid {
@@ -6007,7 +6007,7 @@ nav a:hover {
     padding: 52px 56px;
     border-radius: 30px;
     background: var(--bone);
-    border: 1px solid rgba(255, 63, 157, .18);
+    border: 1px solid rgba(114, 37, 55, .18);
     box-shadow: 0 24px 58px rgba(0, 0, 0, .22);
 }
 
@@ -6022,9 +6022,9 @@ nav a:hover {
     width: fit-content;
     margin-bottom: 16px;
     padding: 9px 15px;
-    border-color: rgba(198, 40, 88, .28) !important;
-    background: #fff7f9 !important;
-    color: #b5164c !important;
+    border-color: rgba(114, 37, 55, .28) !important;
+    background: #fff3dc !important;
+    color: #722537 !important;
     font-size: .78rem;
     font-weight: 700;
     line-height: 1;
@@ -6495,7 +6495,7 @@ nav a:hover {
     align-items: start;
     margin: 0 0 clamp(28px, 4vw, 42px);
     padding: clamp(24px, 4vw, 38px);
-    background: linear-gradient(135deg, rgba(255, 248, 236, 0.08), rgba(255, 63, 157, 0.055));
+    background: linear-gradient(135deg, rgba(255, 248, 236, 0.08), rgba(114, 37, 55, 0.055));
     border: 1px solid rgba(255, 210, 63, 0.28);
     border-radius: 30px;
     box-shadow: 0 24px 54px rgba(0, 0, 0, 0.24);
@@ -6544,9 +6544,9 @@ nav a:hover {
     left: 0;
     width: 8px;
     height: 8px;
-    background: #ff3f9d;
+    background: #722537;
     border-radius: 999px;
-    box-shadow: 0 0 0 4px rgba(255, 63, 157, 0.12);
+    box-shadow: 0 0 0 4px rgba(114, 37, 55, 0.12);
 }
 
 .tepeapulco-page .tepe-history-card strong {
@@ -6678,7 +6678,7 @@ nav a:hover {
 }
 
 .tepeapulco-page .tepe-card-carousel-btn:hover {
-    background: #ff3f9d;
+    background: #722537;
     transform: translateY(-50%) scale(1.04);
 }
 
@@ -6697,7 +6697,7 @@ nav a:hover {
 
 .tepeapulco-page .tepe-highlight-card:hover {
     transform: translateY(-8px);
-    border-color: rgba(255, 63, 157, 0.5);
+    border-color: rgba(114, 37, 55, 0.5);
     box-shadow: 0 28px 58px rgba(0, 0, 0, 0.34);
 }
 
@@ -6730,7 +6730,7 @@ nav a:hover {
 .tepeapulco-page .tepe-highlight-card span {
     display: inline-flex;
     margin-bottom: 10px;
-    color: #c62858;
+    color: #722537;
     font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -6778,7 +6778,7 @@ nav a:hover {
     overflow-x: auto;
     padding: 2px 2px 18px;
     scroll-snap-type: x mandatory;
-    scrollbar-color: rgba(255, 63, 157, 0.7) rgba(255, 248, 236, 0.12);
+    scrollbar-color: rgba(114, 37, 55, 0.7) rgba(255, 248, 236, 0.12);
 }
 
 .tepeapulco-page .tepe-roll-track figure {
@@ -6864,7 +6864,7 @@ nav a:hover {
     overflow: hidden;
     padding: clamp(28px, 4vw, 44px);
     background:
-        linear-gradient(135deg, rgba(255, 63, 157, 0.08), transparent 38%),
+        linear-gradient(135deg, rgba(114, 37, 55, 0.08), transparent 38%),
         var(--bone);
     border: 1px solid rgba(255, 210, 63, 0.5);
     border-radius: 30px;
@@ -6881,7 +6881,7 @@ nav a:hover {
     width: 150px;
     height: 150px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 63, 157, 0.28), transparent 70%);
+    background: radial-gradient(circle, rgba(114, 37, 55, 0.28), transparent 70%);
     pointer-events: none;
 }
 
@@ -6919,17 +6919,17 @@ nav a:hover {
     text-decoration: none;
     font-weight: 800;
     letter-spacing: 0.02em;
-    background: #ff3f9d !important;
+    background: #722537 !important;
     background-image: none !important;
     border: 0;
     border-radius: 999px;
-    box-shadow: 0 18px 36px rgba(255, 63, 157, 0.34);
+    box-shadow: 0 18px 36px rgba(114, 37, 55, 0.34);
     transition: transform 0.24s ease, box-shadow 0.24s ease;
 }
 
 .team-invite-button:hover {
     transform: translateY(-4px);
-    box-shadow: 0 24px 44px rgba(255, 63, 157, 0.42);
+    box-shadow: 0 24px 44px rgba(114, 37, 55, 0.42);
 }
 
 .tepeapulco-page .tepe-detail-stack .team-invite-card {
@@ -7174,7 +7174,7 @@ body.promo-modal-open {
 }
 
 .promo-modal__link:focus-visible {
-    outline: 3px solid #ff3b9d;
+    outline: 3px solid #722537;
     outline-offset: 5px;
 }
 
@@ -7463,8 +7463,8 @@ body.promo-modal-open {
 .promotions-primary-button {
     border: 1px solid rgba(255, 210, 63, 0.62);
     color: #ffffff;
-    background: linear-gradient(135deg, #ff3b9d, #d91475);
-    box-shadow: 0 14px 28px rgba(255, 55, 155, 0.3);
+    background: #722537;
+    box-shadow: 0 14px 28px rgba(114, 37, 55, 0.3);
 }
 
 .promotions-secondary-button {
@@ -7495,7 +7495,7 @@ body.promo-modal-open {
     background: #181318;
     box-shadow:
         0 28px 58px rgba(0, 0, 0, 0.5),
-        0 0 36px rgba(255, 55, 155, 0.14);
+        0 0 36px rgba(114, 37, 55, 0.14);
 }
 
 .promotions-artwork img {
@@ -7549,7 +7549,7 @@ body.promo-modal-open {
 .promotions-condition {
     min-height: 174px;
     padding: 22px;
-    border: 1px solid rgba(157, 36, 92, 0.2);
+    border: 1px solid rgba(114, 37, 55, 0.2);
     border-radius: 8px;
     background: #fff8eb;
 }
@@ -7557,7 +7557,7 @@ body.promo-modal-open {
 .promotions-condition__number {
     display: block;
     margin-bottom: 24px;
-    color: #d91475;
+    color: #722537;
     font-size: 0.84rem;
     font-weight: 800;
 }
@@ -7583,7 +7583,7 @@ body.promo-modal-open {
 
 .promotions-branch {
     padding: 18px 20px;
-    border-left: 4px solid #ff3b9d;
+    border-left: 4px solid #722537;
     background: rgba(255, 255, 255, 0.58);
 }
 
@@ -7612,7 +7612,7 @@ body.promo-modal-open {
     border: 1px solid rgba(255, 210, 63, 0.45);
     border-radius: 8px;
     background:
-        linear-gradient(115deg, rgba(255, 59, 157, 0.08), transparent 48%),
+        linear-gradient(115deg, rgba(114, 37, 55, 0.08), transparent 48%),
         #171417;
     box-shadow: 0 26px 56px rgba(0, 0, 0, 0.38);
 }
@@ -7641,7 +7641,10 @@ body.promo-modal-open {
 }
 
 .promotions-weekly__day {
-    color: #ff3b9d;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #722537;
+    color: #fff3dc;
     font-size: 0.88rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -7669,13 +7672,13 @@ body.promo-modal-open {
     gap: 16px;
     margin-top: 30px;
     padding: 18px 24px;
-    border-left: 5px solid #ff3b9d;
+    border-left: 5px solid #722537;
     background: #f3ead8;
     color: #171417;
 }
 
 .promotions-weekly__offer strong {
-    color: #d91475;
+    color: #722537;
     font-size: 3rem;
     line-height: 1;
 }
