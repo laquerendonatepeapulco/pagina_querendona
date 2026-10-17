@@ -119,6 +119,16 @@
     filter: drop-shadow(0 4px 10px rgba(255, 255, 255, 0.18));
 }
 
+.selector-navbar .selector-brand img.brand-logo-october {
+    width: 220px;
+    height: 80px;
+    object-fit: cover;
+    object-position: center 42%;
+    border-radius: 8px;
+    background: #080808;
+    filter: none;
+}
+
 .selector-navbar .selector-contact-nav {
     color: #ffffff !important;
     background: linear-gradient(135deg, #ff3f9d, #ff74bd) !important;
