@@ -1237,7 +1237,7 @@ mobileMenu.querySelectorAll('a').forEach((link)=>{
 }
 
 /* ========================= */
-/* PROMOCION DE TEMPORADA */
+/* PROMOCION JUEVES POZOLERO */
 /* ========================= */
 
 window.addEventListener('DOMContentLoaded', ()=>{
