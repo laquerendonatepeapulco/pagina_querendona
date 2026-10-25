@@ -38,6 +38,22 @@
     {
       "source": "/inventario",
       "destination": "/inventario/login.html"
+    },
+    {
+      "source": "/evento",
+      "destination": "/evento.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/posadas.html",
+      "destination": "/evento.html",
+      "permanent": true
+    },
+    {
+      "source": "/posadas",
+      "destination": "/evento.html",
+      "permanent": true
     }
   ]
 }

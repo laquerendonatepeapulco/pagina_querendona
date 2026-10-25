@@ -8,7 +8,7 @@ const outDir = path.join(rootDir, "dist");
 
 const staticEntries = [
   "index.html",
-  "posadas.html",
+  "evento.html",
   "posadas.css",
   "posadas.js",
   "cookies.html",
