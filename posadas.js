@@ -30,8 +30,58 @@
     simDetail.textContent = `${result.people} ${result.people === 1 ? 'persona' : 'personas'} × ${money(result.perPerson)} por persona`;
   };
 
+  const range = document.getElementById('eventBudgetRange');
+  const valueOut = document.getElementById('budgetValue');
+  const hint = document.getElementById('budgetHint');
+  const clearBtn = document.getElementById('budgetClear');
+
+  const paintBudget = value => {
+    if (!range) return;
+    const empty = value === null;
+    range.classList.toggle('is-empty', empty);
+    valueOut.classList.toggle('is-empty', empty);
+    valueOut.textContent = empty ? 'Por definir' : money(value);
+    if (!empty) range.value = value;
+    range.style.setProperty('--fill', `${(empty ? 0 : value) / 10}%`);
+    range.setAttribute('aria-valuetext', empty ? 'Por definir' : `${money(value)} por persona`);
+    if (hint) hint.hidden = !empty;
+    if (clearBtn) clearBtn.hidden = empty;
+  };
+
+  if (range) {
+    const fromRange = () => {
+      budget.value = range.value;
+      paintBudget(Number(range.value));
+      updateEstimate();
+    };
+    range.addEventListener('input', fromRange);
+    range.addEventListener('change', fromRange);
+    range.addEventListener('pointerup', fromRange);
+
+    budget.addEventListener('input', () => {
+      const raw = budget.value.trim();
+      paintBudget(raw === '' ? null : Math.min(Math.max(parseInt(raw, 10) || 0, 0), 1000));
+      updateEstimate();
+    });
+    budget.addEventListener('blur', () => {
+      if (budget.value.trim() === '') return;
+      budget.value = Math.min(Math.max(parseInt(budget.value, 10) || 0, 0), 1000);
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      budget.value = '';
+      range.value = 500;
+      paintBudget(null);
+      updateEstimate();
+      range.focus();
+    });
+
+    paintBudget(budget.value.trim() === '' ? null : Number(budget.value));
+  } else {
+    budget.addEventListener('input', updateEstimate);
+  }
+
   guests.addEventListener('input', updateEstimate);
-  budget.addEventListener('input', updateEstimate);
 
   const updateCounts = () => {
     form.querySelectorAll('.service-option').forEach(group => {
