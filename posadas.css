@@ -30,7 +30,7 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:110px}
 main{overflow-x:clip}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 var(--sans)}
+body{position:relative;margin:0;background:var(--bg);color:var(--text);font:16px/1.65 var(--sans)}
 a{color:inherit}
 img{max-width:100%}
 h1,h2,h3,p{margin-top:0}
@@ -60,9 +60,10 @@ em{font-weight:400;color:var(--sol)}
 .posada-hero{position:relative;z-index:1;max-width:1240px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;padding:56px 32px 150px}
 .posada-hero::before{content:"";position:absolute;inset:-160px -20vw 0 30%;z-index:-1;background:radial-gradient(ellipse 55% 60% at 70% 70%,rgba(150,82,24,.20),transparent 72%),radial-gradient(ellipse 35% 40% at 95% 30%,rgba(212,18,94,.08),transparent 70%);pointer-events:none}
 /* Flores bordadas del fondo */
-.hero-flores{position:absolute;left:0;top:6px;width:100%;height:var(--hero-h,900px);overflow:hidden;pointer-events:none;z-index:0}
-.flores-izq{position:absolute;left:0;top:0;bottom:0;width:clamp(36px,calc((100vw - 1240px)/2 + 44px),110px);background:url(img/evento/flores-izquierda.webp) left top/110px auto repeat-y}
-.flores-abajo{position:absolute;left:0;bottom:0;width:min(640px,60vw);aspect-ratio:640/200;background:url(img/evento/flores-abajo.webp) left bottom/100% auto no-repeat}
+.hero-flores{position:absolute;left:0;top:6px;bottom:0;width:100%;overflow:hidden;pointer-events:none;z-index:0}
+main>section,.season-strip,.flores-cierre,footer{position:relative;z-index:1}
+.flores-izq{position:absolute;left:0;top:0;bottom:0;opacity:.92;width:clamp(36px,calc((100vw - 1240px)/2 + 44px),110px);background:url(img/evento/flores-izquierda.webp) left top/110px auto repeat-y}
+.flores-abajo{position:absolute;left:0;top:var(--hero-h,900px);transform:translateY(-100%);width:min(640px,60vw);aspect-ratio:640/200;background:url(img/evento/flores-abajo.webp) left bottom/100% auto no-repeat}
 .posada-hero{isolation:isolate}
 .hero-copy .eyebrow{display:flex;align-items:center;gap:16px}
 .hero-copy .eyebrow::after{content:"";width:64px;height:2px;background:var(--sol);flex:0 0 auto}
@@ -134,8 +135,9 @@ em{font-weight:400;color:var(--sol)}
 .steps li p{color:var(--muted);font-size:15px}
 
 /* Cotización */
-.quote-section{position:relative;background:var(--noche);color:var(--text);overflow:hidden}
-.quote-section::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 10% 10%,rgba(212,18,94,.22),transparent 70%),radial-gradient(ellipse 45% 55% at 95% 95%,rgba(66,126,186,.25),transparent 70%);pointer-events:none}
+.quote-section{position:relative;background:transparent;color:var(--text);overflow:hidden;border-top:1px solid var(--line-soft)}
+.quote-section::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 45% 55% at 78% 45%,rgba(150,82,24,.20),transparent 72%),radial-gradient(ellipse 35% 45% at 20% 20%,rgba(212,18,94,.10),transparent 70%);pointer-events:none}
+.flores-cierre{height:clamp(110px,12.5vw,200px);background:url(img/evento/flores-abajo.webp) left bottom/auto 100% no-repeat}
 #cotizar{scroll-margin-top:-110px}
 .quote-wrap{position:relative;max-width:1176px;margin:auto;padding:80px 32px;display:grid;grid-template-columns:1fr 1fr;gap:64px}
 .quote-copy .eyebrow{color:var(--sol)}
@@ -213,7 +215,7 @@ textarea{resize:vertical}
 .faq details p{font-size:15px;color:var(--muted);margin:15px 0 0}
 
 /* Pie */
-footer{position:relative;background:#0a0707;color:var(--text);text-align:center;padding:56px 24px 50px}
+footer{background:#000;color:var(--text);text-align:center;padding:56px 24px 50px}
 footer::before{content:"";position:absolute;inset:0 0 auto;height:6px;background:linear-gradient(90deg,var(--rosa) 0 16.66%,var(--sol) 16.66% 33.33%,var(--arcilla) 33.33% 50%,var(--maguey) 50% 66.66%,var(--anil) 66.66% 83.33%,var(--noche) 83.33% 100%)}
 .footer-brand{font-size:34px;text-decoration:none}
 footer p{font-size:13px;margin:12px 0 28px;color:var(--muted)}
@@ -232,7 +234,9 @@ footer small{opacity:.75;font-size:11px}
   .posada-header nav>a:not(.button){display:none}
   .posada-header img{width:110px;height:74px}
   .posada-hero{grid-template-columns:1fr;padding:34px 24px 120px 44px;gap:36px}
+  .hero-flores{bottom:auto;height:var(--hero-h,900px)}
   .flores-izq{width:34px;background-size:110px auto;background-position:-18px top}
+  .flores-cierre{height:110px}
   .flores-abajo{width:100%;max-width:440px}
   .hero-copy{max-width:550px}
   .hero-picture{max-width:520px;width:100%;margin:auto}
