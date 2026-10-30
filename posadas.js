@@ -1,4 +1,18 @@
 (() => {
+  const deco = document.querySelector('.hero-flores');
+  const hero = document.querySelector('.posada-hero');
+  if (!deco || !hero) return;
+  const fit = () => {
+    const bottom = hero.getBoundingClientRect().bottom + window.scrollY;
+    deco.style.setProperty('--hero-h', `${Math.max(0, bottom - deco.offsetTop)}px`);
+  };
+  fit();
+  window.addEventListener('load', fit);
+  if ('ResizeObserver' in window) new ResizeObserver(fit).observe(hero);
+  else window.addEventListener('resize', fit);
+})();
+
+(() => {
   const form = document.getElementById('posadaForm');
   const date = document.getElementById('eventDate');
 
