@@ -60,7 +60,7 @@ em{font-weight:400;color:var(--sol)}
 .posada-hero{position:relative;z-index:1;max-width:1240px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;padding:56px 32px 150px}
 .posada-hero::before{content:"";position:absolute;inset:-160px -20vw 0 30%;z-index:-1;background:radial-gradient(ellipse 55% 60% at 70% 70%,rgba(150,82,24,.20),transparent 72%),radial-gradient(ellipse 35% 40% at 95% 30%,rgba(212,18,94,.08),transparent 70%);pointer-events:none}
 /* Flores bordadas del fondo */
-.hero-flores{position:absolute;left:0;top:6px;bottom:0;width:100%;overflow:hidden;pointer-events:none;z-index:0}
+.hero-flores{position:absolute;left:0;top:0;bottom:0;width:100%;overflow:hidden;pointer-events:none;z-index:0}
 main>section,.season-strip,.flores-cierre,footer{position:relative;z-index:1}
 .flores-izq{position:absolute;left:0;top:0;bottom:0;opacity:.92;width:clamp(36px,calc((100vw - 1240px)/2 + 44px),110px);background:url(img/evento/flores-izquierda.webp) left top/110px auto repeat-y}
 .flores-abajo{position:absolute;left:0;top:var(--hero-h,900px);transform:translateY(-100%);width:min(640px,60vw);aspect-ratio:640/200;background:url(img/evento/flores-abajo.webp) left bottom/100% auto no-repeat}
