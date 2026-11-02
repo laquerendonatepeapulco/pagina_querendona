@@ -9,6 +9,10 @@ const outDir = path.join(rootDir, "dist");
 const staticEntries = [
   "index.html",
   "evento.html",
+  "pilates.html",
+  "pilates.css",
+  "pilates.js",
+  "fonts",
   "posadas.css",
   "posadas.js",
   "cookies.html",

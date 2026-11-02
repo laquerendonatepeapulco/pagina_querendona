@@ -42,6 +42,10 @@
     {
       "source": "/evento",
       "destination": "/evento.html"
+    },
+    {
+      "source": "/pilates",
+      "destination": "/pilates.html"
     }
   ],
   "redirects": [
@@ -53,6 +57,11 @@
     {
       "source": "/posadas",
       "destination": "/evento.html",
+      "permanent": true
+    },
+    {
+      "source": "/pilates.html",
+      "destination": "/pilates",
       "permanent": true
     }
   ]
