@@ -617,6 +617,16 @@ async function ensurePilatesSchema(query) {
     )
   `);
   await query(`CREATE INDEX IF NOT EXISTS idx_pilates_orders_status ON pilates_orders(status, reserved_until)`);
+
+  // Cuenta de administrador para el control de acceso de Pilates Party.
+  // Solo se crea si no existe; si luego se cambia la contraseña con
+  // scripts/set-staff-account.js, este bloque no la sobrescribe.
+  await query(
+    `INSERT INTO users (username, password_hash, salt, name, role, label)
+     VALUES ('pilates', $1, $2, 'Pilates Party', 'admin', 'admin')
+     ON CONFLICT (username) DO NOTHING`,
+    ["91e8222b492feba575eb6e4becbee4268c1ea3c5de0e16e848b370733188a42e68659f48b6c21ecb347e9555858d64ed4c628755636553103c56d6640d265184", "scrypt:1f11259d9085f47376a08ff94a130dd9b7880af930e016b7"]
+  );
 }
 
 module.exports = { registerPilatesRoutes, ensurePilatesSchema, PILATES, sanitizeCheckout, parseReference, getPilatesCapacity };
