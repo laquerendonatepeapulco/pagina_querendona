@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#24150d">
+<title>Acceso del personal · Pilates Party</title>
+<link rel="stylesheet" href="pilates-acceso.css?v=20261103">
+<script defer src="pilates-acceso.js?v=20261103"></script>
+</head>
+<body>
+<main class="shell">
+  <header class="top">
+    <img src="img/pilates/pilates-party-titulo.webp" alt="Pilates Party" width="1300" height="732">
+    <p>Control de acceso · Sábado 14 de noviembre</p>
+  </header>
+
+  <section class="card" id="login" aria-labelledby="loginTitle">
+    <h1 id="loginTitle">Inicia sesión</h1>
+    <p class="muted">Usa la misma cuenta del sistema de inventario.</p>
+    <form id="loginForm">
+      <label>Usuario<input name="username" autocomplete="username" required></label>
+      <label>Contraseña<input type="password" name="password" autocomplete="current-password" required></label>
+      <button class="btn" type="submit">Entrar</button>
+      <p class="error" id="loginError" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <section id="app" hidden>
+    <div class="bar">
+      <span id="who"></span>
+      <button class="link" id="logout" type="button">Cerrar sesión</button>
+    </div>
+
+    <div class="stats" aria-live="polite">
+      <div><strong id="statIn">–</strong><span>Ingresaron</span></div>
+      <div><strong id="statLeft">–</strong><span>Faltan</span></div>
+      <div><strong id="statSold">–</strong><span>Vendidas</span></div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="scan" id="tabScan">Escanear</button>
+      <button role="tab" aria-selected="false" data-tab="list" id="tabList">Lista</button>
+    </div>
+
+    <section class="card" id="panelScan" role="tabpanel" aria-labelledby="tabScan">
+      <div class="camera" id="camera">
+        <video id="video" playsinline muted></video>
+        <div class="frame" aria-hidden="true"></div>
+        <p id="cameraMsg">Activa la cámara y apunta al QR.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="startCam" type="button">Activar cámara</button>
+        <button class="btn btn-ghost" id="photoBtn" type="button">Tomar foto del QR</button>
+        <input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
+      </div>
+      <details class="manual">
+        <summary>Escribir el código a mano</summary>
+        <form id="manualForm"><input id="manualCode" autocomplete="off" spellcheck="false" placeholder="pp1…" required><button class="btn" type="submit">Buscar</button></form>
+      </details>
+    </section>
+
+    <section class="card" id="panelList" role="tabpanel" aria-labelledby="tabList" hidden>
+      <input class="search" id="search" type="search" placeholder="Nombre o últimos 4 del celular" autocomplete="off">
+      <ul class="list" id="list"></ul>
+      <p class="muted" id="listEmpty" hidden>No hay compras que coincidan.</p>
+    </section>
+  </section>
+</main>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="sheet-backdrop" data-close></div>
+  <div class="sheet-card" id="sheetCard" tabindex="-1">
+    <p class="sheet-label" id="sheetLabel"></p>
+    <h2 id="sheetTitle"></h2>
+    <p class="sheet-sub" id="sheetSub"></p>
+    <div class="sheet-counts" id="sheetCounts"></div>
+    <div class="sheet-admit" id="sheetAdmit" hidden>
+      <p>¿Cuántas personas entran ahora?</p>
+      <div class="qty">
+        <button type="button" data-step="-1" aria-label="Menos">−</button>
+        <output id="admitQty">1</output>
+        <button type="button" data-step="1" aria-label="Más">+</button>
+      </div>
+      <button class="btn btn-go" id="admitBtn" type="button">Registrar entrada</button>
+    </div>
+    <button class="link" id="undoBtn" type="button" hidden>Corregir: quitar 1 llegada</button>
+    <button class="btn btn-ghost" type="button" data-close id="sheetClose">Escanear siguiente</button>
+  </div>
+</div>
+</body>
+</html>

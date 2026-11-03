@@ -7,6 +7,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
+const { registerPilatesRoutes, ensurePilatesSchema } = require("./pilates");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -629,6 +630,7 @@ async function ensureSchema() {
     ]
   );
 
+  await ensurePilatesSchema(query);
 }
 
 async function seedProducts() {
@@ -4365,6 +4367,20 @@ function sanitizeProduct(input) {
     product.location
   ];
 }
+
+registerPilatesRoutes(app, {
+  pool,
+  query,
+  getInitPromise,
+  signPayload,
+  base64UrlEncode,
+  base64UrlDecode,
+  mercadoPagoRequest,
+  getPublicSiteUrl,
+  authRequired,
+  adminRequired,
+  QRCode
+});
 
 if (require.main === module) {
   const rootDir = path.join(__dirname, "..");

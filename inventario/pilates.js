@@ -1,0 +1,622 @@
+"use strict";
+
+// Pilates Party · venta de entradas con Mercado Pago y un QR por compra.
+// Módulo independiente: no comparte tablas ni boletos con Latidos de México.
+
+const crypto = require("crypto");
+
+const PILATES = Object.freeze({
+  event: "pilates-party-2026",
+  title: "Pilates Party · Entrada general",
+  description: "Sábado 14 de noviembre de 2026 · Entrada 8:00 a.m.",
+  unitPrice: 350,
+  maxPerOrder: 10,
+  reservationMinutes: 15,
+  pendingHoldHours: 48,
+  salesEndAt: "2026-11-14T14:00:00-06:00"
+});
+
+function getPilatesCapacity() {
+  const value = Number.parseInt(String(process.env.PILATES_CAPACITY || "80"), 10);
+  return Number.isInteger(value) && value >= 0 ? value : 80;
+}
+
+function arePilatesSalesClosed(now = Date.now()) {
+  const flag = String(process.env.PILATES_SALES_CLOSED || "").trim().toLowerCase();
+  if (["true", "1", "si", "sí", "yes", "on"].includes(flag)) return true;
+  return now >= Date.parse(PILATES.salesEndAt);
+}
+
+function httpError(status, message) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
+function sanitizeCheckout(input = {}) {
+  const name = String(input.name || "").replace(/\s+/g, " ").trim();
+  const phone = String(input.phone || "").trim();
+  const phoneDigits = phone.replace(/\D/g, "");
+  const quantity = Number.parseInt(String(input.quantity ?? "1"), 10);
+
+  if (name.length < 2 || name.length > 120) throw httpError(400, "Escribe tu nombre completo");
+  if (phoneDigits.length < 10 || phoneDigits.length > 15) throw httpError(400, "Escribe un número de celular válido de 10 dígitos");
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > PILATES.maxPerOrder) {
+    throw httpError(400, `Puedes comprar de 1 a ${PILATES.maxPerOrder} entradas por compra`);
+  }
+
+  return { name, phone: phoneDigits, quantity, total: quantity * PILATES.unitPrice };
+}
+
+function createReference(quantity) {
+  return `pilates:${quantity}:${crypto.randomUUID()}`;
+}
+
+function parseReference(reference) {
+  const match = /^pilates:(\d{1,2}):[0-9a-f-]{36}$/i.exec(String(reference || ""));
+  if (!match) return null;
+  const quantity = Number(match[1]);
+  if (quantity < 1 || quantity > PILATES.maxPerOrder) return null;
+  return { quantity };
+}
+
+function maskPhone(phone) {
+  const digits = String(phone || "");
+  return digits.length > 4 ? `${"•".repeat(Math.max(0, digits.length - 4))}${digits.slice(-4)}` : digits;
+}
+
+function registerPilatesRoutes(app, deps) {
+  const {
+    pool,
+    query,
+    getInitPromise,
+    signPayload,
+    base64UrlEncode,
+    base64UrlDecode,
+    mercadoPagoRequest,
+    getPublicSiteUrl,
+    authRequired,
+    adminRequired,
+    QRCode
+  } = deps;
+
+  function createToken(kind, id) {
+    const payload = base64UrlEncode(JSON.stringify({ v: 1, kind, id }));
+    return `pp1.${payload}.${signPayload(`pilates:${payload}`)}`;
+  }
+
+  function readToken(token, expectedKind) {
+    const [prefix, payload, signature] = String(token || "").trim().split(".");
+    if (prefix !== "pp1" || !payload || !signature) return null;
+    const expected = Buffer.from(signPayload(`pilates:${payload}`));
+    const received = Buffer.from(signature);
+    if (expected.length !== received.length || !crypto.timingSafeEqual(expected, received)) return null;
+    try {
+      const value = JSON.parse(base64UrlDecode(payload));
+      if (value.v !== 1 || value.kind !== expectedKind || !value.id) return null;
+      return value;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function expireReservations(client = pool) {
+    await client.query(`
+      UPDATE pilates_orders
+      SET status = 'expired', updated_at = now()
+      WHERE status IN ('reserved', 'pending')
+        AND reserved_until IS NOT NULL
+        AND reserved_until < now()
+    `);
+  }
+
+  async function getOccupied(client = pool) {
+    const result = await client.query(`
+      SELECT
+        COALESCE(SUM(quantity) FILTER (WHERE status = 'approved'), 0)::INTEGER AS sold,
+        COALESCE(SUM(quantity) FILTER (WHERE status IN ('reserved', 'pending') AND reserved_until > now()), 0)::INTEGER AS held,
+        COALESCE(SUM(checked_in) FILTER (WHERE status = 'approved'), 0)::INTEGER AS checked_in,
+        COUNT(*) FILTER (WHERE status = 'approved')::INTEGER AS orders
+      FROM pilates_orders
+    `);
+    const row = result.rows[0] || {};
+    return {
+      sold: Number(row.sold || 0),
+      held: Number(row.held || 0),
+      checkedIn: Number(row.checked_in || 0),
+      orders: Number(row.orders || 0)
+    };
+  }
+
+  async function getAvailability(client = pool) {
+    await expireReservations(client);
+    const capacity = getPilatesCapacity();
+    const occupied = await getOccupied(client);
+    return { capacity, ...occupied, available: Math.max(0, capacity - occupied.sold - occupied.held) };
+  }
+
+  function publicOrder(order) {
+    const approved = order.status === "approved";
+    const quantity = Number(order.quantity);
+    const checkedIn = Number(order.checked_in || 0);
+    return {
+      status: order.status,
+      approved,
+      name: order.customer_name,
+      quantity,
+      checkedIn,
+      remaining: Math.max(0, quantity - checkedIn),
+      total: Number(order.total),
+      ticketToken: approved ? createToken("ticket", order.id) : null
+    };
+  }
+
+  // Aplica el estado de un pago de Mercado Pago a su orden.
+  async function syncPayment(payment) {
+    const selection = parseReference(payment.external_reference);
+    if (!selection) throw httpError(400, "Este pago no corresponde a Pilates Party");
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const orderResult = await client.query(
+        "SELECT * FROM pilates_orders WHERE external_reference = $1 FOR UPDATE",
+        [payment.external_reference]
+      );
+      const order = orderResult.rows[0];
+      if (!order) throw httpError(404, "No encontramos la compra relacionada con este pago");
+
+      const amount = Number(payment.transaction_amount);
+      const amountMatches = Number.isFinite(amount) && Math.abs(amount - Number(order.total)) < 0.01;
+      const currencyMatches = String(payment.currency_id || "").toUpperCase() === "MXN";
+      const quantityMatches = Number(order.quantity) === selection.quantity;
+      if (!amountMatches || !currencyMatches || !quantityMatches) {
+        throw httpError(400, "Los datos del pago no coinciden con la compra");
+      }
+
+      const mpStatus = String(payment.status || "unknown").toLowerCase();
+      const paymentId = String(payment.id || "");
+      let nextStatus = order.status;
+      let updatePaymentId = true;
+
+      if (mpStatus === "approved") {
+        nextStatus = "approved";
+      } else if (["refunded", "charged_back"].includes(mpStatus)) {
+        // Solo un reembolso del pago que aprobó la orden la cancela.
+        if (order.status !== "approved" || !order.mercadopago_payment_id || order.mercadopago_payment_id === paymentId) {
+          nextStatus = "refunded";
+        } else {
+          updatePaymentId = false;
+        }
+      } else if (order.status === "approved") {
+        // Un intento rechazado posterior no debe tocar una compra ya pagada.
+        updatePaymentId = false;
+      } else if (["pending", "in_process", "authorized"].includes(mpStatus)) {
+        nextStatus = "pending";
+      } else if (["rejected", "cancelled"].includes(mpStatus)) {
+        // Se conserva el apartado para que la persona pueda reintentar el pago.
+        nextStatus = order.status === "pending" ? "reserved" : order.status;
+      }
+
+      const updated = await client.query(
+        `
+          UPDATE pilates_orders
+          SET
+            mercadopago_payment_id = CASE WHEN $5 THEN $1 ELSE mercadopago_payment_id END,
+            status = $2,
+            paid_at = CASE WHEN $2 = 'approved' THEN COALESCE(paid_at, $3::timestamptz, now()) ELSE paid_at END,
+            reserved_until = CASE
+              WHEN $2 IN ('approved', 'cancelled', 'refunded') THEN NULL
+              WHEN $2 = 'pending' THEN GREATEST(COALESCE(reserved_until, now()), now() + make_interval(hours => $6))
+              ELSE reserved_until
+            END,
+            updated_at = now()
+          WHERE id = $4
+          RETURNING *
+        `,
+        [paymentId, nextStatus, payment.date_approved || null, order.id, updatePaymentId && Boolean(paymentId), PILATES.pendingHoldHours]
+      );
+      await client.query("COMMIT");
+      return updated.rows[0];
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async function syncPaymentById(paymentId) {
+    const id = String(paymentId || "").trim();
+    if (!/^\d{6,30}$/.test(id)) throw httpError(400, "Identificador de pago inválido");
+    const payment = await mercadoPagoRequest(`/v1/payments/${id}`);
+    return { payment, order: await syncPayment(payment) };
+  }
+
+  async function refreshOrderFromMercadoPago(order) {
+    const search = await mercadoPagoRequest(
+      `/v1/payments/search?external_reference=${encodeURIComponent(order.external_reference)}&sort=date_created&criteria=desc&limit=10`
+    );
+    const results = Array.isArray(search.results) ? search.results : [];
+    const payment = results.find((item) => item.status === "approved") || results[0];
+    return payment ? syncPayment(payment) : order;
+  }
+
+  async function findOrder(id) {
+    const result = await query("SELECT * FROM pilates_orders WHERE id = $1", [id]);
+    return result.rows[0] || null;
+  }
+
+  // ---------- Rutas públicas ----------
+
+  app.get("/api/pilates/availability", async (req, res, next) => {
+    try {
+      const availability = await getAvailability();
+      const salesClosed = arePilatesSalesClosed();
+      res.json({
+        salesClosed,
+        price: PILATES.unitPrice,
+        maxPerOrder: PILATES.maxPerOrder,
+        capacity: availability.capacity,
+        available: salesClosed ? 0 : availability.available
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/pilates/checkout", async (req, res, next) => {
+    let orderId = null;
+    try {
+      if (arePilatesSalesClosed()) throw httpError(409, "La venta de entradas ya cerró.");
+      const checkout = sanitizeCheckout(req.body);
+      const siteUrl = getPublicSiteUrl();
+      const reference = createReference(checkout.quantity);
+      const reservedUntil = new Date(Date.now() + PILATES.reservationMinutes * 60 * 1000).toISOString();
+
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('pilates_party_checkout'))");
+        const availability = await getAvailability(client);
+        if (checkout.quantity > availability.available) {
+          throw httpError(409, availability.available === 0
+            ? "Las entradas están agotadas."
+            : `Solo quedan ${availability.available} lugares disponibles.`);
+        }
+        const inserted = await client.query(
+          `
+            INSERT INTO pilates_orders (external_reference, customer_name, phone, quantity, unit_price, total, status, reserved_until)
+            VALUES ($1, $2, $3, $4, $5, $6, 'reserved', $7::timestamptz)
+            RETURNING id
+          `,
+          [reference, checkout.name, checkout.phone, checkout.quantity, PILATES.unitPrice, checkout.total, reservedUntil]
+        );
+        orderId = inserted.rows[0].id;
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+      } finally {
+        client.release();
+      }
+
+      const returnToken = createToken("return", orderId);
+      const backUrl = (status) => `${siteUrl}/pilates?pago=${status}&t=${encodeURIComponent(returnToken)}`;
+
+      const preference = await mercadoPagoRequest("/checkout/preferences", {
+        method: "POST",
+        headers: { "X-Idempotency-Key": crypto.randomUUID() },
+        body: JSON.stringify({
+          items: [{
+            id: "pilates-party-general",
+            title: PILATES.title,
+            description: PILATES.description,
+            category_id: "tickets",
+            quantity: checkout.quantity,
+            currency_id: "MXN",
+            unit_price: PILATES.unitPrice
+          }],
+          payer: { name: checkout.name },
+          external_reference: reference,
+          metadata: { event: PILATES.event, quantity: checkout.quantity },
+          notification_url: `${siteUrl}/api/pilates/webhook`,
+          expires: true,
+          expiration_date_to: reservedUntil,
+          payment_methods: {
+            excluded_payment_types: [{ id: "ticket" }, { id: "atm" }],
+            installments: 1
+          },
+          back_urls: { success: backUrl("ok"), pending: backUrl("pendiente"), failure: backUrl("error") },
+          auto_return: "approved",
+          statement_descriptor: "PILATES PARTY"
+        })
+      });
+
+      if (!preference.init_point) throw httpError(502, "Mercado Pago no devolvió un enlace de pago válido");
+
+      await query(
+        "UPDATE pilates_orders SET mercadopago_preference_id = $1, updated_at = now() WHERE id = $2",
+        [preference.id, orderId]
+      );
+
+      res.status(201).json({ checkoutUrl: preference.init_point, returnToken, total: checkout.total });
+    } catch (error) {
+      if (orderId) {
+        await query(
+          "UPDATE pilates_orders SET status = 'cancelled', reserved_until = NULL, updated_at = now() WHERE id = $1 AND status = 'reserved'",
+          [orderId]
+        ).catch((cancelError) => console.error("No fue posible liberar el apartado de Pilates:", cancelError));
+      }
+      next(error);
+    }
+  });
+
+  // Regreso desde Mercado Pago: confirma el pago y entrega el boleto.
+  app.get("/api/pilates/order", async (req, res, next) => {
+    try {
+      const access = readToken(req.query.t, "return");
+      if (!access) throw httpError(403, "El enlace de tu compra no es válido.");
+      let order = await findOrder(access.id);
+      if (!order) throw httpError(404, "No encontramos tu compra.");
+
+      const paymentId = String(req.query.payment_id || "").trim();
+      if (order.status !== "approved") {
+        if (/^\d{6,30}$/.test(paymentId)) {
+          const payment = await mercadoPagoRequest(`/v1/payments/${paymentId}`);
+          if (payment.external_reference !== order.external_reference) throw httpError(403, "El pago no corresponde a esta compra.");
+          order = await syncPayment(payment);
+        } else {
+          order = await refreshOrderFromMercadoPago(order);
+        }
+      }
+
+      res.setHeader("Cache-Control", "private, no-store");
+      res.json(publicOrder(order));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/pilates/ticket", async (req, res, next) => {
+    try {
+      const access = readToken(req.query.token, "ticket");
+      if (!access) throw httpError(403, "El boleto no es válido.");
+      const order = await findOrder(access.id);
+      if (!order) throw httpError(404, "No encontramos este boleto.");
+      res.setHeader("Cache-Control", "private, no-store");
+      res.json(publicOrder(order));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/pilates/qr/:token", async (req, res, next) => {
+    try {
+      const access = readToken(req.params.token, "ticket");
+      if (!access) throw httpError(400, "El boleto no es válido.");
+      const image = await QRCode.toBuffer(req.params.token, {
+        type: "png",
+        width: 720,
+        margin: 2,
+        errorCorrectionLevel: "M",
+        color: { dark: "#24150d", light: "#f6ece0" }
+      });
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Content-Length", image.length);
+      res.setHeader("Cache-Control", "private, max-age=86400");
+      if (req.query.descargar) res.setHeader("Content-Disposition", 'attachment; filename="boleto-pilates-party.png"');
+      res.send(image);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/pilates/webhook", async (req, res, next) => {
+    const type = String(req.body?.type || req.query.type || req.query.topic || "").toLowerCase();
+    const paymentId = req.body?.data?.id || req.query["data.id"] || req.query.id;
+    if ((type && type !== "payment") || !paymentId) {
+      res.json({ received: true, processed: false });
+      return;
+    }
+    try {
+      const { order } = await syncPaymentById(paymentId);
+      res.json({ received: true, processed: true, approved: order.status === "approved" });
+    } catch (error) {
+      if ([400, 404].includes(error.status)) {
+        console.warn("Notificación de Pilates ignorada:", error.message);
+        res.json({ received: true, processed: false });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  // ---------- Rutas del personal ----------
+
+  function resolveOrderId(body) {
+    if (body.ticketToken) {
+      const access = readToken(body.ticketToken, "ticket");
+      if (!access) throw httpError(400, "Este QR no es una entrada de Pilates Party.");
+      return access.id;
+    }
+    const orderId = String(body.orderId || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(orderId)) throw httpError(400, "Compra no válida.");
+    return orderId;
+  }
+
+  function staffOrder(order, isAdmin) {
+    const base = publicOrder(order);
+    return {
+      id: order.id,
+      status: base.status,
+      name: base.name,
+      phone: isAdmin ? order.phone : maskPhone(order.phone),
+      quantity: base.quantity,
+      checkedIn: base.checkedIn,
+      remaining: base.remaining,
+      total: base.total,
+      paidAt: order.paid_at || null,
+      lastCheckInAt: order.last_check_in_at || null,
+      paymentId: isAdmin ? order.mercadopago_payment_id || null : undefined
+    };
+  }
+
+  // Sin "count" solo consulta; con "count" registra la llegada de esas personas.
+  app.post("/api/pilates/check-in", authRequired, async (req, res, next) => {
+    const client = await pool.connect().catch(next);
+    if (!client) return;
+    try {
+      const orderId = resolveOrderId(req.body || {});
+      const count = req.body?.count === undefined ? 0 : Number.parseInt(String(req.body.count), 10);
+      if (!Number.isInteger(count) || count < 0 || count > PILATES.maxPerOrder) throw httpError(400, "Número de personas no válido.");
+      const isAdmin = req.user.role === "admin";
+
+      await client.query("BEGIN");
+      const result = await client.query("SELECT * FROM pilates_orders WHERE id = $1 FOR UPDATE", [orderId]);
+      const order = result.rows[0];
+      if (!order) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ valid: false, reason: "not_found", error: "No encontramos esta entrada." });
+        return;
+      }
+      if (order.status !== "approved") {
+        await client.query("ROLLBACK");
+        res.status(409).json({
+          valid: false,
+          reason: order.status === "refunded" ? "refunded" : "unpaid",
+          error: order.status === "refunded" ? "Esta compra fue reembolsada." : "Esta compra no está pagada.",
+          order: staffOrder(order, isAdmin)
+        });
+        return;
+      }
+
+      const remaining = Number(order.quantity) - Number(order.checked_in);
+      if (count === 0) {
+        await client.query("ROLLBACK");
+        res.json({ valid: remaining > 0, reason: remaining > 0 ? "ok" : "used", order: staffOrder(order, isAdmin) });
+        return;
+      }
+      if (count > remaining) {
+        await client.query("ROLLBACK");
+        res.status(409).json({
+          valid: false,
+          reason: "used",
+          error: remaining === 0 ? "Todas las entradas de esta compra ya se usaron." : `Solo quedan ${remaining} entradas en esta compra.`,
+          order: staffOrder(order, isAdmin)
+        });
+        return;
+      }
+
+      const updated = await client.query(
+        `
+          UPDATE pilates_orders
+          SET checked_in = checked_in + $2, last_check_in_at = now(), updated_at = now()
+          WHERE id = $1
+          RETURNING *
+        `,
+        [order.id, count]
+      );
+      await client.query(
+        "INSERT INTO pilates_check_ins (order_id, count, user_id) VALUES ($1, $2, $3)",
+        [order.id, count, req.user.id]
+      );
+      await client.query("COMMIT");
+      res.json({ valid: true, reason: "admitted", admitted: count, order: staffOrder(updated.rows[0], isAdmin) });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      next(error);
+    } finally {
+      client.release();
+    }
+  });
+
+  // Corrección de llegadas registradas por error (solo administradores).
+  app.post("/api/pilates/check-in/undo", authRequired, adminRequired, async (req, res, next) => {
+    try {
+      const orderId = resolveOrderId(req.body || {});
+      const count = Number.parseInt(String(req.body?.count ?? "1"), 10);
+      if (!Number.isInteger(count) || count < 1 || count > PILATES.maxPerOrder) throw httpError(400, "Número de personas no válido.");
+      const updated = await query(
+        `
+          UPDATE pilates_orders
+          SET checked_in = checked_in - $2, updated_at = now()
+          WHERE id = $1 AND checked_in >= $2
+          RETURNING *
+        `,
+        [orderId, count]
+      );
+      if (!updated.rows[0]) throw httpError(409, "No hay tantas llegadas registradas en esta compra.");
+      await query("INSERT INTO pilates_check_ins (order_id, count, user_id) VALUES ($1, $2, $3)", [orderId, -count, req.user.id]);
+      res.json({ ok: true, order: staffOrder(updated.rows[0], true) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/pilates/orders", authRequired, async (req, res, next) => {
+    try {
+      const isAdmin = req.user.role === "admin";
+      const availability = await getAvailability();
+      const result = await query(`
+        SELECT *
+        FROM pilates_orders
+        WHERE status IN ('approved', 'refunded')
+           OR (status = 'pending' AND reserved_until > now())
+        ORDER BY customer_name ASC, created_at ASC
+      `);
+      res.setHeader("Cache-Control", "private, no-store");
+      res.json({
+        summary: {
+          capacity: availability.capacity,
+          sold: availability.sold,
+          available: availability.available,
+          checkedIn: availability.checkedIn,
+          orders: availability.orders,
+          revenue: availability.sold * PILATES.unitPrice
+        },
+        orders: result.rows.map((order) => staffOrder(order, isAdmin))
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  return { createToken, readToken, syncPayment, getAvailability };
+}
+
+async function ensurePilatesSchema(query) {
+  await query(`
+    CREATE TABLE IF NOT EXISTS pilates_orders (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      external_reference TEXT NOT NULL UNIQUE,
+      mercadopago_preference_id TEXT,
+      mercadopago_payment_id TEXT UNIQUE,
+      customer_name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      quantity INTEGER NOT NULL CHECK (quantity > 0),
+      unit_price NUMERIC(12, 2) NOT NULL CHECK (unit_price >= 0),
+      total NUMERIC(12, 2) NOT NULL CHECK (total >= 0),
+      status TEXT NOT NULL DEFAULT 'reserved'
+        CHECK (status IN ('reserved', 'pending', 'approved', 'expired', 'cancelled', 'refunded')),
+      reserved_until TIMESTAMPTZ,
+      checked_in INTEGER NOT NULL DEFAULT 0 CHECK (checked_in >= 0 AND checked_in <= quantity),
+      last_check_in_at TIMESTAMPTZ,
+      paid_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  await query(`
+    CREATE TABLE IF NOT EXISTS pilates_check_ins (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      order_id UUID NOT NULL REFERENCES pilates_orders(id) ON DELETE CASCADE,
+      count INTEGER NOT NULL,
+      user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  await query(`CREATE INDEX IF NOT EXISTS idx_pilates_orders_status ON pilates_orders(status, reserved_until)`);
+}
+
+module.exports = { registerPilatesRoutes, ensurePilatesSchema, PILATES, sanitizeCheckout, parseReference, getPilatesCapacity };

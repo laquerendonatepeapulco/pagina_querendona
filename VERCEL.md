@@ -12,6 +12,9 @@ Configuracion recomendada en Vercel:
 
 Variables de entorno necesarias:
 
+- `PILATES_CAPACITY` (opcional): cupo total de Pilates Party. Si no existe, se usan 80 lugares.
+- `PILATES_SALES_CLOSED` (opcional): `true` para cerrar la venta de Pilates Party antes de tiempo. La venta cierra sola el 14 de noviembre de 2026 a las 14:00.
+
 - `DATABASE_URL`: cadena de conexion de Neon/PostgreSQL. En Neon normalmente termina con `?sslmode=require`.
 - `SESSION_SECRET`: texto largo y privado para firmar sesiones del inventario.
 - `MERCADO_PAGO_ACCESS_TOKEN`: credencial privada de produccion para crear y verificar los pagos de Latidos de Mexico.
@@ -31,4 +34,7 @@ Rutas principales:
 - Verificacion de pagos de Latidos de Mexico: `/api/latidos/payment`
 - Pase de Google Wallet por boleto: `/api/latidos/tickets/:token/wallet`
 - Registros privados de Latidos (solo administradores): `/latidos-registros.html`
+- Pilates Party (página pública y compra): `/pilates`
+- Pilates Party · escáner y lista del personal: `/pilates-acceso.html`
+- API de Pilates Party: `/api/pilates/*` (usa la misma cuenta `MERCADO_PAGO_ACCESS_TOKEN`)
 - API privada de registros y pagos confirmados: `/api/latidos/registrations`
