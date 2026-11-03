@@ -136,7 +136,7 @@ h2 em{font-style:italic;color:var(--arena)}
 .btn-pay{width:100%;background:var(--cafe);color:var(--crema);box-shadow:none}
 .btn-pay:hover{background:var(--tierra);color:var(--crema)}
 .btn-pay:disabled{opacity:.6;cursor:wait;transform:none}
-.buy-legal{margin:14px 0 0;font-size:11px;line-height:1.6;color:#7a6556}
+.buy-legal{margin:14px 0 0;font-size:12px;line-height:1.6;color:#7a6556;text-align:center}
 .buy-legal a{color:var(--tierra)}
 .buy.is-soldout .buy-form input,.buy.is-soldout .qty{opacity:.5;pointer-events:none}
 

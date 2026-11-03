@@ -24,6 +24,7 @@ const staticEntries = [
   "cookies.css",
   "privacidad.html",
   "privacidad.css",
+  "aviso.css",
   "promociones.html",
   "latidos-de-mexico.html",
   "latidos-scanner.html",
