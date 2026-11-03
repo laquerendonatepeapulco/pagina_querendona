@@ -19,6 +19,8 @@ input{display:block;width:100%;margin-top:6px;padding:12px 14px;border-radius:12
 .btn-ghost{background:transparent;color:var(--crema);border:1px solid rgba(246,236,224,.4)}
 .btn-go{background:var(--ok);color:#fff}
 .link{background:none;border:0;color:var(--arena);font:300 13px "Poppins",sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px}
+.legal{margin-top:14px;font-size:12px;line-height:1.6;color:var(--crema-2)}
+.legal a{color:var(--arena)}
 .error{margin-top:12px;color:#ffb4a8;font-size:14px}
 .error[hidden],[hidden]{display:none!important}
 .bar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--crema-2);margin-bottom:12px}
