@@ -15,8 +15,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="fonts/poppins-300.woff" as="font" type="font/woff" crossorigin>
 <link rel="preload" href="img/pilates/pilates-party-titulo.webp" as="image">
-<link rel="stylesheet" href="pilates.css?v=20261103">
-<script defer src="pilates.js?v=20261103"></script>
+<link rel="stylesheet" href="pilates.css?v=20261103n">
+<script defer src="pilates.js?v=20261103n"></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -40,6 +40,20 @@
 </head>
 <body>
 <a class="skip" href="#evento">Saltar al contenido</a>
+
+<nav class="topnav" id="topnav" aria-label="Menú principal">
+  <a class="topnav-brand" href="#" aria-label="Pilates Party, ir al inicio">
+    <img src="img/pilates/pilates-party-titulo.webp" alt="" width="1300" height="732">
+    <span>14 · 11 · 26</span>
+  </a>
+  <div class="topnav-links">
+    <a href="#evento">Programa</a>
+    <a href="#incluye">Incluye</a>
+    <a href="#sede">La sede</a>
+    <a href="#flyers">Flyers</a>
+  </div>
+  <a class="topnav-cta" href="#comprar">Comprar entrada</a>
+</nav>
 
 <header class="hero">
   <div class="hero-photo" aria-hidden="true"></div>
@@ -97,7 +111,7 @@
     </div>
   </section>
 
-  <section class="section includes" aria-labelledby="incluye-titulo">
+  <section class="section includes" id="incluye" aria-labelledby="incluye-titulo">
     <div class="includes-bg" aria-hidden="true"></div>
     <p class="kicker" id="incluye-titulo">Tu entrada incluye</p>
     <ul class="include-grid">
@@ -174,7 +188,7 @@
     </div>
   </section>
 
-  <section class="section venue" aria-labelledby="sede-titulo">
+  <section class="section venue" id="sede" aria-labelledby="sede-titulo">
     <div class="venue-copy reveal">
       <p class="kicker">La sede</p>
       <h2 id="sede-titulo">La Querendona</h2>
@@ -186,7 +200,7 @@
     </figure>
   </section>
 
-  <section class="section flyers" aria-labelledby="flyers-titulo">
+  <section class="section flyers" id="flyers" aria-labelledby="flyers-titulo">
     <p class="kicker" id="flyers-titulo">Comparte el evento</p>
     <div class="flyer-grid">
       <a class="flyer reveal" href="img/pilates/flyer-pilates-party.jpg" download>

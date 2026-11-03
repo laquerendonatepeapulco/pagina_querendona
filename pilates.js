@@ -298,3 +298,24 @@
   loadAvailability();
 })();
 
+// ---------- Menú superior ----------
+(() => {
+  const nav = document.getElementById("topnav");
+  if (!nav) return;
+  const update = () => nav.classList.toggle("is-solid", window.scrollY > 40);
+  update();
+  window.addEventListener("scroll", update, { passive: true });
+
+  const links = [...nav.querySelectorAll(".topnav-links a")];
+  if (!("IntersectionObserver" in window)) return;
+  const byId = new Map(links.map((a) => [a.hash.slice(1), a]));
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      links.forEach((a) => a.classList.remove("is-active"));
+      byId.get(entry.target.id)?.classList.add("is-active");
+    });
+  }, { rootMargin: "-40% 0px -55% 0px" });
+  byId.forEach((_, id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+})();
+

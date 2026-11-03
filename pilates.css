@@ -21,7 +21,7 @@
 }
 
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
 body{margin:0;background:var(--cafe);color:var(--crema);font:300 16px/1.7 var(--sans);-webkit-font-smoothing:antialiased}
 img{max-width:100%;display:block}
 a{color:inherit}
@@ -30,8 +30,26 @@ h1,h2,p{margin:0}
 .skip:focus{left:8px}
 :focus-visible{outline:2px solid var(--crema);outline-offset:4px;border-radius:6px}
 
+/* Menú superior */
+.topnav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:24px;height:72px;padding:0 max(20px,calc((100vw - 1160px)/2));transition:background .3s,box-shadow .3s,border-color .3s;border-bottom:1px solid transparent}
+.topnav.is-solid{background:rgba(246,236,224,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom-color:rgba(58,35,22,.18);box-shadow:0 8px 24px rgba(20,10,4,.12)}
+.topnav-brand{display:flex;align-items:center;gap:14px;text-decoration:none}
+.topnav-brand img{width:104px;height:auto;transition:filter .3s}
+.topnav-brand span{font-size:11px;letter-spacing:.28em;color:var(--arena);padding-left:14px;border-left:1px solid currentColor;line-height:1.2}
+.topnav-links{display:flex;align-items:center;gap:30px}
+.topnav-links a{font-size:13px;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--crema);position:relative;padding:6px 0}
+.topnav-links a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.topnav-links a:hover::after,.topnav-links a.is-active::after{transform:scaleX(1)}
+.topnav-cta{display:inline-flex;align-items:center;min-height:44px;padding:10px 22px;border-radius:999px;background:var(--crema);color:var(--cafe);font:500 12px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none;transition:background .25s,color .25s,transform .25s}
+.topnav-cta:hover{transform:translateY(-1px)}
+.topnav.is-solid .topnav-brand img{filter:brightness(0) saturate(100%) invert(12%) sepia(30%) saturate(1200%) hue-rotate(345deg) brightness(90%)}
+.topnav.is-solid .topnav-brand span{color:var(--terracota)}
+.topnav.is-solid .topnav-links a{color:var(--cafe)}
+.topnav.is-solid .topnav-cta{background:var(--terracota);color:var(--crema)}
+.topnav.is-solid .topnav-cta:hover{background:var(--tierra)}
+
 /* Portada */
-.hero{position:relative;min-height:100svh;display:grid;place-items:center;padding:40px 20px 96px;overflow:hidden;isolation:isolate;text-align:center}
+.hero{position:relative;min-height:100svh;display:grid;place-items:center;padding:104px 20px 96px;overflow:hidden;isolation:isolate;text-align:center}
 .hero-photo{position:absolute;inset:-4%;z-index:-2;background:url(img/pilates/foto-mat.webp) center 35%/cover no-repeat;transform:scale(1.04);animation:drift 24s ease-in-out infinite alternate}
 .hero::before{content:"";position:absolute;inset:0;z-index:-1;background:
   linear-gradient(180deg,rgba(36,21,13,.70) 0%,rgba(36,21,13,.42) 32%,rgba(58,35,22,.78) 62%,var(--cafe) 100%),
@@ -199,6 +217,7 @@ body.has-modal{overflow:hidden}
 @keyframes scroll{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
 
 @media(max-width:860px){
+  .topnav-links{display:none}
   .buy-card{grid-template-columns:1fr;padding:28px 18px 18px;gap:28px;text-align:center}
   .buy-intro>p{margin-left:auto;margin-right:auto}
   .buy-steps{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;text-align:left}
@@ -208,7 +227,11 @@ body.has-modal{overflow:hidden}
   .venue-photo{max-width:440px;margin:0 auto}
 }
 @media(max-width:480px){
-  .hero{padding:32px 16px 92px}
+  .topnav{height:64px;gap:12px}
+  .topnav-brand img{width:84px}
+  .topnav-brand span{display:none}
+  .topnav-cta{min-height:40px;padding:8px 16px;font-size:11px;letter-spacing:.12em}
+  .hero{padding:88px 16px 92px}
   .partners{gap:8px 10px;flex-wrap:wrap}
   .logo-numa{width:118px}
   .logo-buzz{width:110px}
