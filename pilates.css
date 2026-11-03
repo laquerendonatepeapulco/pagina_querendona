@@ -43,6 +43,8 @@ h1,h2,p{margin:0}
 .partners img{height:auto}
 .logo-numa{width:clamp(140px,22vw,210px)}
 .logo-buzz{width:clamp(130px,20vw,190px)}
+.venue-logo{display:flex}
+.logo-querendona{width:clamp(120px,17vw,170px)}
 .partners .x{font-weight:300;font-size:22px;opacity:.8}
 
 .title{width:min(560px,92%);margin:0 0 22px;filter:drop-shadow(0 6px 22px rgba(20,10,4,.45))}
@@ -126,6 +128,7 @@ h2 em{font-style:italic;color:var(--arena)}
 .footer-logos img:nth-child(1){width:130px}
 .footer-logos img:nth-child(2){width:130px}
 .footer-logos img:nth-child(3){width:86px}
+.footer-logos img:nth-child(4){width:120px}
 .footer p{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--crema-2);opacity:.75}
 
 /* Animación de entrada */
@@ -145,7 +148,13 @@ h2 em{font-style:italic;color:var(--arena)}
 }
 @media(max-width:480px){
   .hero{padding:32px 16px 92px}
-  .partners{gap:12px}
+  .partners{gap:8px 10px;flex-wrap:wrap}
+  .logo-numa{width:118px}
+  .logo-buzz{width:110px}
+  .logo-querendona{width:100px}
+  .partners .x{font-size:16px}
+  .x-venue{display:none}
+  .venue-logo{flex-basis:100%;display:flex;justify-content:center;margin-top:4px}
   .tagline{letter-spacing:.2em}
   .slot{padding:18px 8px 16px}
   .slot-label,.include-grid span{font-size:11px;letter-spacing:.14em}
