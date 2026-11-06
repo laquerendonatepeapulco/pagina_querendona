@@ -343,7 +343,10 @@
   } else if (saved) {
     // Revisa en silencio que el boleto guardado siga siendo válido.
     fetch(`/api/pilates/ticket?token=${encodeURIComponent(saved)}`, { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
+      .then((response) => {
+        if ([403, 404].includes(response.status)) { store.clear(); return null; }
+        return response.ok ? response.json() : null;
+      })
       .then((data) => {
         if (data && data.approved) showHaveTicket(data);
         else if (data) store.clear();

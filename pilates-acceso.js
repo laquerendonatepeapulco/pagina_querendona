@@ -164,10 +164,12 @@
     $("sheet").hidden = false;
     card.focus();
   }
+  let resumeCamera = false;
   function closeSheet() {
     $("sheet").hidden = true;
     current = null;
-    if (!$("panelScan").hidden) startCamera();
+    if (resumeCamera && !$("panelScan").hidden) startCamera();
+    resumeCamera = false;
   }
   $("sheet").addEventListener("click", (event) => { if (event.target.closest("[data-close]")) closeSheet(); });
 
@@ -242,6 +244,7 @@
   }
 
   async function lookup(ref) {
+    resumeCamera = Boolean(stream);
     stopCamera();
     try {
       const { data } = await api("/api/pilates/check-in", { method: "POST", body: JSON.stringify(ref) });
@@ -301,7 +304,7 @@
     const { ok, data } = await api("/api/pilates/test-ticket/clear", { method: "POST", body: "{}" });
     $("testResult").hidden = false;
     $("testQr").removeAttribute("src");
-    $("testCode").textContent = ok ? `Se borraron ${data.removed} ${data.removed === 1 ? "boleto" : "boletos"} de prueba.` : (data.error || "No se pudo borrar.");
+    $("testCode").textContent = ok ? (data.removed === 1 ? "Se borró 1 boleto de prueba." : `Se borraron ${data.removed} boletos de prueba.`) : (data.error || "No se pudo borrar.");
     loadOrders();
   });
 
