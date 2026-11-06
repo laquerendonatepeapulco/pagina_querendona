@@ -148,6 +148,7 @@ function registerPilatesRoutes(app, deps) {
         COALESCE(SUM(checked_in) FILTER (WHERE status = 'approved'), 0)::INTEGER AS checked_in,
         COUNT(*) FILTER (WHERE status = 'approved')::INTEGER AS orders
       FROM pilates_orders
+      WHERE NOT is_test
       GROUP BY COALESCE(slot, '')
     `);
     const empty = () => ({ sold: 0, held: 0, checkedIn: 0, orders: 0 });
@@ -206,7 +207,8 @@ function registerPilatesRoutes(app, deps) {
       checkedIn,
       remaining: Math.max(0, quantity - checkedIn),
       total: Number(order.total),
-      ticketToken: approved ? createToken("ticket", order.id) : null
+      ticketToken: approved ? createToken("ticket", order.id) : null,
+      isTest: order.is_test === true || order.is_test === "t"
     };
   }
 
@@ -550,6 +552,7 @@ function registerPilatesRoutes(app, deps) {
       checkedIn: base.checkedIn,
       remaining: base.remaining,
       total: base.total,
+      isTest: base.isTest,
       paidAt: order.paid_at || null,
       lastCheckInAt: order.last_check_in_at || null,
       paymentId: isAdmin ? order.mercadopago_payment_id || null : undefined
@@ -717,6 +720,36 @@ function registerPilatesRoutes(app, deps) {
     }
   });
 
+  // Boletos de prueba: mismo QR, boleto y escáner, sin cobro y sin ocupar lugares.
+  app.post("/api/pilates/test-ticket", authRequired, adminRequired, async (req, res, next) => {
+    try {
+      const slot = SLOT_BY_ID.get(String(req.body?.slot || "08")) || PILATES_SLOTS[0];
+      const quantity = Math.min(Math.max(Number.parseInt(String(req.body?.quantity ?? "2"), 10) || 2, 1), PILATES.maxPerOrder);
+      const inserted = await query(
+        `
+          INSERT INTO pilates_orders (external_reference, customer_name, phone, quantity, unit_price, total, status, slot, paid_at, is_test)
+          VALUES ($1, 'Boleto de prueba', '0000000000', $2, 0, 0, 'approved', $3, now(), true)
+          RETURNING *
+        `,
+        [`prueba:${crypto.randomUUID()}`, quantity, slot.id]
+      );
+      const order = inserted.rows[0];
+      const token = createToken("ticket", order.id);
+      res.status(201).json({ ticketToken: token, ticketUrl: `${getPublicSiteUrl()}/pilates?boleto=${encodeURIComponent(token)}`, order: staffOrder(order, true) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/pilates/test-ticket/clear", authRequired, adminRequired, async (req, res, next) => {
+    try {
+      const removed = await query("DELETE FROM pilates_orders WHERE is_test RETURNING id");
+      res.json({ removed: removed.rows.length });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return { createToken, readToken, syncPayment, getAvailability };
 }
 
@@ -753,6 +786,7 @@ async function ensurePilatesSchema(query) {
   `);
   await query(`CREATE INDEX IF NOT EXISTS idx_pilates_orders_status ON pilates_orders(status, reserved_until)`);
   await query(`ALTER TABLE pilates_orders ADD COLUMN IF NOT EXISTS slot TEXT CHECK (slot IN ('08', '09'))`);
+  await query(`ALTER TABLE pilates_orders ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT false`);
 
   // Cuenta de administrador para el control de acceso de Pilates Party.
   // Solo se crea si no existe; si luego se cambia la contraseña con

@@ -29,6 +29,7 @@
   async function showApp() {
     $("login").hidden = true; $("app").hidden = false;
     $("who").textContent = `${user.name} · ${user.role === "admin" ? "Administrador" : "Personal"}`;
+    $("testTools").hidden = user.role !== "admin";
     await loadOrders();
   }
 
@@ -124,6 +125,7 @@
       pill.className = "pill";
       pill.textContent = `${order.checkedIn}/${order.quantity}`;
       name.append(pill);
+      if (order.isTest) { const t = document.createElement("span"); t.className = "pill pill-test"; t.textContent = "PRUEBA"; name.append(t); }
       const phone = document.createElement("small");
       phone.textContent = `${order.slot ? SHORT[order.slot] : "Sin horario"} · ${order.phone}`;
       if (!order.slot) phone.className = "no-slot";
@@ -231,7 +233,7 @@
       admitQty = order.remaining;
       $("sheetAdmit").hidden = false;
       renderAdmitQty();
-      openSheet("check", "Entrada pagada", order.name, `${order.phone} · confirma cuántas personas entran.`);
+      openSheet("check", order.isTest ? "Entrada de prueba" : "Entrada pagada", order.name, `${order.phone} · confirma cuántas personas entran.`);
     } else {
       $("sheetAdmit").hidden = true;
       const used = payload.reason === "used";
@@ -274,6 +276,32 @@
     const { ok, data } = await api("/api/pilates/check-in/undo", { method: "POST", body: JSON.stringify({ ...current.ref, count: 1 }) });
     if (!ok) { $("sheetSub").textContent = data.error || "No se pudo corregir."; return; }
     await lookup(current.ref);
+    loadOrders();
+  });
+
+  // ---------- Boleto de prueba ----------
+  $("testCreate").addEventListener("click", async () => {
+    $("testCreate").disabled = true;
+    try {
+      const { ok, data } = await api("/api/pilates/test-ticket", { method: "POST", body: JSON.stringify({ slot: "08", quantity: 2 }) });
+      if (!ok) throw new Error(data.error || "No se pudo crear el boleto de prueba.");
+      $("testQr").src = `/api/pilates/qr/${encodeURIComponent(data.ticketToken)}`;
+      $("testOpen").href = data.ticketUrl;
+      $("testCode").textContent = "Escanéalo con otro teléfono o usa «Escribir el código a mano» para probar el registro de entrada.";
+      $("manualCode").value = data.ticketToken;
+      $("testResult").hidden = false;
+      loadOrders();
+    } catch (error) {
+      $("testCode").textContent = error.message; $("testResult").hidden = false;
+    } finally {
+      $("testCreate").disabled = false;
+    }
+  });
+  $("testClear").addEventListener("click", async () => {
+    const { ok, data } = await api("/api/pilates/test-ticket/clear", { method: "POST", body: "{}" });
+    $("testResult").hidden = false;
+    $("testQr").removeAttribute("src");
+    $("testCode").textContent = ok ? `Se borraron ${data.removed} ${data.removed === 1 ? "boleto" : "boletos"} de prueba.` : (data.error || "No se pudo borrar.");
     loadOrders();
   });
 

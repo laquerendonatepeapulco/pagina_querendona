@@ -82,3 +82,10 @@ input{display:block;width:100%;margin-top:6px;padding:12px 14px;border-radius:12
 .sheet-assign div{display:flex;gap:8px;justify-content:center}
 .sheet-assign button{flex:1;max-width:180px;min-height:42px;border-radius:999px;border:1px solid rgba(246,236,224,.35);background:none;color:var(--crema);font:500 13px "Poppins",sans-serif;cursor:pointer}
 .sheet-assign button[aria-pressed="true"]{background:var(--arena);color:var(--cafe);border-color:var(--arena)}
+.test-card{margin-top:14px;border-style:dashed;border-color:rgba(243,201,139,.5)}
+.test-card h2{font-size:20px}
+.test-actions{display:grid;gap:8px;justify-items:center}
+.test-result{display:grid;gap:12px;justify-items:center;margin-top:16px;text-align:center}
+.test-result img{width:200px;height:200px;border-radius:14px;background:var(--crema);padding:8px}
+.test-result img:not([src]){display:none}
+.pill-test{background:#f3c98b;color:var(--cafe)}

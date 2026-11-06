@@ -199,6 +199,8 @@ body.has-modal{overflow:hidden}
 .ticket-ready{font-size:clamp(24px,6vw,30px);margin:-4px 0 16px}
 .ticket-slot{display:inline-block;margin:0 0 10px;padding:6px 14px;border-radius:999px;background:rgba(246,236,224,.12);border:1px solid rgba(246,236,224,.3);font-size:13px;letter-spacing:.08em}
 .ticket-slot:empty{display:none}
+.ticket-test{display:inline-block;margin:0 0 12px;padding:5px 14px;border-radius:999px;background:#f3c98b;color:var(--cafe);font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase}
+.ticket-test[hidden]{display:none}
 .ticket-paid-msg{margin:-8px 0 16px;font-size:14px;color:var(--crema-2)}
 .ticket-count{font:400 24px/1.2 var(--serif);margin-bottom:4px}
 .ticket-name{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--arena);margin-bottom:12px}

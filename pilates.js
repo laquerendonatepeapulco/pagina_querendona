@@ -259,6 +259,7 @@
     const count = order.quantity === 1 ? "1 entrada" : `${order.quantity} entradas`;
     const text = `Boleto de Pilates Party (${when}), vale por ${count}. Ábrelo y muestra el QR al llegar: ${ticketLink(token)}`;
     el("ticketReadyTitle").textContent = fresh ? "¡Pago realizado!" : "Tu boleto";
+    el("ticketTest").hidden = !order.isTest;
     el("ticketPaidMsg").textContent = fresh ? "Descarga tu QR y preséntalo al llegar." : "Muestra este QR al llegar.";
     el("ticketWhatsApp").href = `https://wa.me/?text=${encodeURIComponent(text)}`;
     modal.setAttribute("aria-labelledby", "ticketReadyTitle");

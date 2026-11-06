@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="theme-color" content="#24150d">
 <title>Acceso del personal · Pilates Party</title>
-<link rel="stylesheet" href="pilates-acceso.css?v=20261105">
-<script defer src="pilates-acceso.js?v=20261105"></script>
+<link rel="stylesheet" href="pilates-acceso.css?v=20261106">
+<script defer src="pilates-acceso.js?v=20261106"></script>
 </head>
 <body>
 <main class="shell">
@@ -61,6 +61,20 @@
         <summary>Escribir el código a mano</summary>
         <form id="manualForm"><input id="manualCode" autocomplete="off" spellcheck="false" placeholder="pp1…" required><button class="btn" type="submit">Buscar</button></form>
       </details>
+    </section>
+
+    <section class="card test-card" id="testTools" hidden aria-labelledby="testTitle">
+      <h2 id="testTitle">Boleto de prueba</h2>
+      <p class="muted">Crea un boleto sin cobro para probar el QR y el escáner. No ocupa lugares y se puede borrar.</p>
+      <div class="test-actions">
+        <button class="btn" type="button" id="testCreate">Crear boleto de prueba</button>
+        <button class="link" type="button" id="testClear">Borrar boletos de prueba</button>
+      </div>
+      <div class="test-result" id="testResult" hidden>
+        <img id="testQr" alt="QR del boleto de prueba" width="220" height="220">
+        <a class="btn btn-ghost" id="testOpen" href="#" target="_blank" rel="noopener">Abrir boleto de prueba</a>
+        <p class="muted" id="testCode"></p>
+      </div>
     </section>
 
     <section class="card" id="panelList" role="tabpanel" aria-labelledby="tabList" hidden>
