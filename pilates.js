@@ -59,7 +59,7 @@
   const stockOut = document.getElementById("buyStock");
   const errorOut = document.getElementById("buyError");
   const payButton = document.getElementById("buyButton");
-  const myTicket = document.getElementById("myTicketLink");
+  const haveTicket = document.getElementById("haveTicket");
   const stepButtons = form.querySelectorAll(".qty-btn");
 
   let qty = 1;
@@ -73,7 +73,8 @@
 
   const store = {
     get() { try { return localStorage.getItem(STORE_KEY); } catch (e) { return null; } },
-    set(v) { try { localStorage.setItem(STORE_KEY, v); } catch (e) { /* sin almacenamiento */ } }
+    set(v) { try { localStorage.setItem(STORE_KEY, v); } catch (e) { /* sin almacenamiento */ } },
+    clear() { try { localStorage.removeItem(STORE_KEY); } catch (e) { /* sin almacenamiento */ } }
   };
 
   function renderQty() {
@@ -219,7 +220,25 @@
     return `${location.origin}/pilates?boleto=${encodeURIComponent(token)}`;
   }
 
-  function showTicket(order) {
+  // Quien ya compró ve su boleto en lugar del formulario (puede abrirlo para comprar más).
+  function showHaveTicket(order) {
+    const count = order.quantity === 1 ? "1 entrada" : `${order.quantity} entradas`;
+    document.getElementById("haveTicketInfo").textContent = `${order.name} · ${count} · ${order.slotLabel || "Horario por confirmar"}`;
+    form.hidden = true;
+    haveTicket.hidden = false;
+  }
+
+  document.getElementById("haveTicketOpen").addEventListener("click", () => {
+    const token = store.get();
+    if (token) openSavedTicket(token);
+  });
+  document.getElementById("buyMore").addEventListener("click", () => {
+    haveTicket.hidden = true;
+    form.hidden = false;
+    nameInput.focus();
+  });
+
+  function showTicket(order, fresh = false) {
     const token = order.ticketToken;
     const qr = `/api/pilates/qr/${encodeURIComponent(token)}`;
     el("ticketQr").src = qr;
@@ -237,15 +256,17 @@
       used.hidden = true;
     }
     const when = order.slot ? `${(order.slotLabel || "").toLowerCase()}, sábado 14 de noviembre` : "sábado 14 de noviembre";
-    const text = `Mi boleto para Pilates Party (${when}): ${ticketLink(token)}`;
+    const count = order.quantity === 1 ? "1 entrada" : `${order.quantity} entradas`;
+    const text = `Boleto de Pilates Party (${when}), vale por ${count}. Ábrelo y muestra el QR al llegar: ${ticketLink(token)}`;
+    el("ticketReadyTitle").textContent = fresh ? "¡Pago realizado!" : "Tu boleto";
+    el("ticketPaidMsg").textContent = fresh ? "Descarga tu QR y preséntalo al llegar." : "Muestra este QR al llegar.";
     el("ticketWhatsApp").href = `https://wa.me/?text=${encodeURIComponent(text)}`;
     modal.setAttribute("aria-labelledby", "ticketReadyTitle");
     stateBox.hidden = true;
     retry.hidden = true;
     body.hidden = false;
     store.set(token);
-    myTicket.href = ticketLink(token);
-    myTicket.hidden = false;
+    showHaveTicket(order);
     history.replaceState(null, "", `/pilates?boleto=${encodeURIComponent(token)}`);
     openModal();
   }
@@ -271,7 +292,7 @@
       const response = await fetch(url, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "No pudimos revisar tu pago.");
-      if (data.approved && data.ticketToken) return showTicket(data);
+      if (data.approved && data.ticketToken) return showTicket(data, true);
       if (failed && data.status !== "pending") return showNotCompleted(returnToken);
       if (["reserved", "pending"].includes(data.status) && attempt < 24) {
         showState("Tu pago", "Confirmando tu pago…", data.status === "pending"
@@ -302,21 +323,10 @@
     }
   }
 
-  myTicket.addEventListener("click", (event) => {
-    const token = store.get();
-    if (!token) return;
-    event.preventDefault();
-    openSavedTicket(token);
-  });
-
   const params = new URLSearchParams(location.search);
   const returnToken = params.get("t");
   const boleto = params.get("boleto");
   const saved = store.get();
-  if (saved) {
-    myTicket.href = ticketLink(saved);
-    myTicket.hidden = false;
-  }
 
   if (returnToken && params.get("pago")) {
     const paymentId = validPaymentId(params.get("payment_id")) || validPaymentId(params.get("collection_id"));
@@ -329,6 +339,15 @@
     }
   } else if (boleto) {
     openSavedTicket(boleto);
+  } else if (saved) {
+    // Revisa en silencio que el boleto guardado siga siendo válido.
+    fetch(`/api/pilates/ticket?token=${encodeURIComponent(saved)}`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data && data.approved) showHaveTicket(data);
+        else if (data) store.clear();
+      })
+      .catch(() => {});
   }
 
   renderQty();

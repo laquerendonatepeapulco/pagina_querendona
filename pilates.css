@@ -169,6 +169,12 @@ h2 em{font-style:italic;color:var(--arena)}
 .stock{margin:0 0 12px;font-size:13px;color:var(--terracota);font-weight:500}
 .stock[hidden],.buy-error[hidden]{display:none}
 .buy-error{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#fbe3dc;color:#8c1d12;font-size:14px}
+.have-ticket{background:var(--crema);color:var(--cafe);border-radius:22px;padding:30px 26px 22px;text-align:center;box-shadow:0 16px 40px rgba(20,10,4,.35)}
+.have-ticket[hidden],.buy-form[hidden]{display:none}
+.have-check{display:grid;place-items:center;width:52px;height:52px;margin:0 auto 14px;border-radius:50%;background:var(--matcha);color:var(--cafe);font-size:24px;font-weight:500}
+.have-ticket h3{margin:0 0 6px;font:400 26px/1.2 var(--serif)}
+.have-ticket p{margin:0 0 20px;font-size:14px;color:var(--tierra)}
+.buy-more{margin-top:14px;padding:6px;border:0;background:none;color:var(--tierra);font:400 13px var(--sans);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .btn-pay{width:100%;background:var(--cafe);color:var(--crema);box-shadow:none}
 .btn-pay:hover{background:var(--tierra);color:var(--crema)}
 .btn-pay:disabled{opacity:.6;cursor:wait;transform:none}
@@ -193,6 +199,7 @@ body.has-modal{overflow:hidden}
 .ticket-ready{font-size:clamp(24px,6vw,30px);margin:-4px 0 16px}
 .ticket-slot{display:inline-block;margin:0 0 10px;padding:6px 14px;border-radius:999px;background:rgba(246,236,224,.12);border:1px solid rgba(246,236,224,.3);font-size:13px;letter-spacing:.08em}
 .ticket-slot:empty{display:none}
+.ticket-paid-msg{margin:-8px 0 16px;font-size:14px;color:var(--crema-2)}
 .ticket-count{font:400 24px/1.2 var(--serif);margin-bottom:4px}
 .ticket-name{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--arena);margin-bottom:12px}
 .ticket-meta{font-size:12px;letter-spacing:.08em;color:var(--crema-2);margin-bottom:18px}

@@ -15,8 +15,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="fonts/poppins-300.woff" as="font" type="font/woff" crossorigin>
 <link rel="preload" href="img/pilates/pilates-party-titulo.webp" as="image">
-<link rel="stylesheet" href="pilates.css?v=20261105b">
-<script defer src="pilates.js?v=20261105b"></script>
+<link rel="stylesheet" href="pilates.css?v=20261106">
+<script defer src="pilates.js?v=20261106"></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -159,7 +159,6 @@
           <li><span>2</span>Paga con tarjeta o saldo de Mercado Pago</li>
           <li><span>3</span>Guarda tu QR y preséntalo al llegar</li>
         </ol>
-        <a class="link my-ticket" id="myTicketLink" href="#" hidden>Ver mi boleto <span aria-hidden="true">→</span></a>
       </div>
 
       <form class="buy-form" id="buyForm" novalidate>
@@ -203,6 +202,14 @@
         <button class="btn btn-pay" type="submit" id="buyButton">Pagar con Mercado Pago</button>
         <p class="buy-legal"><a href="privacidad.html#eventos-pilates" target="_blank" rel="noopener">Consulta el aviso de privacidad</a></p>
       </form>
+
+      <div class="have-ticket" id="haveTicket" hidden>
+        <span class="have-check" aria-hidden="true">✓</span>
+        <h3>Ya tienes tu boleto</h3>
+        <p id="haveTicketInfo"></p>
+        <button class="btn btn-pay" type="button" id="haveTicketOpen">Ver mi QR</button>
+        <button class="buy-more" type="button" id="buyMore">Comprar más entradas</button>
+      </div>
     </div>
   </section>
 
@@ -246,7 +253,8 @@
     </div>
     <div class="ticket-body" id="ticketBody" hidden>
       <img class="ticket-title-img" src="img/pilates/pilates-party-titulo.webp" alt="" width="1300" height="732">
-      <h2 class="ticket-ready" id="ticketReadyTitle">¡Tu lugar está listo!</h2>
+      <h2 class="ticket-ready" id="ticketReadyTitle">¡Pago realizado!</h2>
+      <p class="ticket-paid-msg" id="ticketPaidMsg">Descarga tu QR y preséntalo al llegar.</p>
       <div class="ticket-qr"><img id="ticketQr" alt="Código QR de tu entrada" width="720" height="720"></div>
       <p class="ticket-count" id="ticketCount"></p>
       <p class="ticket-name" id="ticketName"></p>
@@ -255,7 +263,7 @@
       <p class="ticket-used" id="ticketUsed" hidden></p>
       <div class="ticket-actions">
         <a class="btn" id="ticketDownload" href="#" download="boleto-pilates-party.png">Descargar QR</a>
-        <a class="link" id="ticketWhatsApp" href="#" target="_blank" rel="noopener">Enviármelo por WhatsApp <span aria-hidden="true">→</span></a>
+        <a class="link" id="ticketWhatsApp" href="#" target="_blank" rel="noopener">Compartir por WhatsApp <span aria-hidden="true">→</span></a>
       </div>
       <p class="ticket-tip">Guarda una captura de pantalla. Si vienen en grupo, el mismo QR sirve para todos.</p>
     </div>
