@@ -65,6 +65,7 @@
       $("statIn").textContent = data.summary.checkedIn;
       $("statLeft").textContent = Math.max(0, data.summary.sold - data.summary.checkedIn);
       $("statSold").textContent = data.summary.sold;
+      renderSlotStats(data.summary);
       renderList();
     } catch (error) {
       $("listEmpty").textContent = error.message;
@@ -72,11 +73,47 @@
     }
   }
 
+  const SHORT = { "08": "8:00 – 9:00", "09": "9:00 – 10:00" };
+  let filter = "all";
+
+  function renderSlotStats(summary) {
+    const box = $("slotStats");
+    box.replaceChildren();
+    (summary.slots || []).forEach((slot) => {
+      const row = document.createElement("p");
+      const time = document.createElement("b");
+      time.textContent = slot.short;
+      row.append(time, ` · ingresaron ${slot.checkedIn} de ${slot.sold} · ${slot.available} libres`);
+      box.append(row);
+    });
+    const pending = summary.unassigned && summary.unassigned.sold;
+    $("filterNone").hidden = !pending;
+    if (!pending && filter === "none") {
+      filter = "all";
+      $("filters").querySelectorAll("[data-f]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.f === "all")));
+    }
+    if (pending) {
+      const row = document.createElement("p");
+      row.className = "warn-row";
+      row.textContent = `${pending} ${pending === 1 ? "entrada" : "entradas"} sin horario asignado`;
+      box.append(row);
+    }
+  }
+
+  $("filters").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-f]");
+    if (!button) return;
+    filter = button.dataset.f;
+    $("filters").querySelectorAll("[data-f]").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+    renderList();
+  });
+
   function renderList() {
     const term = $("search").value.trim().toLowerCase();
     const list = $("list");
     list.replaceChildren();
-    const visible = orders.filter((o) => o.status === "approved" && (!term || o.name.toLowerCase().includes(term) || String(o.phone).replace(/\D/g, "").endsWith(term.replace(/\D/g, "") || "~")));
+    const bySlot = (o) => filter === "all" || (filter === "none" ? !o.slot : o.slot === filter);
+    const visible = orders.filter((o) => o.status === "approved" && bySlot(o) && (!term || o.name.toLowerCase().includes(term) || String(o.phone).replace(/\D/g, "").endsWith(term.replace(/\D/g, "") || "~")));
     visible.forEach((order) => {
       const li = document.createElement("li");
       if (order.remaining === 0) li.className = "done";
@@ -88,7 +125,8 @@
       pill.textContent = `${order.checkedIn}/${order.quantity}`;
       name.append(pill);
       const phone = document.createElement("small");
-      phone.textContent = order.phone;
+      phone.textContent = `${order.slot ? SHORT[order.slot] : "Sin horario"} · ${order.phone}`;
+      if (!order.slot) phone.className = "no-slot";
       info.append(name, phone);
       const button = document.createElement("button");
       button.type = "button";
@@ -149,8 +187,37 @@
     admitQty += Number(b.dataset.step); renderAdmitQty();
   }));
 
+  function renderSlot(order) {
+    const tag = $("sheetSlot");
+    tag.hidden = !order;
+    if (!order) { $("sheetAssign").hidden = true; return; }
+    tag.textContent = order.slot ? `Clase ${SHORT[order.slot]}` : "Horario por asignar";
+    tag.classList.toggle("is-missing", !order.slot);
+    const isAdmin = user && user.role === "admin";
+    $("sheetAssign").hidden = !isAdmin;
+    $("sheetAssign").querySelectorAll("[data-assign]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.assign === order.slot)));
+  }
+
+  $("sheetAssign").addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-assign]");
+    if (!button || !current || button.dataset.assign === current.order.slot) return;
+    button.disabled = true;
+    try {
+      const { ok, data } = await api(`/api/pilates/orders/${current.order.id}/slot`, { method: "POST", body: JSON.stringify({ slot: button.dataset.assign }) });
+      if (!ok) throw new Error(data.error || "No se pudo cambiar el horario.");
+      current.order = { ...current.order, slot: data.order.slot, slotLabel: data.order.slotLabel };
+      renderSlot(current.order);
+      loadOrders();
+    } catch (error) {
+      $("sheetSub").textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+
   function showOrder(payload, ref) {
     const order = payload.order;
+    renderSlot(order);
     $("undoBtn").hidden = !(user && user.role === "admin" && order && order.checkedIn > 0);
     if (!order) {
       $("sheetCounts").replaceChildren();
@@ -178,7 +245,7 @@
       const { data } = await api("/api/pilates/check-in", { method: "POST", body: JSON.stringify(ref) });
       showOrder(data, ref);
     } catch (error) {
-      $("sheetAdmit").hidden = true; $("undoBtn").hidden = true; $("sheetCounts").replaceChildren();
+      $("sheetAdmit").hidden = true; $("undoBtn").hidden = true; $("sheetCounts").replaceChildren(); renderSlot(null);
       openSheet("bad", "Sin conexión", "No se pudo validar", error.message);
     }
   }

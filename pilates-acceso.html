@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="theme-color" content="#24150d">
 <title>Acceso del personal · Pilates Party</title>
-<link rel="stylesheet" href="pilates-acceso.css?v=20261103b">
-<script defer src="pilates-acceso.js?v=20261103"></script>
+<link rel="stylesheet" href="pilates-acceso.css?v=20261105">
+<script defer src="pilates-acceso.js?v=20261105"></script>
 </head>
 <body>
 <main class="shell">
@@ -39,6 +39,7 @@
       <div><strong id="statLeft">–</strong><span>Faltan</span></div>
       <div><strong id="statSold">–</strong><span>Vendidas</span></div>
     </div>
+    <div class="slot-stats" id="slotStats" aria-live="polite"></div>
 
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" data-tab="scan" id="tabScan">Escanear</button>
@@ -63,6 +64,12 @@
     </section>
 
     <section class="card" id="panelList" role="tabpanel" aria-labelledby="tabList" hidden>
+      <div class="filters" id="filters" role="group" aria-label="Filtrar por horario">
+        <button type="button" data-f="all" aria-pressed="true">Todos</button>
+        <button type="button" data-f="08" aria-pressed="false">8:00</button>
+        <button type="button" data-f="09" aria-pressed="false">9:00</button>
+        <button type="button" data-f="none" aria-pressed="false" id="filterNone" hidden>Por asignar</button>
+      </div>
       <input class="search" id="search" type="search" placeholder="Nombre o últimos 4 del celular" autocomplete="off">
       <ul class="list" id="list"></ul>
       <p class="muted" id="listEmpty" hidden>No hay compras que coincidan.</p>
@@ -75,6 +82,7 @@
   <div class="sheet-card" id="sheetCard" tabindex="-1">
     <p class="sheet-label" id="sheetLabel"></p>
     <h2 id="sheetTitle"></h2>
+    <p class="sheet-slot" id="sheetSlot" hidden></p>
     <p class="sheet-sub" id="sheetSub"></p>
     <div class="sheet-counts" id="sheetCounts"></div>
     <div class="sheet-admit" id="sheetAdmit" hidden>
@@ -85,6 +93,10 @@
         <button type="button" data-step="1" aria-label="Más">+</button>
       </div>
       <button class="btn btn-go" id="admitBtn" type="button">Registrar entrada</button>
+    </div>
+    <div class="sheet-assign" id="sheetAssign" hidden>
+      <p>Horario de esta compra</p>
+      <div><button type="button" data-assign="08">8:00 – 9:00</button><button type="button" data-assign="09">9:00 – 10:00</button></div>
     </div>
     <button class="link" id="undoBtn" type="button" hidden>Corregir: quitar 1 llegada</button>
     <button class="btn btn-ghost" type="button" data-close id="sheetClose">Escanear siguiente</button>

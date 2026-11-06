@@ -65,6 +65,10 @@
   let qty = 1;
   let maxQty = 10;
   let available = null;
+  let slots = [];
+  const slotInputs = [...form.querySelectorAll('input[name="slot"]')];
+  const selectedSlot = () => slotInputs.find((input) => input.checked)?.value || "";
+  const slotInfo = (id) => slots.find((slot) => slot.id === id);
   const money = (n) => `$${Number(n).toLocaleString("es-MX")}`;
 
   const store = {
@@ -73,7 +77,9 @@
   };
 
   function renderQty() {
-    const limit = available === null ? maxQty : Math.max(1, Math.min(maxQty, available));
+    const info = slotInfo(selectedSlot());
+    const free = info ? info.available : available;
+    const limit = free === null || free === undefined ? maxQty : Math.max(1, Math.min(maxQty, free));
     qty = Math.min(Math.max(1, qty), limit);
     qtyOut.textContent = String(qty);
     totalOut.textContent = money(qty * PRICE);
@@ -91,6 +97,11 @@
     renderQty();
   }));
 
+  slotInputs.forEach((input) => input.addEventListener("change", () => {
+    showError("");
+    renderQty();
+  }));
+
   function showError(message) {
     errorOut.textContent = message;
     errorOut.hidden = !message;
@@ -103,14 +114,22 @@
       const data = await response.json();
       maxQty = data.maxPerOrder || maxQty;
       available = data.available;
+      slots = Array.isArray(data.slots) ? data.slots : [];
+      slotInputs.forEach((input) => {
+        const info = slotInfo(input.value);
+        const left = form.querySelector(`[data-left="${input.value}"]`);
+        if (!info || !left) return;
+        const soldOut = info.available <= 0;
+        input.disabled = soldOut;
+        if (soldOut && input.checked) input.checked = false;
+        input.closest(".slot-opt").classList.toggle("is-soldout", soldOut);
+        left.textContent = soldOut ? "Agotado" : info.available === 1 ? "Queda 1 lugar" : `Quedan ${info.available} lugares`;
+      });
+      stockOut.hidden = true;
       if (data.salesClosed || data.available <= 0) {
         section.classList.add("is-soldout");
         payButton.disabled = true;
         payButton.textContent = data.salesClosed ? "Venta cerrada" : "Entradas agotadas";
-        stockOut.hidden = true;
-      } else if (data.available <= 20) {
-        stockOut.textContent = data.available === 1 ? "¡Queda 1 lugar!" : `¡Quedan ${data.available} lugares!`;
-        stockOut.hidden = false;
       }
       renderQty();
     } catch (e) {
@@ -125,6 +144,7 @@
     phoneInput.setAttribute("aria-invalid", String(digits.length < 10 || digits.length > 15));
     if (name.length < 2) { nameInput.focus(); return "Escribe tu nombre completo."; }
     if (digits.length < 10 || digits.length > 15) { phoneInput.focus(); return "Escribe tu celular a 10 dígitos."; }
+    if (!selectedSlot()) { (slotInputs.find((input) => !input.disabled) || slotInputs[0]).focus(); return "Elige el horario de tu clase."; }
     return "";
   }
 
@@ -141,7 +161,7 @@
       const response = await fetch("/api/pilates/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: nameInput.value, phone: phoneInput.value, quantity: qty })
+        body: JSON.stringify({ name: nameInput.value, phone: phoneInput.value, quantity: qty, slot: selectedSlot() })
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.checkoutUrl) throw new Error(data.error || "No pudimos iniciar el pago. Intenta de nuevo.");
@@ -205,6 +225,7 @@
     el("ticketQr").src = qr;
     el("ticketDownload").href = `${qr}?descargar=1`;
     el("ticketCount").textContent = order.quantity === 1 ? "Vale por 1 entrada" : `Vale por ${order.quantity} entradas`;
+    el("ticketSlot").textContent = order.slotLabel || "Horario por confirmar";
     el("ticketName").textContent = order.name;
     const used = el("ticketUsed");
     if (order.checkedIn > 0) {
@@ -215,7 +236,8 @@
     } else {
       used.hidden = true;
     }
-    const text = `Mi boleto para Pilates Party (sábado 14 de noviembre, 8:00 a.m.): ${ticketLink(token)}`;
+    const when = order.slot ? `${(order.slotLabel || "").toLowerCase()}, sábado 14 de noviembre` : "sábado 14 de noviembre";
+    const text = `Mi boleto para Pilates Party (${when}): ${ticketLink(token)}`;
     el("ticketWhatsApp").href = `https://wa.me/?text=${encodeURIComponent(text)}`;
     modal.setAttribute("aria-labelledby", "ticketReadyTitle");
     stateBox.hidden = true;

@@ -12,7 +12,8 @@ Configuracion recomendada en Vercel:
 
 Variables de entorno necesarias:
 
-- `PILATES_CAPACITY` (opcional): cupo total de Pilates Party. Si no existe, se usan 80 lugares.
+- `PILATES_CAPACITY` (opcional): cupo total de Pilates Party. Si no existe, se usan 40 lugares.
+- `PILATES_CAPACITY_08` y `PILATES_CAPACITY_09` (opcionales): cupo de la clase de 8:00 y de la de 9:00. Si no existen, se usan 20 lugares en cada una.
 - `PILATES_SALES_CLOSED` (opcional): `true` para cerrar la venta de Pilates Party antes de tiempo. La venta cierra sola el 14 de noviembre de 2026 a las 14:00.
 
 - `DATABASE_URL`: cadena de conexion de Neon/PostgreSQL. En Neon normalmente termina con `?sslmode=require`.

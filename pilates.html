@@ -15,8 +15,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="fonts/poppins-300.woff" as="font" type="font/woff" crossorigin>
 <link rel="preload" href="img/pilates/pilates-party-titulo.webp" as="image">
-<link rel="stylesheet" href="pilates.css?v=20261103s">
-<script defer src="pilates.js?v=20261103n"></script>
+<link rel="stylesheet" href="pilates.css?v=20261105">
+<script defer src="pilates.js?v=20261105"></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -139,7 +139,7 @@
       <p class="kicker">Entradas</p>
       <p class="price">$350 <span>MXN por persona</span></p>
       <ul class="ticket-facts">
-        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Entrada 8:00 a.m.</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Clases 8:00 y 9:00 a.m.</li>
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="8" cy="14.5" r=".8"/><circle cx="12" cy="14.5" r=".8"/><circle cx="16" cy="14.5" r=".8"/></svg>Venta desde el lunes 2 de noviembre</li>
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="5" cy="10" r="2.2"/><circle cx="19" cy="10" r="2.2"/><path d="M1.5 18.5c.3-2.4 1.8-4 3.8-4.3M22.5 18.5c-.3-2.4-1.8-4-3.8-4.3"/></svg>Cupo limitado</li>
       </ul>
@@ -152,9 +152,9 @@
       <div class="buy-intro">
         <p class="kicker">Compra en línea</p>
         <h2 id="comprar-titulo">Aparta tu <em>lugar.</em></h2>
-        <p>Paga con Mercado Pago y al instante recibes <strong>un solo QR</strong> para todas tus entradas. Muéstralo en la entrada el sábado 14 a las 8:00 a.m.</p>
+        <p>Paga con Mercado Pago y al instante recibes <strong>un solo QR</strong> para todas tus entradas. Muéstralo al llegar el sábado 14, antes de tu clase.</p>
         <ol class="buy-steps">
-          <li><span>1</span>Escribe tu nombre y celular</li>
+          <li><span>1</span>Elige tu horario y escribe tus datos</li>
           <li><span>2</span>Paga con tarjeta o saldo de Mercado Pago</li>
           <li><span>3</span>Guarda tu QR y preséntalo al llegar</li>
         </ol>
@@ -162,6 +162,23 @@
       </div>
 
       <form class="buy-form" id="buyForm" novalidate>
+        <fieldset class="slot-pick" id="slotPick">
+          <legend>Horario de tu clase</legend>
+          <div class="slot-options">
+            <label class="slot-opt">
+              <input type="radio" name="slot" value="08">
+              <span class="slot-opt-time">8:00 – 9:00</span>
+              <span class="slot-opt-name">1era clase</span>
+              <span class="slot-opt-left" data-left="08">20 lugares</span>
+            </label>
+            <label class="slot-opt">
+              <input type="radio" name="slot" value="09">
+              <span class="slot-opt-time">9:00 – 10:00</span>
+              <span class="slot-opt-name">2da clase</span>
+              <span class="slot-opt-left" data-left="09">20 lugares</span>
+            </label>
+          </div>
+        </fieldset>
         <label for="buyName">Nombre completo</label>
         <input id="buyName" name="name" autocomplete="name" maxlength="120" required placeholder="Como aparecerá en tu boleto">
         <label for="buyPhone">Celular</label>
@@ -232,7 +249,8 @@
       <div class="ticket-qr"><img id="ticketQr" alt="Código QR de tu entrada" width="720" height="720"></div>
       <p class="ticket-count" id="ticketCount"></p>
       <p class="ticket-name" id="ticketName"></p>
-      <p class="ticket-meta">Sábado 14 · noviembre · 2026<br>Entrada 8:00 a.m. · Av. Juárez, Centro, Tepeapulco</p>
+      <p class="ticket-slot" id="ticketSlot"></p>
+      <p class="ticket-meta">Sábado 14 · noviembre · 2026<br>Av. Juárez, Centro, Tepeapulco</p>
       <p class="ticket-used" id="ticketUsed" hidden></p>
       <div class="ticket-actions">
         <a class="btn" id="ticketDownload" href="#" download="boleto-pilates-party.png">Descargar QR</a>

@@ -7,8 +7,8 @@ const crypto = require("crypto");
 
 const PILATES = Object.freeze({
   event: "pilates-party-2026",
-  title: "Pilates Party · Entrada general",
-  description: "Sábado 14 de noviembre de 2026 · Entrada 8:00 a.m.",
+  title: "Pilates Party",
+  description: "Sábado 14 de noviembre de 2026",
   unitPrice: 350,
   maxPerOrder: 10,
   reservationMinutes: 15,
@@ -16,9 +16,29 @@ const PILATES = Object.freeze({
   salesEndAt: "2026-11-14T14:00:00-06:00"
 });
 
+// Horarios de clase. Cada uno tiene su propio cupo y juntos no rebasan el cupo total.
+const PILATES_SLOTS = Object.freeze([
+  Object.freeze({ id: "08", label: "Clase de 8:00 a 9:00", short: "8:00 – 9:00", envKey: "PILATES_CAPACITY_08" }),
+  Object.freeze({ id: "09", label: "Clase de 9:00 a 10:00", short: "9:00 – 10:00", envKey: "PILATES_CAPACITY_09" })
+]);
+const SLOT_BY_ID = new Map(PILATES_SLOTS.map((slot) => [slot.id, slot]));
+const UNASSIGNED_LABEL = "Horario por asignar";
+
+function readCapacity(key, fallback) {
+  const value = Number.parseInt(String(process.env[key] || fallback), 10);
+  return Number.isInteger(value) && value >= 0 ? value : fallback;
+}
+
 function getPilatesCapacity() {
-  const value = Number.parseInt(String(process.env.PILATES_CAPACITY || "80"), 10);
-  return Number.isInteger(value) && value >= 0 ? value : 80;
+  return readCapacity("PILATES_CAPACITY", 40);
+}
+
+function getSlotCapacity(slot) {
+  return readCapacity(slot.envKey, 20);
+}
+
+function slotLabel(id) {
+  return SLOT_BY_ID.get(id)?.label || UNASSIGNED_LABEL;
 }
 
 function arePilatesSalesClosed(now = Date.now()) {
@@ -38,6 +58,7 @@ function sanitizeCheckout(input = {}) {
   const phone = String(input.phone || "").trim();
   const phoneDigits = phone.replace(/\D/g, "");
   const quantity = Number.parseInt(String(input.quantity ?? "1"), 10);
+  const slot = String(input.slot || "").trim();
 
   if (name.length < 2 || name.length > 120) throw httpError(400, "Escribe tu nombre completo");
   if (phoneDigits.length < 10 || phoneDigits.length > 15) throw httpError(400, "Escribe un número de celular válido de 10 dígitos");
@@ -45,19 +66,27 @@ function sanitizeCheckout(input = {}) {
     throw httpError(400, `Puedes comprar de 1 a ${PILATES.maxPerOrder} entradas por compra`);
   }
 
-  return { name, phone: phoneDigits, quantity, total: quantity * PILATES.unitPrice };
+  if (!SLOT_BY_ID.has(slot)) throw httpError(400, "Elige el horario de tu clase");
+
+  return { name, phone: phoneDigits, quantity, slot, total: quantity * PILATES.unitPrice };
 }
 
-function createReference(quantity) {
-  return `pilates:${quantity}:${crypto.randomUUID()}`;
+function createReference(slot, quantity) {
+  return `pilates:${slot}:${quantity}:${crypto.randomUUID()}`;
 }
 
+// Acepta el formato con horario (pilates:08:2:uuid) y el anterior sin horario (pilates:2:uuid).
 function parseReference(reference) {
-  const match = /^pilates:(\d{1,2}):[0-9a-f-]{36}$/i.exec(String(reference || ""));
+  const text = String(reference || "");
+  const withSlot = /^pilates:(\d{2}):(\d{1,2}):[0-9a-f-]{36}$/i.exec(text);
+  const legacy = withSlot ? null : /^pilates:(\d{1,2}):[0-9a-f-]{36}$/i.exec(text);
+  const match = withSlot || legacy;
   if (!match) return null;
-  const quantity = Number(match[1]);
+  const slot = withSlot ? withSlot[1] : null;
+  if (slot && !SLOT_BY_ID.has(slot)) return null;
+  const quantity = Number(withSlot ? withSlot[2] : legacy[1]);
   if (quantity < 1 || quantity > PILATES.maxPerOrder) return null;
-  return { quantity };
+  return { quantity, slot };
 }
 
 function maskPhone(phone) {
@@ -113,26 +142,54 @@ function registerPilatesRoutes(app, deps) {
   async function getOccupied(client = pool) {
     const result = await client.query(`
       SELECT
+        COALESCE(slot, '') AS slot,
         COALESCE(SUM(quantity) FILTER (WHERE status = 'approved'), 0)::INTEGER AS sold,
         COALESCE(SUM(quantity) FILTER (WHERE status IN ('reserved', 'pending') AND reserved_until > now()), 0)::INTEGER AS held,
         COALESCE(SUM(checked_in) FILTER (WHERE status = 'approved'), 0)::INTEGER AS checked_in,
         COUNT(*) FILTER (WHERE status = 'approved')::INTEGER AS orders
       FROM pilates_orders
+      GROUP BY COALESCE(slot, '')
     `);
-    const row = result.rows[0] || {};
-    return {
-      sold: Number(row.sold || 0),
-      held: Number(row.held || 0),
-      checkedIn: Number(row.checked_in || 0),
-      orders: Number(row.orders || 0)
-    };
+    const empty = () => ({ sold: 0, held: 0, checkedIn: 0, orders: 0 });
+    const groups = new Map([["", empty()], ...PILATES_SLOTS.map((slot) => [slot.id, empty()])]);
+    for (const row of result.rows) {
+      const key = groups.has(row.slot) ? row.slot : "";
+      const group = groups.get(key);
+      group.sold += Number(row.sold || 0);
+      group.held += Number(row.held || 0);
+      group.checkedIn += Number(row.checked_in || 0);
+      group.orders += Number(row.orders || 0);
+    }
+    const totals = empty();
+    for (const group of groups.values()) {
+      totals.sold += group.sold; totals.held += group.held; totals.checkedIn += group.checkedIn; totals.orders += group.orders;
+    }
+    return { totals, groups };
   }
 
   async function getAvailability(client = pool) {
     await expireReservations(client);
     const capacity = getPilatesCapacity();
-    const occupied = await getOccupied(client);
-    return { capacity, ...occupied, available: Math.max(0, capacity - occupied.sold - occupied.held) };
+    const { totals, groups } = await getOccupied(client);
+    const totalFree = Math.max(0, capacity - totals.sold - totals.held);
+    const slots = PILATES_SLOTS.map((slot) => {
+      const group = groups.get(slot.id);
+      const slotCapacity = getSlotCapacity(slot);
+      return {
+        id: slot.id,
+        label: slot.label,
+        short: slot.short,
+        capacity: slotCapacity,
+        sold: group.sold,
+        held: group.held,
+        checkedIn: group.checkedIn,
+        orders: group.orders,
+        available: Math.max(0, Math.min(slotCapacity - group.sold - group.held, totalFree))
+      };
+    });
+    const unassigned = groups.get("");
+    const available = Math.min(totalFree, slots.reduce((sum, slot) => sum + slot.available, 0));
+    return { capacity, ...totals, available, slots, unassigned };
   }
 
   function publicOrder(order) {
@@ -144,6 +201,8 @@ function registerPilatesRoutes(app, deps) {
       approved,
       name: order.customer_name,
       quantity,
+      slot: order.slot || null,
+      slotLabel: slotLabel(order.slot),
       checkedIn,
       remaining: Math.max(0, quantity - checkedIn),
       total: Number(order.total),
@@ -253,12 +312,20 @@ function registerPilatesRoutes(app, deps) {
     try {
       const availability = await getAvailability();
       const salesClosed = arePilatesSalesClosed();
+      res.setHeader("Cache-Control", "no-store");
       res.json({
         salesClosed,
         price: PILATES.unitPrice,
         maxPerOrder: PILATES.maxPerOrder,
         capacity: availability.capacity,
-        available: salesClosed ? 0 : availability.available
+        available: salesClosed ? 0 : availability.available,
+        slots: availability.slots.map((slot) => ({
+          id: slot.id,
+          label: slot.label,
+          short: slot.short,
+          capacity: slot.capacity,
+          available: salesClosed ? 0 : slot.available
+        }))
       });
     } catch (error) {
       next(error);
@@ -271,7 +338,8 @@ function registerPilatesRoutes(app, deps) {
       if (arePilatesSalesClosed()) throw httpError(409, "La venta de entradas ya cerró.");
       const checkout = sanitizeCheckout(req.body);
       const siteUrl = getPublicSiteUrl();
-      const reference = createReference(checkout.quantity);
+      const slot = SLOT_BY_ID.get(checkout.slot);
+      const reference = createReference(slot.id, checkout.quantity);
       const reservedUntil = new Date(Date.now() + PILATES.reservationMinutes * 60 * 1000).toISOString();
 
       const client = await pool.connect();
@@ -279,18 +347,20 @@ function registerPilatesRoutes(app, deps) {
         await client.query("BEGIN");
         await client.query("SELECT pg_advisory_xact_lock(hashtext('pilates_party_checkout'))");
         const availability = await getAvailability(client);
-        if (checkout.quantity > availability.available) {
-          throw httpError(409, availability.available === 0
-            ? "Las entradas están agotadas."
-            : `Solo quedan ${availability.available} lugares disponibles.`);
+        const free = availability.slots.find((item) => item.id === slot.id).available;
+        if (checkout.quantity > free) {
+          const lower = slot.label.charAt(0).toLowerCase() + slot.label.slice(1);
+          throw httpError(409, free === 0
+            ? `La ${lower} está agotada.`
+            : `Solo quedan ${free} ${free === 1 ? "lugar" : "lugares"} en la ${lower}.`);
         }
         const inserted = await client.query(
           `
-            INSERT INTO pilates_orders (external_reference, customer_name, phone, quantity, unit_price, total, status, reserved_until)
-            VALUES ($1, $2, $3, $4, $5, $6, 'reserved', $7::timestamptz)
+            INSERT INTO pilates_orders (external_reference, customer_name, phone, quantity, unit_price, total, status, reserved_until, slot)
+            VALUES ($1, $2, $3, $4, $5, $6, 'reserved', $7::timestamptz, $8)
             RETURNING id
           `,
-          [reference, checkout.name, checkout.phone, checkout.quantity, PILATES.unitPrice, checkout.total, reservedUntil]
+          [reference, checkout.name, checkout.phone, checkout.quantity, PILATES.unitPrice, checkout.total, reservedUntil, slot.id]
         );
         orderId = inserted.rows[0].id;
         await client.query("COMMIT");
@@ -309,8 +379,8 @@ function registerPilatesRoutes(app, deps) {
         headers: { "X-Idempotency-Key": crypto.randomUUID() },
         body: JSON.stringify({
           items: [{
-            id: "pilates-party-general",
-            title: PILATES.title,
+            id: `pilates-party-${slot.id}`,
+            title: `${PILATES.title} · ${slot.label}`,
             description: PILATES.description,
             category_id: "tickets",
             quantity: checkout.quantity,
@@ -319,7 +389,7 @@ function registerPilatesRoutes(app, deps) {
           }],
           payer: { name: checkout.name },
           external_reference: reference,
-          metadata: { event: PILATES.event, quantity: checkout.quantity },
+          metadata: { event: PILATES.event, quantity: checkout.quantity, slot: slot.id },
           notification_url: `${siteUrl}/api/pilates/webhook`,
           expires: true,
           expiration_date_to: reservedUntil,
@@ -453,6 +523,8 @@ function registerPilatesRoutes(app, deps) {
       name: base.name,
       phone: isAdmin ? order.phone : maskPhone(order.phone),
       quantity: base.quantity,
+      slot: base.slot,
+      slotLabel: base.slotLabel,
       checkedIn: base.checkedIn,
       remaining: base.remaining,
       total: base.total,
@@ -573,12 +645,53 @@ function registerPilatesRoutes(app, deps) {
           available: availability.available,
           checkedIn: availability.checkedIn,
           orders: availability.orders,
-          revenue: availability.sold * PILATES.unitPrice
+          revenue: availability.sold * PILATES.unitPrice,
+          slots: availability.slots.map((slot) => ({
+            id: slot.id, label: slot.label, short: slot.short, capacity: slot.capacity,
+            sold: slot.sold, checkedIn: slot.checkedIn, available: slot.available
+          })),
+          unassigned: { sold: availability.unassigned.sold, orders: availability.unassigned.orders, checkedIn: availability.unassigned.checkedIn }
         },
         orders: result.rows.map((order) => staffOrder(order, isAdmin))
       });
     } catch (error) {
       next(error);
+    }
+  });
+
+  // Asignar o cambiar el horario de una compra (solo administradores).
+  app.post("/api/pilates/orders/:id/slot", authRequired, adminRequired, async (req, res, next) => {
+    const client = await pool.connect().catch(next);
+    if (!client) return;
+    try {
+      const orderId = String(req.params.id || "");
+      if (!/^[0-9a-f-]{36}$/i.test(orderId)) throw httpError(400, "Compra no válida.");
+      const slot = SLOT_BY_ID.get(String(req.body?.slot || ""));
+      if (!slot) throw httpError(400, "Horario no válido.");
+
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext('pilates_party_checkout'))");
+      const found = await client.query("SELECT * FROM pilates_orders WHERE id = $1 FOR UPDATE", [orderId]);
+      const order = found.rows[0];
+      if (!order) throw httpError(404, "No encontramos esta compra.");
+      if (order.slot !== slot.id) {
+        const availability = await getAvailability(client);
+        const target = availability.slots.find((item) => item.id === slot.id);
+        // Al moverla, la compra deja libre su lugar actual; el cupo total no cambia.
+        const freeInSlot = getSlotCapacity(slot) - target.sold - target.held;
+        if (Number(order.quantity) > freeInSlot) {
+          throw httpError(409, `No hay lugar suficiente en la ${slot.label.toLowerCase()} (quedan ${Math.max(0, freeInSlot)}).`);
+        }
+        await client.query("UPDATE pilates_orders SET slot = $2, updated_at = now() WHERE id = $1", [orderId, slot.id]);
+      }
+      const updated = await client.query("SELECT * FROM pilates_orders WHERE id = $1", [orderId]);
+      await client.query("COMMIT");
+      res.json({ ok: true, order: staffOrder(updated.rows[0], true) });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      next(error);
+    } finally {
+      client.release();
     }
   });
 
@@ -617,6 +730,7 @@ async function ensurePilatesSchema(query) {
     )
   `);
   await query(`CREATE INDEX IF NOT EXISTS idx_pilates_orders_status ON pilates_orders(status, reserved_until)`);
+  await query(`ALTER TABLE pilates_orders ADD COLUMN IF NOT EXISTS slot TEXT CHECK (slot IN ('08', '09'))`);
 
   // Cuenta de administrador para el control de acceso de Pilates Party.
   // Solo se crea si no existe; si luego se cambia la contraseña con
@@ -629,4 +743,4 @@ async function ensurePilatesSchema(query) {
   );
 }
 
-module.exports = { registerPilatesRoutes, ensurePilatesSchema, PILATES, sanitizeCheckout, parseReference, getPilatesCapacity };
+module.exports = { registerPilatesRoutes, ensurePilatesSchema, PILATES, PILATES_SLOTS, sanitizeCheckout, parseReference, getPilatesCapacity };

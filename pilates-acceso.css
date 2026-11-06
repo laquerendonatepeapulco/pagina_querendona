@@ -68,3 +68,17 @@ input{display:block;width:100%;margin-top:6px;padding:12px 14px;border-radius:12
 .qty button{width:52px;height:52px;border:0;background:none;color:var(--crema);font:300 26px "Poppins",sans-serif;cursor:pointer}
 .qty button:disabled{opacity:.3}
 .qty output{min-width:40px;font:400 30px "Lora",serif}
+.slot-stats{display:grid;gap:6px;margin:-4px 0 14px;font-size:13px;color:var(--crema-2)}
+.slot-stats p{padding:8px 12px;border-radius:12px;background:rgba(246,236,224,.05)}
+.slot-stats b{font-weight:500;color:var(--crema)}
+.slot-stats .warn-row{background:rgba(214,140,40,.18);color:#f3c98b}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.filters button{min-height:36px;padding:6px 14px;border-radius:999px;border:1px solid rgba(246,236,224,.3);background:none;color:var(--crema-2);font:500 12px "Poppins",sans-serif;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--crema);color:var(--cafe);border-color:var(--crema)}
+.list small.no-slot{color:#f3c98b}
+.sheet-slot{justify-self:center;padding:8px 18px;border-radius:999px;background:var(--crema);color:var(--cafe);font:500 16px/1.2 "Poppins",sans-serif}
+.sheet-slot.is-missing{background:#f3c98b}
+.sheet-assign p{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--arena);margin-bottom:8px}
+.sheet-assign div{display:flex;gap:8px;justify-content:center}
+.sheet-assign button{flex:1;max-width:180px;min-height:42px;border-radius:999px;border:1px solid rgba(246,236,224,.35);background:none;color:var(--crema);font:500 13px "Poppins",sans-serif;cursor:pointer}
+.sheet-assign button[aria-pressed="true"]{background:var(--arena);color:var(--cafe);border-color:var(--arena)}
