@@ -250,7 +250,20 @@
     openModal();
   }
 
-  async function checkReturn(returnToken, paymentId, attempt = 0) {
+  const validPaymentId = (value) => (/^\d{6,30}$/.test(String(value || "")) ? String(value) : "");
+
+  function showNotCompleted(returnToken) {
+    // Libera el lugar apartado si no hubo ningún pago.
+    fetch("/api/pilates/order/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ t: returnToken })
+    }).catch(() => {}).finally(() => loadAvailability());
+    history.replaceState(null, "", "/pilates#comprar");
+    showState("Tu pago", "El pago no se completó", "No se realizó ningún cargo. Puedes intentarlo de nuevo.", { canRetry: true });
+  }
+
+  async function checkReturn(returnToken, paymentId, attempt = 0, failed = false) {
     const url = new URL("/api/pilates/order", location.origin);
     url.searchParams.set("t", returnToken);
     if (paymentId) url.searchParams.set("payment_id", paymentId);
@@ -259,11 +272,12 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "No pudimos revisar tu pago.");
       if (data.approved && data.ticketToken) return showTicket(data);
+      if (failed && data.status !== "pending") return showNotCompleted(returnToken);
       if (["reserved", "pending"].includes(data.status) && attempt < 24) {
         showState("Tu pago", "Confirmando tu pago…", data.status === "pending"
           ? "Mercado Pago está revisando tu pago. En cuanto se apruebe, aquí aparecerá tu QR."
           : "Esto tarda unos segundos. No cierres esta página.", { spinner: true });
-        pollTimer = setTimeout(() => checkReturn(returnToken, paymentId, attempt + 1), 5000);
+        pollTimer = setTimeout(() => checkReturn(returnToken, paymentId, attempt + 1, failed), 5000);
         return;
       }
       if (data.status === "pending") {
@@ -305,12 +319,13 @@
   }
 
   if (returnToken && params.get("pago")) {
-    const paymentId = params.get("payment_id") || params.get("collection_id") || "";
-    if (params.get("pago") === "error" && !paymentId) {
-      showState("Tu pago", "El pago no se completó", "No se realizó ningún cargo. Puedes intentarlo de nuevo.", { canRetry: true });
+    const paymentId = validPaymentId(params.get("payment_id")) || validPaymentId(params.get("collection_id"));
+    const failed = params.get("pago") === "error";
+    if (failed && !paymentId) {
+      showNotCompleted(returnToken);
     } else {
       showState("Tu pago", "Confirmando tu pago…", "Esto tarda unos segundos. No cierres esta página.", { spinner: true });
-      checkReturn(returnToken, paymentId);
+      checkReturn(returnToken, paymentId, 0, failed);
     }
   } else if (boleto) {
     openSavedTicket(boleto);

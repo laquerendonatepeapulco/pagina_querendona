@@ -34,7 +34,10 @@ h1,h2,p{margin:0}
 .topnav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:24px;height:72px;padding:0 max(20px,calc((100vw - 1160px)/2));transition:background .3s,box-shadow .3s,border-color .3s;border-bottom:1px solid transparent}
 .topnav.is-solid{background:rgba(246,236,224,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom-color:rgba(58,35,22,.18);box-shadow:0 8px 24px rgba(20,10,4,.12)}
 .topnav-brand{display:flex;align-items:center;gap:14px;text-decoration:none}
-.topnav-brand img{width:104px;height:auto;transition:filter .3s}
+.topnav-brand img{width:104px;height:auto}
+.topnav-brand .brand-dark{display:none}
+.topnav.is-solid .brand-light{display:none}
+.topnav.is-solid .brand-dark{display:block}
 .topnav-brand span{font-size:11px;letter-spacing:.28em;color:var(--arena);padding-left:14px;border-left:1px solid currentColor;line-height:1.2}
 .topnav-links{display:flex;align-items:center;gap:30px}
 .topnav-links a{font-size:13px;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--crema);position:relative;padding:6px 0}
@@ -42,7 +45,6 @@ h1,h2,p{margin:0}
 .topnav-links a:hover::after,.topnav-links a.is-active::after{transform:scaleX(1)}
 .topnav-cta{display:inline-flex;align-items:center;min-height:44px;padding:10px 22px;border-radius:999px;background:var(--crema);color:var(--cafe);font:500 12px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none;transition:background .25s,color .25s,transform .25s}
 .topnav-cta:hover{transform:translateY(-1px)}
-.topnav.is-solid .topnav-brand img{filter:brightness(0) saturate(100%) invert(12%) sepia(30%) saturate(1200%) hue-rotate(345deg) brightness(90%)}
 .topnav.is-solid .topnav-brand span{color:var(--terracota)}
 .topnav.is-solid .topnav-links a{color:var(--cafe)}
 .topnav.is-solid .topnav-cta{background:var(--terracota);color:var(--crema)}

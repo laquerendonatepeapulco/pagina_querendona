@@ -448,6 +448,28 @@ function registerPilatesRoutes(app, deps) {
     }
   });
 
+  // Quien regresa de Mercado Pago sin pagar libera su apartado de inmediato.
+  app.post("/api/pilates/order/cancel", async (req, res, next) => {
+    try {
+      const access = readToken(req.body?.t, "return");
+      if (!access) throw httpError(403, "El enlace de tu compra no es válido.");
+      const updated = await query(
+        `
+          UPDATE pilates_orders
+          SET status = 'cancelled', reserved_until = NULL, updated_at = now()
+          WHERE id = $1 AND status = 'reserved' AND mercadopago_payment_id IS NULL
+          RETURNING status
+        `,
+        [access.id]
+      );
+      const order = updated.rows[0] || await findOrder(access.id);
+      if (!order) throw httpError(404, "No encontramos tu compra.");
+      res.json({ status: order.status });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/pilates/ticket", async (req, res, next) => {
     try {
       const access = readToken(req.query.token, "ticket");
